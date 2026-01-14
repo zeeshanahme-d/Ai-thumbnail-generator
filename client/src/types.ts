@@ -62,5 +62,28 @@ export interface SectionProps {
     buttonText: string;
     buttonHref: string;
 }
+export interface UserId {
+    _id: string;
+    name: string;
+    image_url: string;
+}
+export interface Thumbnail {
+    _id: string;
+    title: string;
+    image_url: string;
+    aspect_ratio: string;
+    color_scheme: string;
+    createdAt: string;
+    updatedAt: string;
+    isGenerating: boolean;
+    model: string;
+    userId?: UserId;
+    prompt_used: string;
+    published: boolean;
+    style: string;
+    text_overlay: boolean;
+    user_prompt: string;
+    __v: number;
+}
 
 export type AuthMode = 'login' | 'signup' | "forgotPassword" | "verifyOtp" | "resetPassword";
