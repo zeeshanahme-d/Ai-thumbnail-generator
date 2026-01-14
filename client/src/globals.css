@@ -5,13 +5,27 @@
     --font-poppins: "Poppins", sans-serif;
 
     --color-primary: #e60076;
+    --color-background: #0B0B0F;
     --color-primary-hover: #c6005c;
 
     --color-border: #c6005c;
+
+    /* 448px */
+    --breakpoint-xs: 28rem;
+    /* 640px */
+    --breakpoint-sm: 40rem;
+    /* 768px */
+    --breakpoint-md: 48rem;
+    /* 1024px */
+    --breakpoint-lg: 64rem;
+    /* 1280px */
+    --breakpoint-xl: 77.5rem;
+    /* 1480px */
+    --breakpoint-2xl: 92.5rem;
 }
 
 body {
-    @apply bg-black text-white text-sm antialiased font-poppins;
+    @apply bg-background text-white text-sm antialiased font-poppins scroll-smooth;
 }
 
 body::selection {
@@ -26,6 +40,12 @@ button {
     background-image: linear-gradient(to right, var(--color-pink-500), var(--color-pink-300));
     background-size: 200% 100%;
     animation: movegradient 5s infinite;
+}
+
+.flex-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @keyframes movegradient {
