@@ -1,5 +1,5 @@
 'use client'
-import { CheckIcon, ChevronRightIcon, VideoIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon, Eye } from "lucide-react";
 import TiltedImage from "../components/TiltImage";
 import { motion } from "motion/react";
 
@@ -53,7 +53,7 @@ export default function HeroSection() {
                     Generate Now
                 </button>
                 <button className="flex items-center gap-2 border border-pink-900 hover:bg-pink-950/50 transition rounded-full px-6 h-11">
-                    <VideoIcon strokeWidth={1} />
+                    <Eye strokeWidth={1} />
                     <span>View creations</span>
                 </button>
             </motion.div>

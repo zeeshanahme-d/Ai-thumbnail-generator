@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react"
 import { useAuthStore } from "../../store/useAuthModalStore";
 import { X, Lock } from "lucide-react";
+import Button from "../../components/Button";
 
 const ResetPassword = () => {
     const { showAuthModal, closeModal } = useAuthStore((state) => state);
@@ -21,7 +22,7 @@ const ResetPassword = () => {
     }
 
     return (
-        <div className="w-full sm:w-87.5 py-10 md:w-md relative text-center bg-white/6 border border-white/10 rounded-2xl px-8">
+        <div className="w-[90%] xs:w-sm md:w-md md:py-10 relative text-center bg-white/6 border border-white/10 rounded-2xl px-4 py-5 md:px-8">
             <button onClick={closeModal} title="Close Modal" className="hover:text-[#bdbdbd] absolute right-4 top-4 transition-all duration-300">
                 <X />
             </button>
@@ -42,9 +43,9 @@ const ResetPassword = () => {
                     <input type="password" name="confirmPassword" placeholder="Confirm Password" className="w-full bg-transparent text-white placeholder-white/60 border-none outline-none text-base" value={formData.confirmPassword} onChange={handleChange} required />
                 </div>
 
-                <button type="submit" className="px-6 py-2.5 w-full mt-5 bg-primary hover:bg-primary-hover active:scale-95 transition-all rounded-full" >
+                <Button type="submit" variant="primary" className="mt-5">
                     Reset Password
-                </button>
+                </Button>
 
                 <div className="text-gray-400 text-sm mt-3" >
                     <button onClick={() => showAuthModal("login")} className="text-indigo-400 hover:underline ml-1">Go Back</button>

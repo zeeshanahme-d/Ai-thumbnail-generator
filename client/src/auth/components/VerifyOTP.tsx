@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 import { useAuthStore } from "../../store/useAuthModalStore";
 import { X } from "lucide-react";
+import Button from "../../components/Button";
 
 const length = 6;
 
@@ -65,7 +66,7 @@ const VerifyOTP = () => {
     };
 
     return (
-        <div className="w-full sm:w-87.5 md:w-md p-10 relative text-center bg-white/6 border border-white/10 rounded-2xl px-8">
+        <div className="w-[90%] xs:w-sm md:w-md md:p-10 relative text-center bg-white/6 border border-white/10 rounded-2xl px-4 py-5 md:px-8">
             <button onClick={closeModal} title="Close Modal" className="hover:text-[#bdbdbd] absolute right-4 top-4 transition-all duration-300">
                 <X />
             </button>
@@ -96,9 +97,9 @@ const VerifyOTP = () => {
                 </div>
 
 
-                <button type="submit" className="px-6 py-2.5 w-full mt-4 bg-primary hover:bg-primary-hover active:scale-95 transition-all rounded-full" >
+                <Button type="submit" variant="primary" className="mt-5">
                     Submit
-                </button>
+                </Button>
 
                 <div className="text-gray-400 text-sm mt-3" >
                     <button onClick={() => showAuthModal("login")} className="text-indigo-400 hover:underline ml-1">Go Back</button>

@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react"
 import { useAuthStore } from "../../store/useAuthModalStore";
 import { Lock, Mail, X } from "lucide-react";
+import Button from "../../components/Button";
 
 const LoginForm = () => {
     const { showAuthModal, closeModal } = useAuthStore((state) => state);
@@ -21,7 +22,7 @@ const LoginForm = () => {
     }
 
     return (
-        <div className="w-full sm:w-87.5 md:w-md relative text-center bg-white/6 border border-white/10 rounded-2xl px-8 py-10">
+        <div className="w-[90%] xs:w-sm md:w-md relative text-center bg-white/6 border border-white/10 rounded-2xl md:px-8 md:py-10 px-4 py-5">
             <button onClick={closeModal} title="Close Modal" className="hover:text-[#bdbdbd] absolute right-4 top-4 transition-all duration-300">
                 <X />
             </button>
@@ -49,9 +50,9 @@ const LoginForm = () => {
                     </button>
                 </div>
 
-                <button type="submit" className="px-6 py-2.5 w-full bg-primary hover:bg-primary-hover active:scale-95 transition-all rounded-full" >
+                <Button type="submit" variant="primary" >
                     Login
-                </button>
+                </Button>
 
                 <div className="text-gray-400 text-sm mt-3 cursor-pointer" >
                     Don't have an account
