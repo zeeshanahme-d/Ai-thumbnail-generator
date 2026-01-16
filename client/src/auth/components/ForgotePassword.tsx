@@ -39,7 +39,7 @@ const ForgotePassword = () => {
                     <input type="email" name="email" placeholder="Email id" className="w-full bg-transparent text-white placeholder-white/60 border-none outline-none text-base" value={formData.email} onChange={handleChange} required />
                 </div>
 
-                <Button type="submit" variant="primary">
+                <Button type="submit" variant="primary" className="mt-5">
                     Send OTP
                 </Button>
 

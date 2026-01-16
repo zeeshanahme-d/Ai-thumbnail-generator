@@ -11,7 +11,7 @@ export default function HeroSection() {
     ];
 
     return (
-        <div className="relative flex flex-col items-center justify-center px-4 md:px-10 lg:px-24 xl:px-32 mt-44">
+        <div className="relative flex flex-col items-center justify-center px-4 md:px-10 lg:px-16 xl:px-32 mt-44">
             <div className="absolute top-30 -z-10 left-1/4 size-72 bg-primary blur-[300px]"></div>
             <motion.a href="https://prebuiltui.com?utm_source=pixels" className="group flex items-center gap-2 rounded-full p-1 pr-3 text-pink-100 bg-pink-200/15"
                 initial={{ y: -20, opacity: 0 }}

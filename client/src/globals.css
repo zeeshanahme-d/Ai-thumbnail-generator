@@ -22,6 +22,8 @@
     --breakpoint-xl: 77.5rem;
     /* 1480px */
     --breakpoint-2xl: 92.5rem;
+    /* 1600px */
+    --breakpoint-3xl: 100rem;
 }
 
 body {
