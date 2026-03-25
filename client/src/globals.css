@@ -63,3 +63,36 @@ button {
         background-position: 0% 50%;
     }
 }
+
+.popover-thumbnail-style-button {
+    anchor-name: --thumbnail-style-button;
+}
+
+.popover-thumbnail-style {
+    position-anchor: --thumbnail-style-button;
+    z-index: 1000;
+    margin: 0;
+    inset: auto;
+    position: absolute;
+    left: anchor(left);
+    top: anchor(bottom);
+    width: anchor-size(width);
+    animation: fadeIn 0.2s ease;
+
+}
+
+.popover-thumbnail-style:popover-open {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
