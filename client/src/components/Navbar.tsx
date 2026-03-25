@@ -29,7 +29,7 @@ export default function Navbar() {
 
                 <div className="hidden md:flex items-center gap-8 transition duration-500">
                     <Link to="/" className="hover:text-pink-300 transition">Home</Link>
-                    <Link to="/generate" className="hover:text-pink-300 transition">Generate</Link>
+                    <Link to="/generate" className="hover:text-pink-300 transition">Generate Thumbnail</Link>
                     <Link to="/community" className="hover:text-pink-300 transition">Community</Link>
                     <Link to="/my-generation" className="hover:text-pink-300 transition">My Generations</Link>
                 </div>
@@ -44,7 +44,7 @@ export default function Navbar() {
 
             <div className={`fixed inset-0 z-100 bg-black/40 backdrop-blur-3xl flex flex-col items-center justify-center text-lg gap-8 md:hidden transition-transform duration-400 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
                 <Link onClick={handleCloseMenu} to="/">Home</Link>
-                <Link onClick={handleCloseMenu} to="/generate">Generate</Link>
+                <Link onClick={handleCloseMenu} to="/generate">Generate Thumbnail</Link>
                 <Link onClick={handleCloseMenu} to="/community">Community</Link>
                 <Link onClick={handleCloseMenu} to="/my-generation">My Generations</Link>
                 <button onClick={handleCloseMenu} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-primary hover:bg-primary-hover transition text-white rounded-md flex">

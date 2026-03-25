@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children, redirectTo = '/' }: ProtectedRouteProps) {
-    const currentUser = false;
+    const currentUser = true;
 
     const isAllowed = !!currentUser
 

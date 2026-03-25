@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
     return (
-        <footer className="flex bg-white/6 border-t border-white/10 flex-wrap justify-center md:justify-between overflow-hidden gap-10 md:gap-20 mt-20 py-20 px-6 md:px-10 lg:px-16 xl:px-32 text-[13px] text-gray-500">
+        <footer className="flex bg-white/6 border-t border-white/10 flex-wrap justify-center md:justify-between overflow-hidden gap-10 md:gap-20 mt-20 py-10 px-6 md:px-10 lg:px-16 xl:px-32 text-[13px] text-gray-500">
             <motion.div className="flex flex-wrap items-start gap-10 md:gap-35"
                 initial={{ x: -150, opacity: 0 }}
                 whileInView={{ x: 0, opacity: 1 }}
@@ -20,7 +20,7 @@ export default function Footer() {
                 viewport={{ once: true }}
                 transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
             >
-                <p className="mt-3 text-center">&copy; {new Date().getFullYear()} <a href="https://prebuiltui.com?utm_source=pixels">PrebuiltUI</a></p>
+                <p className="mt-3 text-center">&copy; {new Date().getFullYear()} <a href="#">Thumblify</a></p>
             </motion.div>
         </footer>
     );
