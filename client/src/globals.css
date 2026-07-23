@@ -1,98 +1,215 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 @import "tailwindcss";
 
+:root {
+  --bg-base: #fff;
+  --bg-surface: #f9fafb;
+  --bg-surface-2: #f3f4f6;
+  --bg-card: #fff;
+  --border: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --text-on-primary: #fff;
+  --primary: #e63946;
+  --primary-hover: #dc2626;
+  --primary-light: #ef4444;
+  --primary-glow: #e639461a;
+  --primary-glow-strong: #e6394633;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px 0 #0000000d;
+  --shadow-md: 0 4px 6px -1px #0000000d, 0 2px 4px -2px #0000000d;
+  --shadow-lg: 0 10px 15px -3px #0000000d, 0 4px 6px -4px #0000000d;
+  --shadow-primary: 0 8px 24px #e6394640;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @theme {
-    --font-poppins: "Poppins", sans-serif;
+  /* Fonts */
+  --font-poppins: "Poppins", sans-serif;
 
-    --color-primary: #e60076;
-    --color-background: #0B0B0F;
-    --color-primary-hover: #c6005c;
+  /* Colors */
+  --color-background: #ffffff;
+  --color-background-surface: #f9fafb;
+  --color-background-surface-2: #f3f4f6;
+  --color-background-card: #ffffff;
 
-    --color-border: #c6005c;
+  --color-primary: #e63946;
+  --color-primary-hover: #dc2626;
+  --color-primary-light: #ef4444;
 
-    /* 448px */
-    --breakpoint-xs: 28rem;
-    /* 640px */
-    --breakpoint-sm: 40rem;
-    /* 768px */
-    --breakpoint-md: 48rem;
-    /* 1024px */
-    --breakpoint-lg: 64rem;
-    /* 1280px */
-    --breakpoint-xl: 77.5rem;
-    /* 1480px */
-    --breakpoint-2xl: 92.5rem;
-    /* 1600px */
-    --breakpoint-3xl: 100rem;
+  --color-primary-glow: #e639461a;
+  --color-primary-glow-strong: #e6394633;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+
+  --color-border: #e5e7eb;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #9ca3af;
+  --color-text-on-primary: #ffffff;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-primary: 0 8px 24px rgb(230 57 70 / 0.25);
+
+  /* Transition */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-default: 200ms;
+
+  /* Breakpoints */
+  --breakpoint-xs: 28rem; /* 448px */
+  --breakpoint-sm: 40rem; /* 640px */
+  --breakpoint-md: 48rem; /* 768px */
+  --breakpoint-lg: 64rem; /* 1024px */
+  --breakpoint-xl: 77.5rem; /* 1240px */
+  --breakpoint-2xl: 92.5rem; /* 1480px */
+  --breakpoint-3xl: 100rem; /* 1600px */
 }
 
 body {
-    @apply bg-background text-white text-sm antialiased font-poppins scroll-smooth;
+  @apply bg-background-surface text-text-primary text-sm antialiased font-poppins scroll-smooth;
 }
 
 body::selection {
-    @apply bg-primary text-white;
-}
-
-button {
-    @apply cursor-pointer;
+  @apply bg-primary text-white;
 }
 
 .move-gradient {
-    background-image: linear-gradient(to right, var(--color-pink-500), var(--color-pink-300));
-    background-size: 200% 100%;
-    animation: movegradient 5s infinite;
+  background-image: linear-gradient(
+    to right,
+    var(--color-pink-500),
+    var(--color-pink-300)
+  );
+  background-size: 200% 100%;
+  animation: movegradient 5s infinite;
 }
 
 .flex-centered {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 @keyframes movegradient {
-    0% {
-        background-position: 0% 50%;
-    }
+  0% {
+    background-position: 0% 50%;
+  }
 
-    50% {
-        background-position: 100% 50%;
-    }
+  50% {
+    background-position: 100% 50%;
+  }
 
-    100% {
-        background-position: 0% 50%;
-    }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Mobile nav menu — positioned under the fixed header rather than CSS-anchored,
+   so it does not depend on anchor-positioning support. */
+.mobile-menu-popover {
+  position: fixed;
+  inset: auto;
+  top: 5.25rem;
+  left: 1rem;
+  right: 1rem;
+  width: auto;
+  max-width: none;
+  max-height: calc(100dvh - 7rem);
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow-x: hidden;
+}
+
+.mobile-menu-popover:popover-open {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.mobile-menu-popover::backdrop {
+  background: rgb(0 0 0 / 0.25);
+  backdrop-filter: blur(2px);
+}
+
+/* Prompt card tool panels — anchored above the toolbar they belong to. */
+.prompt-tools-anchor {
+  anchor-name: --prompt-tools;
+}
+
+.prompt-popover {
+  position: fixed;
+  position-anchor: --prompt-tools;
+  inset: auto;
+  bottom: anchor(top);
+  left: anchor(left);
+  margin: 0 0 -12px 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+  max-width: none;
+  max-height: none;
+}
+
+.prompt-popover:popover-open {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.prompt-popover::backdrop {
+  background: rgb(0 0 0 / 0.15);
 }
 
 .popover-thumbnail-style-button {
-    anchor-name: --thumbnail-style-button;
+  anchor-name: --thumbnail-style-button;
 }
 
 .popover-thumbnail-style {
-    position-anchor: --thumbnail-style-button;
-    z-index: 1000;
-    margin: 0;
-    inset: auto;
-    position: absolute;
-    left: anchor(left);
-    top: anchor(bottom);
-    width: anchor-size(width);
-    animation: fadeIn 0.2s ease;
-
+  position-anchor: --thumbnail-style-button;
+  z-index: 1000;
+  margin: 0;
+  inset: auto;
+  position: absolute;
+  left: anchor(left);
+  top: anchor(bottom);
+  width: anchor-size(width);
+  animation: fadeIn 0.2s ease;
 }
 
 .popover-thumbnail-style:popover-open {
-    display: block;
+  display: block;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
