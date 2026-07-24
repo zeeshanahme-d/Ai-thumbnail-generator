@@ -1,49 +1,48 @@
-import type { IPricing } from "../types";
+import type { IPricingPlan } from "../types";
 
-export const pricingData: IPricing[] = [
+export const pricingPlans: IPricingPlan[] = [
     {
-        name: "Starter",
-        price: 9.99,
-        credits: "500",
+        name: "Free",
+        tagline: "Perfect for getting started",
+        monthlyPrice: 0,
+        cta: "Start Free",
         features: [
-            "50 Premium AI Thumbnails",
-            "Best for starters",
-            "Access to all AI models",
-            "No watermark on downloads",
-            "High-quality",
-            "Commercial usage allowed",
-            "Credits never expire"
+            "5 generations per month",
+            "Standard quality",
+            "16:9 & 1:1 aspect ratios",
+            "Community gallery access",
+            "Basic style presets",
         ],
-        mostPopular: false
     },
     {
         name: "Pro",
-        price: 19.99,
-        credits: "1200",
+        tagline: "For creators who need more",
+        monthlyPrice: 9,
+        cta: "Get Pro",
+        mostPopular: true,
         features: [
-            "110 Premium AI Thumbnails",
-            "Best for intermediate",
-            "Access to all AI models",
-            "No watermark on downloads",
-            "High-quality",
-            "Commercial usage allowed",
-            "Credits never expire"
+            "100 generations per month",
+            "HD & Ultra quality",
+            "All aspect ratios",
+            "Image upload & blending",
+            "All style presets",
+            "Recreate & modify thumbnails",
+            "Priority generation",
+            "Download without watermark",
         ],
-        mostPopular: true
     },
     {
         name: "Ultra",
-        price: 49.99,
-        credits: "3000",
+        tagline: "For power creators and agencies",
+        monthlyPrice: 29,
+        cta: "Get Ultra",
         features: [
-            "280 Premium AI Thumbnails",
-            "Best for professionals",
-            "Access to all AI models",
-            "No watermark on downloads",
-            "High-quality",
-            "Commercial usage allowed",
-            "Credits never expire"
+            "500 generations per month",
+            "Ultra quality always",
+            "All style presets",
+            "API access",
+            "Priority support",
+            "Commercial license",
         ],
-        mostPopular: false
-    }
+    },
 ];
