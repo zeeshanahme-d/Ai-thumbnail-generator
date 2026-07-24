@@ -1,27 +1,64 @@
+import { Heart } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
+import Wrapper from "./Wrapper";
+import { footerData } from "../data/footer";
+import Logo from "../assets/svgs/logo.svg?react";
 
 export default function Footer() {
-    return (
-        <footer className="flex bg-white/6 border-t border-white/10 flex-wrap justify-center md:justify-between overflow-hidden gap-10 md:gap-20 mt-20 py-10 px-6 md:px-10 lg:px-16 xl:px-32 text-[13px] text-gray-500">
-            <motion.div className="flex flex-wrap items-start gap-10 md:gap-35"
-                initial={{ x: -150, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
-            >
-                <Link to="/">
-                    <img className="h-8.5 w-auto" src="/logo.svg" alt="logo" width={130} height={34} />
-                </Link>
-            </motion.div>
-            <motion.div className="flex flex-col max-md:items-center max-md:text-center gap-2 items-end"
-                initial={{ x: 150, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
-            >
-                <p className="mt-3 text-center">&copy; {new Date().getFullYear()} <a href="#">Thumblify</a></p>
-            </motion.div>
-        </footer>
-    );
+  return (
+    <footer className="border-t border-border bg-background-surface">
+      <Wrapper className="py-16">
+        <motion.div
+          className="grid grid-cols-2 gap-10 md:grid-cols-6"
+          initial={{ y: 40, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
+        >
+          <div className="col-span-2">
+            <Link to="/">
+              <Logo className="h-7 w-auto" />
+            </Link>
+            <p className="mt-4 max-w-xs text-sm text-text-muted">
+              AI-powered thumbnail generation for creators who want to stand
+              out. Beautiful. Fast. Effortless.
+            </p>
+          </div>
+
+          {footerData.map((column) => (
+            <div key={column.title}>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-text-muted">
+                {column.title}
+              </h4>
+              <ul className="mt-4 space-y-3">
+                {column.links.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      to={link.href}
+                      className="text-sm text-text-secondary transition hover:text-primary"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </motion.div>
+      </Wrapper>
+
+      <div className="border-t border-border">
+        <Wrapper className="flex flex-col items-center justify-between gap-2 py-6 text-sm text-text-muted sm:flex-row">
+          <p>
+            &copy; {new Date().getFullYear()} Thumblify. All rights reserved.
+          </p>
+          <p className="flex items-center gap-1.5">
+            Made with <Heart size={14} className="fill-primary text-primary" />{" "}
+            for creators worldwide
+          </p>
+        </Wrapper>
+      </div>
+    </footer>
+  );
 }
