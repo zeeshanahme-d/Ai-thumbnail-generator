@@ -1,57 +1,69 @@
-import { MenuIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, LogOut } from "lucide-react";
 import { motion } from "motion/react";
-import { Link } from "react-router-dom";
-import AuthModal from "../auth/AuthModal";
-import { useAuthStore } from "../store/useAuthModalStore";
+import { Link, useLocation } from "react-router-dom";
+import { useSession } from "../store/useSessionStore";
+import { useLogout } from "../pages/auth/core/hooks";
+import { navlinks } from "../data/navlinks";
+import MobileNav from "./MobileNav";
+//icons
+import Logo from "../assets/svgs/logo.svg?react";
 
 export default function Navbar() {
-    const { showAuthModal, isModalOpen } = useAuthStore((state) => state);
-    const [isOpen, setIsOpen] = useState(false);
-    const handleCloseMenu = () => {
-        setIsOpen(false)
-    };
-    const handleOpenAuthModal = () => {
-        showAuthModal("login");
-    };
+  const isAuthenticated = useSession((state) => state.isAuthenticated);
+  const { mutate: logout } = useLogout();
+  const { pathname } = useLocation();
 
-    return (
-        <>
-            <motion.nav className="fixed top-0 z-50 flex items-center justify-between w-full py-4 px-6 md:px-10 lg:px-16 xl:px-32 backdrop-blur"
-                initial={{ y: -100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1 }}
-            >
-                <Link to="/">
-                    <img className="h-8.5 w-auto" src="/logo.svg" alt="logo" width={130} height={34} />
-                </Link>
+  return (
+    <div className="sticky top-4 mt-4 mb-2 z-50 w-full max-w-7xl mx-auto px-6">
+      <motion.header
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1 }}
+      >
+        <nav className="px-4 flex items-center justify-between gap-4 rounded-2xl border border-border bg-background-card/70 py-2.5 shadow-[0_2px_16px_-6px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+          <Link to="/">
+            <Logo className="h-7 w-auto" />
+          </Link>
 
-                <div className="hidden md:flex items-center gap-8 transition duration-500">
-                    <Link to="/" className="hover:text-pink-300 transition">Home</Link>
-                    <Link to="/generate" className="hover:text-pink-300 transition">Generate Thumbnail</Link>
-                    <Link to="/community" className="hover:text-pink-300 transition">Community</Link>
-                    <Link to="/my-generation" className="hover:text-pink-300 transition">My Generations</Link>
-                </div>
+          <div className="hidden md:flex items-center gap-1">
+            {navlinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`rounded-lg px-3 py-1.5 text-[0.8rem] font-medium transition ${
+                  pathname === link.href
+                    ? "bg-primary/10 text-primary"
+                    : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
 
-                <button onClick={handleOpenAuthModal} className="hidden md:block px-6 py-2.5 bg-primary hover:bg-primary-hover active:scale-95 transition-all rounded-full">
-                    Get Started
-                </button>
-                <button onClick={() => setIsOpen(true)} className="md:hidden">
-                    <MenuIcon size={26} className="active:scale-90 transition" />
-                </button>
-            </motion.nav>
+          <div className="flex items-center gap-2">
+            {isAuthenticated ? (
+              <button
+                onClick={() => logout()}
+                className="hidden md:flex items-center gap-1.5 rounded-full border border-border px-5 py-2 text-[0.8rem] font-medium text-text-primary transition hover:bg-background-surface-2 active:scale-95"
+              >
+                <LogOut size={15} />
+                Log out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden md:flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-[0.8rem] font-medium text-text-on-primary transition-all hover:bg-primary-hover hover:scale-105 active:scale-95"
+              >
+                Get Started
+                <ArrowRight size={15} />
+              </Link>
+            )}
 
-            <div className={`fixed inset-0 z-100 bg-black/40 backdrop-blur-3xl flex flex-col items-center justify-center text-lg gap-8 md:hidden transition-transform duration-400 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-                <Link onClick={handleCloseMenu} to="/">Home</Link>
-                <Link onClick={handleCloseMenu} to="/generate">Generate Thumbnail</Link>
-                <Link onClick={handleCloseMenu} to="/community">Community</Link>
-                <Link onClick={handleCloseMenu} to="/my-generation">My Generations</Link>
-                <button onClick={handleCloseMenu} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-primary hover:bg-primary-hover transition text-white rounded-md flex">
-                    <XIcon />
-                </button>
-            </div>
-            {isModalOpen && <AuthModal />}
-        </>
-    );
+            <MobileNav />
+          </div>
+        </nav>
+      </motion.header>
+    </div>
+  );
 }
