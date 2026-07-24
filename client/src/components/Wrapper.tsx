@@ -1,9 +1,9 @@
-import { type PropsWithChildren } from 'react';
+import type { WrapperProps } from "../types";
 
-const Wrapper = ({ children }: PropsWithChildren<{}>) => (
-    <div className="w-full max-w-[1920px] px-4 md:px-10 lg:px-16 xl:px-32">
-        {children}
-    </div>
+// Centered page container: caps content at 1280px and applies the app's
+// responsive horizontal padding. Pass `className` for layout (flex, spacing, etc.).
+const Wrapper = ({ children, className = "" }: WrapperProps) => (
+  <div className={`w-full max-w-7xl mx-auto px-6 ${className}`}>{children}</div>
 );
 
 export default Wrapper;
