@@ -1,7 +1,11 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 //icons
-import { ChevronDown, Cpu, Image, PenTool, RectangleHorizontal, RectangleVertical, Sparkle, Square } from "lucide-react";
+import { Cpu, Image, PenTool, RectangleHorizontal, RectangleVertical, Sparkle, Square } from "lucide-react";
+//components
+import Select from "../../components/Select";
+//types
+import type { SelectOption } from "../../types";
 
 const ASPECT_RATIOS = [
     {
@@ -18,29 +22,29 @@ const ASPECT_RATIOS = [
     }
 ];
 
-const THUMBNAIL_STYLES = [
+const THUMBNAIL_STYLES: SelectOption[] = [
     {
-        style: "Bold & Graphic",
+        label: "Bold & Graphic",
         description: "High contrast, bold typography, striking visuals, vibrant colors.",
         icon: <Sparkle size={18} />
     },
     {
-        style: "Tech/Futuristic",
+        label: "Tech/Futuristic",
         description: "Modern, sleek, high-tech elements, bold colors, futuristic elements.",
         icon: <Cpu size={18} />
     },
     {
-        style: "Minimalist",
+        label: "Minimalist",
         description: "Clean, simple, minimalistic design, bold colors, lots of white space.",
         icon: <Square size={18} />
     },
     {
-        style: "Photorealistic",
+        label: "Photorealistic",
         description: "Photo-based, realistic, lifelike, natural looking, DSLR-style photography.",
         icon: <Image size={18} />
     },
     {
-        style: "Illustrated",
+        label: "Illustrated",
         description: "Hand-drawn, artistic, creative, cartoon-like, vector art style.",
         icon: <PenTool size={18} />
     },
@@ -93,19 +97,8 @@ const COLOR_SCHEMES = [
 function Generate() {
     const [title, setTitle] = useState("");
     const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0].ratio);
-    const [thumbnailStyle, setThumbnailStyle] = useState(THUMBNAIL_STYLES[0]);
+    const [thumbnailStyle, setThumbnailStyle] = useState<SelectOption>(THUMBNAIL_STYLES[0]);
     const [colorScheme, setColorScheme] = useState(COLOR_SCHEMES[0]);
-
-
-    const handleThumbnailStyle = (style: any) => {
-        setThumbnailStyle(style);
-
-        const popover = document.getElementById("popover-thumbnail-style") as HTMLElement | null;
-
-        if (popover) {
-            popover.hidePopover();
-        }
-    };
 
     return (
         <div className="relative flex flex-col items-center justify-center px-4 md:px-10 lg:px-16 xl:px-32 mt-44">
@@ -152,37 +145,14 @@ function Generate() {
 
                             <div className="mt-4">
                                 <TitleOverlay title="Thumbnail Style" className="text-base! font-medium!" />
-                                <div className="mt-2 relative w-full">
-                                    <button className='popover-thumbnail-style-button flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition gap-1 bg-white/8 border-white/10 text-zinc-200 hover:bg-white/12' popoverTarget="popover-thumbnail-style">
-                                        <div className="flex flex-col items-start gap-1">
-                                            <div className="flex items-center gap-2">
-                                                {thumbnailStyle.icon}
-                                                <p className="text-sm font-medium">{thumbnailStyle.style}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-zinc-400">{thumbnailStyle.description}</p>
-                                            </div>
-                                        </div>
-                                        <ChevronDown size={20} className="text-zinc-400" />
-                                    </button>
-
-                                    <div popover="auto" id="popover-thumbnail-style" className="popover-thumbnail-style rounded-lg border border-white/12 bg-black/20 backdrop-blur-3xl shadow-lg">
-                                        {THUMBNAIL_STYLES.map((style) => (
-                                            <button key={style.style} onClick={() => handleThumbnailStyle(style)} className='flex text-white w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-black/30'>
-                                                <div className="flex flex-col items-start gap-1">
-                                                    <div className="flex items-center gap-2">
-                                                        {style.icon}
-                                                        <p className="text-sm font-medium">{style.style}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-zinc-400">{style.description}</p>
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                </div>
+                                <Select
+                                    id="popover-thumbnail-style"
+                                    popoverBtnClassName="popover-thumbnail-style-button"
+                                    options={THUMBNAIL_STYLES}
+                                    value={thumbnailStyle}
+                                    onChange={setThumbnailStyle}
+                                    className="mt-2"
+                                />
                             </div>
 
                             <div className="mt-4">
@@ -228,7 +198,7 @@ function Generate() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
 
@@ -248,3 +218,36 @@ const TitleOverlay = ({ title, className }: { title: string, className?: string 
         </div>
     )
 }
+
+
+
+
+{/* <div className="mt-2 relative w-full">
+    <button className='popover-thumbnail-style-button flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition gap-1 bg-white/8 border-white/10 text-zinc-200 hover:bg-white/12' popoverTarget="popover-thumbnail-style">
+        <div className="flex flex-col items-start gap-1">
+            <div className="flex items-center gap-2">
+                {thumbnailStyle.icon}
+                <p className="text-sm font-medium">{thumbnailStyle.style}</p>
+            </div>
+            <div>
+                <p className="text-xs text-zinc-400">{thumbnailStyle.description}</p>
+            </div>
+        </div>
+        <ChevronDown size={20} className="text-zinc-400" />
+    </button>
+
+    <div popover="auto" id="popover-thumbnail-style" className="popover-thumbnail-style rounded-lg border border-white/12 bg-black/20 backdrop-blur-3xl shadow-lg">
+        {THUMBNAIL_STYLES.map((style) => (
+            <button key={style.style} onClick={() => handleThumbnailStyle(style)} className='flex text-white w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-black/30'>
+                <div className="flex flex-col items-start gap-1">
+                    <div className="flex items-center gap-2">
+                        {style.icon}
+                        <p className="text-sm font-medium">{style.style}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-zinc-400">{style.description}</p>
+                    </div>
+                </div>
+            </button>
+        ))}
+    </div> */}
