@@ -2,14 +2,15 @@ import jwt from "jsonwebtoken";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode } from "../constants/enums.js";
 import { NextFunction, Request, Response } from "express";
+import { verifyAccessToken } from "../helper/token-helpers.js";
 
 const authenticationToken = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const tokken = req.headers["authorization"]?.split(" ")[1];
-  if (!tokken) {
+  const accessTokken = req.cookies?.accessToken;
+  if (!accessTokken) {
     return ApiResponse.error(
       res,
       401,
@@ -17,9 +18,8 @@ const authenticationToken = (
       AuthErrorCode.TokenMissing,
     );
   }
-  const secret = process.env.SECRET || "";
   try {
-    const decoded = jwt.verify(tokken, secret);
+    const decoded = verifyAccessToken(accessTokken);
     req.user = decoded as Request["user"];
     next();
   } catch (error) {
@@ -32,7 +32,12 @@ const authenticationToken = (
         AuthErrorCode.TokenExpired,
       );
     }
-    return ApiResponse.error(res, 401, "Invalid token.", AuthErrorCode.TokenInvalid);
+    return ApiResponse.error(
+      res,
+      401,
+      "Invalid token.",
+      AuthErrorCode.TokenInvalid,
+    );
   }
 };
 
