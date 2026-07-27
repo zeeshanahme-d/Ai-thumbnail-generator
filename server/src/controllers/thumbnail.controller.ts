@@ -19,10 +19,7 @@ import fs from "fs";
 
 const generateGminiThumbnail = async (req: Request, res: Response) => {
   try {
-    const accessToken = req.headers.authorization?.split(" ")[1];
-    const { userId } = verifyAccessToken(accessToken as string) as {
-      userId?: string;
-    };
+    const userId = req.user?.userId || req.user?._id;
 
     const {
       title,
@@ -81,16 +78,24 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       prompt += ` Additional details: ${user_prompt}`;
     }
     prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it professional and imposisible to ignore.`;
-    console.log(genai());
+
     const aiResponse = await genai()?.models.generateContent({
       model,
       contents: [prompt],
       config: generateConfig,
     });
+
+    const parts = aiResponse?.candidates?.[0]?.content?.parts ?? [];
+    const imagePart = parts.find((part) => part.inlineData);
+    const imageBuffer = Buffer.from(
+      imagePart?.inlineData?.data as string,
+      "base64",
+    );
     console.log(aiResponse);
+
     return ApiResponse.success(
       res,
-      2001,
+      201,
       "Image is successfuly generated.",
       aiResponse,
     );
