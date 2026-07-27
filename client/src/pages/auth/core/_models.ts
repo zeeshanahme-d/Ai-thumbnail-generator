@@ -21,6 +21,14 @@ export interface IUser {
     username?: string;
     email: string;
     image_url?: string;
+    avatar?: {
+        url: string;
+        publicId: string;
+        originalName: string;
+        directory: string;
+        format: string;
+        bytes: number;
+    };
     coverUrl?: string;
     bio?: string;
     website?: string;
@@ -51,7 +59,6 @@ export interface SignupPayload {
 }
 
 export interface AuthResponse {
-    accessToken: string;
     user: IUser;
 }
 

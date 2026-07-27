@@ -10,8 +10,8 @@ export function useLogin() {
 
     return useMutation<AuthResponse, unknown, LoginPayload>({
         mutationFn: login,
-        onSuccess: ({ accessToken, user }) => {
-            setSession(user, accessToken);
+        onSuccess: ({ user }) => {
+            setSession(user);
             queryClient.setQueryData(authKeys.me(), user);
         },
     });
