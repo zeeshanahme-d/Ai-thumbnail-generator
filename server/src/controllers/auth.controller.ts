@@ -12,12 +12,12 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
   REFRESH_TOKEN_MAX_AGE,
+  ACCESS_TOKEN_MAX_AGE,
 } from "../helper/token-helpers.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode } from "../constants/enums.js";
 
-// Validates the refresh token on the request and resolves its user.
-// Returns null after already sending the error response.
+
 async function resolveUserFromRefreshToken(req: Request, res: Response) {
   const token = req.cookies?.refreshToken || req.body?.refreshToken;
 
@@ -119,6 +119,13 @@ async function handleLoginUser(req: Request, res: Response) {
       expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE),
     });
 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -129,7 +136,6 @@ async function handleLoginUser(req: Request, res: Response) {
     const safeUser = await userModel.findById(user._id);
 
     return ApiResponse.success(res, 200, "Login successful.", {
-      accessToken,
       user: safeUser,
     });
   } catch (error) {
@@ -150,8 +156,14 @@ async function handleRefreshToken(req: Request, res: Response) {
       email: user.email,
     });
 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+
     return ApiResponse.success(res, 200, "Access token refreshed.", {
-      accessToken,
       user,
     });
   } catch (error) {
@@ -166,7 +178,7 @@ async function handleRefreshToken(req: Request, res: Response) {
 // that middleware rejects expired tokens before we can handle them.
 async function handleVerifyToken(req: Request, res: Response) {
   try {
-    const accessToken = req.headers.authorization?.split(" ")[1];
+    const accessToken = req.cookies?.accessToken;
 
     if (accessToken) {
       try {
@@ -180,14 +192,13 @@ async function handleVerifyToken(req: Request, res: Response) {
             "User no longer exists.",
             "Unauthorized",
           );
-        }
+        };
 
         return ApiResponse.success(res, 200, "Access token is valid.", {
-          accessToken,
           user,
         });
+
       } catch (error) {
-        // Only an expired token is recoverable — anything else is a bad token.
         if (!(error instanceof jwt.TokenExpiredError)) {
           return ApiResponse.error(
             res,
@@ -208,8 +219,14 @@ async function handleVerifyToken(req: Request, res: Response) {
       email: user.email,
     });
 
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+
     return ApiResponse.success(res, 200, "Access token refreshed.", {
-      accessToken: newAccessToken,
       user,
     });
   } catch (error) {
@@ -232,7 +249,7 @@ async function handleGetMe(req: Request, res: Response) {
     console.error(error);
     return ApiResponse.error(res, 500, "Something went wrong.");
   }
-}
+};
 
 async function handleLogoutUser(req: Request, res: Response) {
   try {
@@ -242,6 +259,7 @@ async function handleLogoutUser(req: Request, res: Response) {
       await refreshTokenModel.deleteOne({ token });
     }
 
+    res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
 
     return ApiResponse.success(res, 200, "Logged out successfully.");
@@ -249,7 +267,7 @@ async function handleLogoutUser(req: Request, res: Response) {
     console.error(error);
     return ApiResponse.error(res, 500, "Something went wrong.");
   }
-}
+};
 
 async function handleSignupUser(req: Request, res: Response) {
   try {
@@ -279,7 +297,7 @@ async function handleSignupUser(req: Request, res: Response) {
     console.error(error);
     return ApiResponse.error(res, 500, "Something went wrong.");
   }
-}
+};
 
 export {
   handleSignupUser,
