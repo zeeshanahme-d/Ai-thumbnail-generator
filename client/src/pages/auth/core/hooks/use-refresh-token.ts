@@ -12,8 +12,8 @@ export function useRefreshToken() {
 
     return useMutation<AuthResponse>({
         mutationFn: refreshToken,
-        onSuccess: ({ accessToken, user }) => {
-            setSession(user, accessToken);
+        onSuccess: ({ user }) => {
+            setSession(user);
             queryClient.setQueryData(authKeys.me(), user);
         },
         onError: () => {
