@@ -167,11 +167,11 @@ const PromptCard = ({
         }`}
       />
 
-      <div className="prompt-tools-anchor mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+      <div className="prompt-tools-anchor mt-4 flex flex-col gap-4 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-y-3">
           {showTools && (
             <>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <ToolButton
                   panelId={STYLE_PANEL_ID}
                   icon={Sparkles}
@@ -215,8 +215,8 @@ const PromptCard = ({
           )}
         </div>
 
-        <div className="ml-auto space-x-3">
-          <span className="text-xs text-text-muted">
+        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+          <span className="text-xs text-text-muted shrink-0">
             {prompt.length}/{maxLength}
           </span>
           <Button
@@ -227,6 +227,7 @@ const PromptCard = ({
             fullWidth={false}
             disabled={!canSubmit}
             onClick={handleSubmit}
+            className="flex-1 sm:flex-none"
           >
             {submitLabel}
             <ArrowRight size={15} />

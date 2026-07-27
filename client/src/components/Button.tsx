@@ -25,7 +25,7 @@ const Button: React.FC<ButtonProps> = ({
     xs: "px-3 py-1 text-[11px] font-semibold",
     sm: "px-5 py-2.5 text-sm font-medium",
     md: "px-6 py-3.25 text-sm font-medium",
-    icon: "size-9 shrink-0",
+    icon: "size-8 shrink-0",
   };
 
   const roundedClasses = {
@@ -36,7 +36,7 @@ const Button: React.FC<ButtonProps> = ({
   const variantClasses = {
     primary: "bg-primary hover:bg-primary-hover text-text-on-primary",
     secondary:
-      "border border-border text-text-primary hover:bg-background-surface-2",
+      "border border-border text-text-secondary hover:bg-background-surface-2 hover:text-text-primary",
     outline: "bg-transparent border border-white/20 hover:bg-white/10",
     ghost: "bg-primary/10 text-primary hover:bg-primary/20",
   };
