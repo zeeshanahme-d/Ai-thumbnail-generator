@@ -5,15 +5,13 @@ const STORAGE_KEY = "tg_session";
 
 interface PersistedSession {
   user: IUser;
-  accessToken: string;
 }
 
 interface SessionState {
   user: IUser | null;
-  accessToken: string | null;
   isAuthenticated: boolean;
   isRestoring: boolean;
-  setSession: (user: IUser, accessToken: string) => void;
+  setSession: (user: IUser) => void;
   clearSession: () => void;
   finishRestoring: () => void;
 }
@@ -32,21 +30,20 @@ export const useSession = create<SessionState>((set) => {
 
   return {
     user: stored?.user ?? null,
-    accessToken: stored?.accessToken ?? null,
-    isAuthenticated: !!stored?.accessToken,
+    isAuthenticated: !!stored?.user,
     isRestoring: true,
 
-    setSession: (user, accessToken) => {
+    setSession: (user) => {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ user, accessToken } satisfies PersistedSession),
+        JSON.stringify({ user } satisfies PersistedSession),
       );
-      set({ user, accessToken, isAuthenticated: true });
+      set({ user, isAuthenticated: true });
     },
 
     clearSession: () => {
       localStorage.removeItem(STORAGE_KEY);
-      set({ user: null, accessToken: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false });
     },
 
     finishRestoring: () => set({ isRestoring: false }),
