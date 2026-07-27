@@ -33,9 +33,9 @@ const MyGeneration = () => {
                 </motion.p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 gap-6 items-start mt-10">
-                {ThumbnailData.slice(0, limit)?.map((thumbnail) => {
+                {ThumbnailData.slice(0, limit)?.map((thumbnail, index) => {
                     return (
-                        <ThumbnailCard thumbnail={thumbnail} key={thumbnail._id} />
+                        <ThumbnailCard thumbnail={thumbnail} key={thumbnail._id} index={index} />
                     )
                 })}
             </div>
