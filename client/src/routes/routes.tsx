@@ -1,6 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import MainLayout from './MainLayout';
-import DashboardLayout from './DashboardLayout';
+import DashboardLayout from '../pages/layouts/DashboardLayout';
 import ProtectedRoute from './protected-routes';
 import GuestRoute from './guest-route';
 import HomePage from '../pages/home/HomePage';
@@ -17,7 +16,8 @@ import DashboardGenerate from '../pages/dashboard/generate/DashboardGenerate';
 import Recreate from '../pages/dashboard/recreate/Recreate';
 import Profile from '../pages/dashboard/profile/Profile';
 import Settings from '../pages/dashboard/settings/Settings';
-
+import PublicProfile from '../pages/profile/Profile';
+import MainLayout from '../pages/layouts/MainLayout';
 function AppRoutes() {
     return (
         <BrowserRouter>
@@ -54,6 +54,7 @@ function AppRoutes() {
                     <Route path="/generate" element={<Generate />} />
                     <Route path="/generate/:Id" element={<Generate />} />
                     <Route path="/preview" element={<YtPreview />} />
+                    <Route path="/profile" element={<PublicProfile />} />
 
                     {/* Requires login */}
                     <Route
