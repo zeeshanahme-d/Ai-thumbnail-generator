@@ -7,12 +7,11 @@ import {
 
 const userSchema = new mongoose.Schema(
   {
-    // Profile
     fullName: {
       type: String,
       required: true,
       trim: true,
-      minlength: 2,
+      minlength: 4,
       maxlength: 50,
     },
 
@@ -32,9 +31,31 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    image_url: {
-      type: String,
-      default: "",
+    avatar: {
+      url: {
+        type: String,
+        default: "",
+      },
+      publicId: {
+        type: String,
+        default: "",
+      },
+      originalName: {
+        type: String,
+        default: "",
+      },
+      directory: {
+        type: String,
+        default: "",
+      },
+      format: {
+        type: String,
+        default: "",
+      },
+      bytes: {
+        type: Number,
+        default: 0,
+      },
     },
 
     coverUrl: {
