@@ -1,6 +1,6 @@
-import { useForm } from "@tanstack/react-form";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+//icons
 import { Lock, Mail } from "lucide-react";
+//componenrs
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import AuthTabs from "./components/AuthTabs";
@@ -8,6 +8,9 @@ import SocialAuth from "./components/SocialAuth";
 import FieldError from "./components/FieldError";
 import Input from "../../components/Input";
 import Alert from "../../components/Alert";
+//hooks & utils
+import { useForm } from "@tanstack/react-form";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogin } from "./core/hooks";
 import { loginSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";

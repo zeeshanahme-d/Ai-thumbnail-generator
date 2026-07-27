@@ -6,19 +6,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 const api = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true, // send the httpOnly refresh cookie
-});
-
-api.interceptors.request.use((config) => {
-    const token = useSession.getState().accessToken;
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+    withCredentials: true,
 });
 
 // Queue requests that 401 while a refresh is already in flight.
-let refreshPromise: Promise<string> | null = null;
 
 const refreshAccessToken = async () => {
     const { data } = await axios.post(
@@ -26,9 +17,8 @@ const refreshAccessToken = async () => {
         {},
         { withCredentials: true },
     );
-    const { accessToken, user } = data.data;
-    useSession.getState().setSession(user, accessToken);
-    return accessToken as string;
+    const { user } = data.data;
+    useSession.getState().setSession(user);
 };
 
 api.interceptors.response.use(
@@ -47,14 +37,9 @@ api.interceptors.response.use(
         original._retry = true;
 
         try {
-            refreshPromise = refreshPromise ?? refreshAccessToken();
-            const token = await refreshPromise;
-            refreshPromise = null;
-
-            original.headers = { ...original.headers, Authorization: `Bearer ${token}` };
+            await refreshAccessToken();
             return api(original);
         } catch (refreshError) {
-            refreshPromise = null;
             useSession.getState().clearSession();
             return Promise.reject(refreshError);
         }
