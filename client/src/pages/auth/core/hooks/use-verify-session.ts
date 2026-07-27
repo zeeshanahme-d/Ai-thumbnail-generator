@@ -14,8 +14,8 @@ export function useVerifySession() {
 
     return useMutation<AuthResponse>({
         mutationFn: verifySession,
-        onSuccess: ({ accessToken, user }) => {
-            setSession(user, accessToken);
+        onSuccess: ({ user }) => {
+            setSession(user);
             queryClient.setQueryData(authKeys.me(), user);
         },
         onError: () => {
