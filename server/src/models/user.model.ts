@@ -4,6 +4,7 @@ import {
   SubscriptionStatus,
   UserPlan,
 } from "../constants/enums.js";
+import mediaSchema from "../schemas/media.schema.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -31,32 +32,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    avatar: {
-      url: {
-        type: String,
-        default: "",
-      },
-      publicId: {
-        type: String,
-        default: "",
-      },
-      originalName: {
-        type: String,
-        default: "",
-      },
-      directory: {
-        type: String,
-        default: "",
-      },
-      format: {
-        type: String,
-        default: "",
-      },
-      bytes: {
-        type: Number,
-        default: 0,
-      },
-    },
+    avatar: mediaSchema,
 
     coverUrl: {
       type: String,
