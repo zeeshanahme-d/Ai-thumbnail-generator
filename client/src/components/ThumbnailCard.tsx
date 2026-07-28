@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Download, Eye, Heart } from "lucide-react";
+import { Download, Eye, Heart, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { getEngagement, STYLE_DOTS } from "../data/community";
+import {
+  getThumbnailAuthorName,
+  getThumbnailImageUrl,
+} from "../lib/thumbnail";
 import type { ThumbnailCardProps } from "../types";
 
 const AVATAR_COLORS = [
@@ -19,11 +23,12 @@ export default function ThumbnailCard({
   thumbnail,
   index,
 }: ThumbnailCardProps) {
-  const { title, image_url, style, userId } = thumbnail;
+  const { title, style, isGenerating } = thumbnail;
+  const imageUrl = getThumbnailImageUrl(thumbnail);
   const { likes, views } = getEngagement(thumbnail._id);
   const [liked, setLiked] = useState(false);
 
-  const authorName = userId?.name ?? "Anonymous";
+  const authorName = getThumbnailAuthorName(thumbnail);
   const dot = (style && STYLE_DOTS[style]) || "bg-gray-400";
 
   return (
@@ -41,43 +46,52 @@ export default function ThumbnailCard({
       }}
     >
       <div className="relative aspect-video overflow-hidden bg-background-surface-2">
-        <img
-          src={image_url}
-          alt={title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {isGenerating || !imageUrl ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-text-muted">
+            <Loader2 size={24} className="animate-spin text-primary" />
+            <span className="text-xs font-medium">Generating...</span>
+          </div>
+        ) : (
+          <img
+            src={imageUrl}
+            alt={title}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        )}
 
-        {style && (
-          <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-background-card/90 px-2.5 py-1 text-xs font-medium text-text-primary backdrop-blur">
+        {style && !isGenerating && (
+          <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-background-card/0 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             <span className={`size-2 rounded-full ${dot}`} />
             {style}
           </span>
         )}
 
-        <div className="absolute right-3 top-3 flex gap-2">
-          <a
-            href={image_url}
-            target="_blank"
-            rel="noreferrer"
-            download
-            className="flex size-8 items-center justify-center rounded-full bg-background-card/90 text-text-secondary backdrop-blur transition hover:text-primary"
-            aria-label="Download thumbnail"
-          >
-            <Download size={15} />
-          </a>
-          <button
-            type="button"
-            onClick={() => setLiked((prev) => !prev)}
-            className="flex size-8 items-center justify-center rounded-full bg-background-card/90 text-text-secondary backdrop-blur transition hover:text-primary"
-            aria-label="Like thumbnail"
-          >
-            <Heart
-              size={15}
-              className={liked ? "fill-primary text-primary" : ""}
-            />
-          </button>
-        </div>
+        {!isGenerating && imageUrl && (
+          <div className="absolute right-3 top-3 flex gap-2">
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noreferrer"
+              download
+              className="flex size-8 items-center justify-center rounded-full bg-background-card/90 text-text-secondary backdrop-blur transition hover:text-primary"
+              aria-label="Download thumbnail"
+            >
+              <Download size={15} />
+            </a>
+            <button
+              type="button"
+              onClick={() => setLiked((prev) => !prev)}
+              className="flex size-8 items-center justify-center rounded-full bg-background-card/90 text-text-secondary backdrop-blur transition hover:text-primary"
+              aria-label="Like thumbnail"
+            >
+              <Heart
+                size={15}
+                className={liked ? "fill-primary text-primary" : ""}
+              />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="p-4">
