@@ -8,6 +8,7 @@ import CommunityFilters from "./components/CommunityFilters";
 import type { CommunitySort } from "../../types";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
+import { getThumbnailAuthorName } from "../../lib/thumbnail";
 
 const PAGE_SIZE = 12;
 
@@ -26,7 +27,7 @@ export default function Community() {
       const matchesSearch =
         !query ||
         thumbnail.title.toLowerCase().includes(query) ||
-        (thumbnail.userId?.name ?? "").toLowerCase().includes(query);
+        (getThumbnailAuthorName(thumbnail)).toLowerCase().includes(query);
       return matchesStyle && matchesSearch;
     });
 
