@@ -1,4 +1,6 @@
-const validate = (schema) => (req, res, next) => {
+import { NextFunction, Request, Response } from "express";
+
+const validate = (schema: any) => (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body);
 
     if (!result.success) {
