@@ -1,11 +1,45 @@
+import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
-import { ThumbnailData } from "../../../data/thumbnail";
 import ThumbnailCard from "../../../components/ThumbnailCard";
+import Alert from "../../../components/Alert";
+import { getApiErrorMessage } from "../../../lib/axios";
+import { buildThumbnailTitle } from "../../../lib/thumbnail";
+
+import type { PromptSubmission } from "../../../types";
+import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
+import useMyThumbnails from "../core/hooks/use-my-thumbnails";
 
 export default function DashboardGenerate() {
-  const generations = ThumbnailData.slice(0, 6);
+  const { data: generations = [], isLoading } = useMyThumbnails();
+  const { generateThumbnailMutate, isPending } = useGenerateThumbnail();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const handleSubmit = async (submission: PromptSubmission) => {
+    setError(null);
+    setSuccess(null);
+
+    console.log("Submitting prompt:", submission);
+
+    const payload = {
+      title: buildThumbnailTitle(submission.prompt),
+      prompt: submission.prompt,
+      style: submission.style,
+      aspect_ratio: submission.aspectRatio,
+      color_scheme: submission.colorScheme,
+      referenceImage: submission.referenceImage,
+    };
+    generateThumbnailMutate(payload, {
+      onSuccess: () => {
+        setSuccess("Your thumbnail was generated successfully.");
+      },
+      onError: (err) => {
+        setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
+      }
+    });
+  };
 
   return (
     <div className="px-6 py-10 md:px-10">
@@ -27,8 +61,18 @@ export default function DashboardGenerate() {
         </p>
       </motion.div>
 
-      <div className="mx-auto mt-10 max-w-5xl">
-        <PromptCard label="Your prompt" />
+      <div className="mx-auto mt-10 max-w-5xl space-y-4">
+        {error && <Alert variant="error">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+
+        <PromptCard
+          label="Your prompt"
+          disabled={isPending}
+          submitLabel={
+            isPending ? "Generating..." : "Generate Thumbnail"
+          }
+          onSubmit={handleSubmit}
+        />
       </div>
 
       <hr className="mx-auto my-12 max-w-6xl border-border" />
@@ -43,15 +87,23 @@ export default function DashboardGenerate() {
           </span>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {generations.map((thumbnail, index) => (
-            <ThumbnailCard
-              key={thumbnail._id}
-              thumbnail={thumbnail}
-              index={index}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <p className="mt-6 text-sm text-text-muted">Loading your thumbnails...</p>
+        ) : generations.length === 0 ? (
+          <p className="mt-6 text-sm text-text-muted">
+            No thumbnails yet. Generate your first one above.
+          </p>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {generations.map((thumbnail, index) => (
+              <ThumbnailCard
+                key={thumbnail._id}
+                thumbnail={thumbnail}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
