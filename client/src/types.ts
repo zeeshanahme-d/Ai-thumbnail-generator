@@ -186,26 +186,40 @@ export interface SectionProps {
 }
 export interface UserId {
   _id: string;
-  name: string;
-  image_url: string;
+  name?: string;
+  fullName?: string;
+  image_url?: string;
+  avatar?: MediaAsset;
 }
+
+export interface MediaAsset {
+  url: string;
+  publicId?: string;
+  originalName?: string;
+  directory?: string;
+  format?: string;
+  bytes?: number;
+}
+
 export interface Thumbnail {
   _id: string;
   title: string;
-  image_url: string;
+  image_url?: string;
+  thumbnail?: MediaAsset;
   aspect_ratio?: string;
   color_scheme?: string;
   createdAt: string;
   updatedAt: string;
   isGenerating: boolean;
   model: string;
-  userId?: UserId;
+  userId?: UserId | string;
   prompt_used?: string;
   published?: boolean;
   style?: string;
   text_overlay?: boolean;
   user_prompt?: string;
-  __v: number;
+  deletedAt?: string | null;
+  __v?: number;
 }
 
 export type AuthMode =
