@@ -5,6 +5,7 @@ import {
   ThumbnailModel,
   ThumbnailStyle,
 } from "../constants/enums.js";
+import mediaSchema from "../schemas/media.schema.js";
 
 const thumbnailSchema = new mongoose.Schema(
   {
@@ -54,10 +55,7 @@ const thumbnailSchema = new mongoose.Schema(
       default: false,
     },
 
-    image_url: {
-      type: String,
-      default: "",
-    },
+    thumbnail: mediaSchema,
 
     // What the user typed, and the final prompt sent to the model.
     user_prompt: {
@@ -83,6 +81,11 @@ const thumbnailSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -91,6 +94,6 @@ const thumbnailSchema = new mongoose.Schema(
 
 // Community feed (newest published first) and a user's own gallery.
 thumbnailSchema.index({ published: 1, createdAt: -1 });
-thumbnailSchema.index({ userId: 1, createdAt: -1 });
+thumbnailSchema.index({ userId: 1, deletedAt: 1, createdAt: -1 });
 
 export default mongoose.model("Thumbnail", thumbnailSchema);
