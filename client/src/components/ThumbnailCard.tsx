@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Eye, Heart, Loader2 } from "lucide-react";
+import { Clock, Download, Eye, Heart, Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { getEngagement, STYLE_DOTS } from "../data/community";
 import {
@@ -7,6 +7,11 @@ import {
   getThumbnailImageUrl,
 } from "../lib/thumbnail";
 import type { ThumbnailCardProps } from "../types";
+import Button from "./Button";
+import dayjs from "dayjs";
+
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 const AVATAR_COLORS = [
   "bg-red-500",
@@ -16,16 +21,27 @@ const AVATAR_COLORS = [
   "bg-blue-500",
 ];
 
-const avatarColor = (name: string) =>
-  AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+const avatarColor = (name: string) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+
+function getTimeAgo(date: string) {
+  if (!date) {
+    return "";
+  }
+  return dayjs(date).fromNow();
+}
 
 export default function ThumbnailCard({
   thumbnail,
   index,
+  showDelete = false,
+  onDelete,
+  showRecycleBinActions = false,
+  onRestore,
+  onPermanentDelete,
+  restoring = false,
 }: ThumbnailCardProps) {
-  const { title, style, isGenerating } = thumbnail;
+  const { title, style, isGenerating, likesCount, viewsCount } = thumbnail;
   const imageUrl = getThumbnailImageUrl(thumbnail);
-  const { likes, views } = getEngagement(thumbnail._id);
   const [liked, setLiked] = useState(false);
 
   const authorName = getThumbnailAuthorName(thumbnail);
@@ -56,40 +72,62 @@ export default function ThumbnailCard({
             src={imageUrl}
             alt={title}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105`}
           />
         )}
 
         {style && !isGenerating && (
-          <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-background-card/0 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+          <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             <span className={`size-2 rounded-full ${dot}`} />
             {style}
           </span>
         )}
 
-        {!isGenerating && imageUrl && (
+        {showRecycleBinActions && (
+          <span className="absolute right-3 top-3 rounded-full bg-red-500/80 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+            Deleted
+          </span>
+        )}
+
+        {!isGenerating && imageUrl && !showRecycleBinActions && (
           <div className="absolute right-3 top-3 flex gap-2">
-            <a
-              href={imageUrl}
-              target="_blank"
-              rel="noreferrer"
-              download
-              className="flex size-8 items-center justify-center rounded-full bg-background-card/90 text-text-secondary backdrop-blur transition hover:text-primary"
-              aria-label="Download thumbnail"
-            >
-              <Download size={15} />
-            </a>
-            <button
+            <Button
               type="button"
+              size="iconSm"
+              variant="secondary"
               onClick={() => setLiked((prev) => !prev)}
-              className="flex size-8 items-center justify-center rounded-full bg-background-card/90 text-text-secondary backdrop-blur transition hover:text-primary"
+              className="bg-black/60 backdrop-blur border-none text-white"
+              aria-label="Like thumbnail"
+            >
+              <Download
+                size={15}
+              />
+            </Button>
+            {showDelete && (
+              <Button
+                type="button"
+                size="iconSm"
+                variant="secondary"
+                onClick={() => onDelete?.(thumbnail._id)}
+                className="bg-black/60 backdrop-blur border-none text-white hover:text-red-400"
+                aria-label="Delete thumbnail"
+              >
+                <Trash2 size={15} />
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="iconSm"
+              variant="secondary"
+              onClick={() => setLiked((prev) => !prev)}
+              className="bg-black/60 backdrop-blur border-none text-white"
               aria-label="Like thumbnail"
             >
               <Heart
                 size={15}
                 className={liked ? "fill-primary text-primary" : ""}
               />
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -99,30 +137,71 @@ export default function ThumbnailCard({
           {title}
         </h3>
 
-        <div className="mt-3 flex items-center gap-2">
-          <span
-            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white ${avatarColor(authorName)}`}
-          >
-            {authorName.charAt(0).toUpperCase()}
-          </span>
-          <span className="truncate text-xs text-text-secondary">
-            {authorName}
-          </span>
+        <div className="flex justify-between items-center">
+          <div className="mt-3 flex items-center gap-2">
+            <span
+              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white ${avatarColor(authorName)}`}
+            >
+              {authorName.charAt(0).toUpperCase()}
+            </span>
+            <span className="truncate text-xs text-text-secondary">
+              {authorName}
+            </span>
+          </div>
+
+          {!showRecycleBinActions && (
+            <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+              <span className="flex items-center gap-1">
+                <Heart
+                  size={13}
+                  className={liked ? "fill-primary text-primary" : ""}
+                />
+                {likesCount || 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <Eye size={13} />
+                {viewsCount || 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock size={13} />
+                {getTimeAgo(thumbnail.createdAt)}
+              </span>
+            </div>
+          )}
         </div>
 
-        <div className="mt-3 flex items-center gap-4 text-xs text-text-muted">
-          <span className="flex items-center gap-1">
-            <Heart
-              size={13}
-              className={liked ? "fill-primary text-primary" : ""}
-            />
-            {likes + (liked ? 1 : 0)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Eye size={13} />
-            {views}
-          </span>
-        </div>
+        {showRecycleBinActions && (
+          <div className="mt-4 flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              rounded="lg"
+              size="sm"
+              fullWidth={false}
+              onClick={() => onRestore?.(thumbnail._id)}
+              disabled={restoring}
+            >
+              {restoring ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <RotateCcw size={14} />
+              )}
+              Restore
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              rounded="lg"
+              size="sm"
+              // fullWidth={false}
+              onClick={() => onPermanentDelete?.(thumbnail._id)}
+              className="text-red-500 hover:text-red-400 hover:border-red-500/30"
+            >
+              <Trash2 size={14} />
+              Delete Forever
+            </Button>
+          </div>
+        )}
       </div>
     </motion.div>
   );
