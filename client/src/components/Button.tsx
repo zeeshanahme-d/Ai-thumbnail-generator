@@ -3,7 +3,7 @@ import React from "react";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "outline" | "ghost";
-  size?: "xs" | "sm" | "md" | "icon";
+  size?: "xs" | "sm" | "md" | "icon" | "iconSm";
   rounded?: "full" | "lg";
   fullWidth?: boolean;
   className?: string;
@@ -26,6 +26,7 @@ const Button: React.FC<ButtonProps> = ({
     sm: "px-5 py-2.5 text-sm font-medium",
     md: "px-6 py-3.25 text-sm font-medium",
     icon: "size-8 shrink-0",
+    iconSm: "size-6 px-1.5",
   };
 
   const roundedClasses = {
