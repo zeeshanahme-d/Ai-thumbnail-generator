@@ -1,21 +1,26 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+import toast from "react-hot-toast";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import Alert from "../../../components/Alert";
+import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import { getApiErrorMessage } from "../../../lib/axios";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
 
 import type { PromptSubmission } from "../../../types";
 import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
 import useMyThumbnails from "../core/hooks/use-my-thumbnails";
+import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
 
 export default function DashboardGenerate() {
   const { data: generations = [], isLoading } = useMyThumbnails();
   const { generateThumbnailMutate, isPending } = useGenerateThumbnail();
+  const deleteMutation = useDeleteThumbnail();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleSubmit = async (submission: PromptSubmission) => {
     setError(null);
@@ -38,6 +43,21 @@ export default function DashboardGenerate() {
       onError: (err) => {
         setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
       }
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return;
+
+    deleteMutation.mutate(deleteTarget, {
+      onSuccess: () => {
+        toast.success("Thumbnail moved to recycle bin.");
+        setDeleteTarget(null);
+      },
+      onError: (err) => {
+        toast.error(getApiErrorMessage(err, "Failed to delete thumbnail."));
+        setDeleteTarget(null);
+      },
     });
   };
 
@@ -94,17 +114,31 @@ export default function DashboardGenerate() {
             No thumbnails yet. Generate your first one above.
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {generations.map((thumbnail, index) => (
               <ThumbnailCard
                 key={thumbnail._id}
                 thumbnail={thumbnail}
                 index={index}
+                showDelete
+                onDelete={(id) => setDeleteTarget(id)}
               />
             ))}
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Thumbnail?"
+        description="This thumbnail will be moved to the recycle bin. You can restore it later."
+        confirmLabel="Move to Bin"
+        variant="danger"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
+

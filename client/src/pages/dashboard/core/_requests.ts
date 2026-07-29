@@ -38,3 +38,17 @@ export async function deleteThumbnail(id: string) {
   );
   return data.data as Thumbnail;
 }
+
+export async function restoreThumbnail(id: string) {
+  const { data } = await api.patch<ApiSuccessEnvelope<Thumbnail>>(
+    `${THUMBNAIL_URL.byId(id)}/restore`,
+  );
+  return data.data as Thumbnail;
+}
+
+export async function permanentDeleteThumbnail(id: string) {
+  const { data } = await api.delete<ApiSuccessEnvelope<null>>(
+    `${THUMBNAIL_URL.byId(id)}/permanent`,
+  );
+  return data;
+}
