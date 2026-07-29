@@ -16,6 +16,7 @@ import DashboardGenerate from '../pages/dashboard/generate/DashboardGenerate';
 import Recreate from '../pages/dashboard/recreate/Recreate';
 import Profile from '../pages/dashboard/profile/Profile';
 import Settings from '../pages/dashboard/settings/Settings';
+import RecycleBin from '../pages/dashboard/recycle-bin/RecycleBin';
 import PublicProfile from '../pages/profile/Profile';
 import MainLayout from '../pages/layouts/MainLayout';
 function AppRoutes() {
@@ -30,20 +31,14 @@ function AppRoutes() {
                 <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
                 {/* Dashboard (sidebar) — requires login */}
-                <Route
-                    path="/dashboard"
-                    element={
-                        <ProtectedRoute>
-                            <DashboardLayout />
-                        </ProtectedRoute>
-                    }
-                >
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                     <Route index element={<Navigate to="/dashboard/generate" replace />} />
                     <Route path="generate" element={<DashboardGenerate />} />
                     <Route path="recreate" element={<Recreate />} />
                     <Route path="community" element={<Community />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="recycle-bin" element={<RecycleBin />} />
                 </Route>
 
                 {/* Marketing site (navbar + footer) */}
@@ -57,13 +52,7 @@ function AppRoutes() {
                     <Route path="/profile" element={<PublicProfile />} />
 
                     {/* Requires login */}
-                    <Route
-                        path="/my-generation"
-                        element={
-                            <ProtectedRoute>
-                                <MyGeneration />
-                            </ProtectedRoute>
-                        }
+                    <Route path="/my-generation" element={<ProtectedRoute> <MyGeneration /></ProtectedRoute>}
                     />
                 </Route>
             </Routes>
