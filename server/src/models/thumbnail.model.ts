@@ -14,7 +14,18 @@ const thumbnailSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+    isLiked: {
+      type: Boolean,
+      default: false,
+    },
     title: {
       type: String,
       required: true,

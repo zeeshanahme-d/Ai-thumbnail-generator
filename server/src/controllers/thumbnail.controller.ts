@@ -1,29 +1,25 @@
 import { Request, Response } from "express";
-import { verifyAccessToken } from "../helper/token-helpers.js";
-import thumbnailModel from "../models/thumbnail.model.js";
+import path from "path";
+import fsPromises from "fs/promises";
 import {
   GenerateContentConfig,
   HarmBlockThreshold,
   HarmCategory,
 } from "@google/genai";
+import genai from "../config/genai.js";
 import {
   colorSchemeDescriptions,
   stylePrompts,
 } from "../constants/constants.js";
-import genai from "../config/genai.js";
+import thumbnailModel from "../models/thumbnail.model.js";
+import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import hfai from "../config/hf.js";
-import path from "path";
-import fsPromises from "fs/promises";
-import uploadFileOnCloudniary, { removeLocalFile } from "../utils/cloudniary.js";
 import { UploadErrorCode } from "../constants/enums.js";
+import uploadFileOnCloudniary, { removeLocalFile, deleteFileFromCloudinary } from "../utils/cloudniary.js";
+
 
 const resolveUserId = (req: Request) =>
   req.user?.userId ?? (req.user as { _id?: string } | undefined)?._id;
-
-// Additional imports needed at the top of the file (add if not already present):
-// import { promises as fsPromises } from "fs";
-// import crypto from "node:crypto";
 
 const generateGminiThumbnail = async (req: Request, res: Response) => {
   let thumbnailId: string | null = null;
@@ -206,6 +202,9 @@ const getMyThumbnails = async (req: Request, res: Response) => {
   try {
     const userId = resolveUserId(req);
 
+    const { page = 1, limit = 10 } = req.query;
+    const skipData = (Number(page) - 1) * Number(limit);
+
     if (!userId) {
       return ApiResponse.error(res, 401, "Unauthorized.");
     }
@@ -219,11 +218,34 @@ const getMyThumbnails = async (req: Request, res: Response) => {
       })
       .sort({ createdAt: -1 })
       .populate("userId", "fullName avatar")
-      .lean();
+      .lean()
+      .skip(skipData)
+      .limit(Number(limit));
+
+    const likedIds = await likeDislikeModel.find({
+      userId: userId,
+    });
+    const likedMap = new Set(
+      likedIds.map((x) => x.thumbnailId.toString())
+    );
+
+    const total = await thumbnailModel.countDocuments({
+      userId,
+      deletedAt: deletedOnly ? { $ne: null } : null,
+    });
+
+    const result = thumbnails.map((thumbnail) => ({
+      ...thumbnail,
+      isLiked: likedMap.has(thumbnail._id.toString()),
+    }));
 
     return ApiResponse.success(res, 200, "Thumbnails fetched.", {
-      thumbnails,
-      total: thumbnails.length,
+      thumbnails: result,
+      meta: {
+        total,
+        page,
+        limit,
+      }
     });
   } catch (error) {
     console.error(error);
@@ -266,83 +288,206 @@ const softDeleteThumbnail = async (req: Request, res: Response) => {
   }
 };
 
-const generateHFThumbnail = async (req: Request, res: Response) => {
+const restoreThumbnail = async (req: Request, res: Response) => {
   try {
-    const accessToken = req.headers.authorization?.split(" ")[1];
+    const userId = resolveUserId(req);
 
-    const { userId } = verifyAccessToken(accessToken as string) as {
-      userId?: string;
-    };
+    if (!userId) {
+      return ApiResponse.error(res, 401, "Unauthorized.");
+    }
 
-    const {
-      title,
-      prompt: userPrompt,
-      style,
-      aspect_ratio,
-      color_scheme,
-      text_overlay,
-    } = req.body;
+    const { id } = req.params;
 
-    const thumbnail = await thumbnailModel.create({
+    const thumbnail = await thumbnailModel.findOne({
+      _id: id,
       userId,
-      prompt_used: userPrompt,
-      style,
-      title,
-      aspect_ratio,
-      text_overlay,
-      color_scheme,
-      isGenerating: true,
+      deletedAt: { $ne: null },
     });
 
-    let prompt = `Create a ${stylePrompts[style as keyof typeof stylePrompts]} thumbnail for "${title}".`;
-
-    if (color_scheme) {
-      prompt += ` Use ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} colors.`;
+    if (!thumbnail) {
+      return ApiResponse.error(res, 404, "Thumbnail not found in recycle bin.");
     }
 
-    if (userPrompt) {
-      prompt += ` ${userPrompt}`;
-    }
-
-    prompt += `
-Professional YouTube thumbnail.
-Ultra detailed.
-High CTR.
-4k quality.
-Sharp focus.
-No watermark.
-No logo.
-No border.
-`;
-
-    const image = await hfai().textToImage({
-      model: "black-forest-labs/FLUX.1-dev",
-      inputs: prompt,
-    });
-
-    const arrayBuffer = await (image as unknown as Blob).arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const fileName = `${thumbnail._id}.png`;
-    const outputPath = path.join(process.cwd(), "uploads", fileName);
-
-    fs.writeFileSync(outputPath, buffer);
+    thumbnail.deletedAt = null;
+    await thumbnail.save();
 
     return ApiResponse.success(
       res,
       200,
-      "Thumbnail generated successfully.",
-      image,
+      "Thumbnail restored successfully.",
+      thumbnail,
     );
   } catch (error) {
     console.error(error);
-
     return ApiResponse.error(res, 500, "Something went wrong.");
   }
 };
 
+const permanentDeleteThumbnail = async (req: Request, res: Response) => {
+  try {
+    const userId = resolveUserId(req);
+
+    if (!userId) {
+      return ApiResponse.error(res, 401, "Unauthorized.");
+    }
+
+    const { id } = req.params;
+
+    const thumbnail = await thumbnailModel.findOne({
+      _id: id,
+      userId,
+      deletedAt: { $ne: null },
+    });
+
+    if (!thumbnail) {
+      return ApiResponse.error(
+        res,
+        404,
+        "Thumbnail not found in recycle bin.",
+      );
+    }
+
+    // Delete from Cloudinary if a publicId exists
+    if (thumbnail.thumbnail?.publicId) {
+      await deleteFileFromCloudinary(thumbnail.thumbnail.publicId);
+    }
+
+    await thumbnailModel.findByIdAndDelete(id);
+
+    return ApiResponse.success(
+      res,
+      200,
+      "Thumbnail permanently deleted.",
+    );
+  } catch (error) {
+    console.error(error);
+    return ApiResponse.error(res, 500, "Something went wrong.");
+  }
+};
+
+const likeThumbnail = async (req: Request, res: Response) => {
+  try {
+    const userId = resolveUserId(req);
+
+    if (!userId) {
+      return ApiResponse.error(res, 401, "Unauthorized.");
+    }
+
+    const { id } = req.params;
+
+    const existingLike = await likeDislikeModel.findOne({
+      userId,
+      thumbnailId: id,
+    });
+    if (existingLike) {
+      await existingLike.deleteOne();
+      await thumbnailModel.findByIdAndUpdate(id, {
+        $inc: { likesCount: -1 },
+      });
+      return ApiResponse.success(
+        res,
+        200,
+        "Thumbnail unliked successfully.",
+      );
+    };
+
+
+    await likeDislikeModel.create({
+      userId,
+      thumbnailId: id as string,
+    });
+
+    await thumbnailModel.findByIdAndUpdate(id, {
+      $inc: { likesCount: 1 },
+    });
+
+    return ApiResponse.success(res, 200, "Thumbnail liked successfully.");
+  } catch (error) {
+    console.error(error);
+    return ApiResponse.error(res, 500, "Something went wrong.");
+  }
+};
+
+// const generateHFThumbnail = async (req: Request, res: Response) => {
+//   try {
+//     const accessToken = req.headers.authorization?.split(" ")[1];
+
+//     const { userId } = verifyAccessToken(accessToken as string) as {
+//       userId?: string;
+//     };
+
+//     const {
+//       title,
+//       prompt: userPrompt,
+//       style,
+//       aspect_ratio,
+//       color_scheme,
+//       text_overlay,
+//     } = req.body;
+
+//     const thumbnail = await thumbnailModel.create({
+//       userId,
+//       prompt_used: userPrompt,
+//       style,
+//       title,
+//       aspect_ratio,
+//       text_overlay,
+//       color_scheme,
+//       isGenerating: true,
+//     });
+
+//     let prompt = `Create a ${stylePrompts[style as keyof typeof stylePrompts]} thumbnail for "${title}".`;
+
+//     if (color_scheme) {
+//       prompt += ` Use ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} colors.`;
+//     }
+
+//     if (userPrompt) {
+//       prompt += ` ${userPrompt}`;
+//     }
+
+//     prompt += `
+// Professional YouTube thumbnail.
+// Ultra detailed.
+// High CTR.
+// 4k quality.
+// Sharp focus.
+// No watermark.
+// No logo.
+// No border.
+// `;
+
+//     const image = await hfai().textToImage({
+//       model: "black-forest-labs/FLUX.1-dev",
+//       inputs: prompt,
+//     });
+
+//     const arrayBuffer = await (image as unknown as Blob).arrayBuffer();
+//     const buffer = Buffer.from(arrayBuffer);
+//     const fileName = `${thumbnail._id}.png`;
+//     const outputPath = path.join(process.cwd(), "uploads", fileName);
+
+//     fs.writeFileSync(outputPath, buffer);
+
+//     return ApiResponse.success(
+//       res,
+//       200,
+//       "Thumbnail generated successfully.",
+//       image,
+//     );
+//   } catch (error) {
+//     console.error(error);
+
+//     return ApiResponse.error(res, 500, "Something went wrong.");
+//   }
+// };
+
 export {
   generateGminiThumbnail,
-  generateHFThumbnail,
+  // generateHFThumbnail,
   getMyThumbnails,
   softDeleteThumbnail,
+  restoreThumbnail,
+  permanentDeleteThumbnail,
+  likeThumbnail
 };
