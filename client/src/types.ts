@@ -115,6 +115,12 @@ export interface CommunityFiltersProps {
 export interface ThumbnailCardProps {
   thumbnail: Thumbnail;
   index: number;
+  showDelete?: boolean;
+  onDelete?: (id: string) => void;
+  showRecycleBinActions?: boolean;
+  onRestore?: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
+  restoring?: boolean;
 }
 
 export interface SectionTitleProps {
@@ -219,6 +225,9 @@ export interface Thumbnail {
   text_overlay?: boolean;
   user_prompt?: string;
   deletedAt?: string | null;
+  likesCount?: number;
+  viewsCount?: number;
+  isLiked?: boolean;
   __v?: number;
 }
 
