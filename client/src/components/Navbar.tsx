@@ -1,17 +1,22 @@
-import { ArrowRight, LogOut } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
-import { useLogout } from "../pages/auth/core/hooks";
 import { navlinks } from "../data/navlinks";
 import MobileNav from "./MobileNav";
 //icons
 import Logo from "../assets/svgs/logo.svg?react";
+import Button from "./Button";
 
 export default function Navbar() {
   const isAuthenticated = useSession((state) => state.isAuthenticated);
-  const { mutate: logout } = useLogout();
+  const user = useSession((state) => state.user);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  const handleNavigateToProfile = () => {
+    navigate("/profile")
+  };
 
   return (
     <div className="sticky top-4 mt-4 mb-2 z-50 w-full max-w-7xl mx-auto px-6">
@@ -30,11 +35,10 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 to={link.href}
-                className={`rounded-lg px-3 py-1.5 text-[0.8rem] font-medium transition ${
-                  pathname === link.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
-                }`}
+                className={`rounded-lg px-3 py-1.5 text-[0.8rem] font-medium transition ${pathname === link.href
+                  ? "bg-primary/10 text-primary"
+                  : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
+                  }`}
               >
                 {link.name}
               </Link>
@@ -43,13 +47,14 @@ export default function Navbar() {
 
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
-              <button
-                onClick={() => logout()}
-                className="hidden md:flex items-center gap-1.5 rounded-full border border-border px-5 py-2 text-[0.8rem] font-medium text-text-primary transition hover:bg-background-surface-2 active:scale-95"
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNavigateToProfile}
+                className="hidden p-0! md:flex items-center rounded-full"
               >
-                <LogOut size={15} />
-                Log out
-              </button>
+                <img src={user?.avatar?.url} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+              </Button>
             ) : (
               <Link
                 to="/login"

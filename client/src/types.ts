@@ -116,6 +116,9 @@ export interface ThumbnailCardProps {
   thumbnail: Thumbnail;
   index: number;
   showDelete?: boolean;
+  showLike?: boolean;
+  showPublish?: boolean;
+  source?: "community" | "gallery" | "generate" | "profile" | "recycle-bin";
   onDelete?: (id: string) => void;
   showRecycleBinActions?: boolean;
   onRestore?: (id: string) => void;
@@ -216,6 +219,7 @@ export interface Thumbnail {
   color_scheme?: string;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   isGenerating: boolean;
   model: string;
   userId?: UserId | string;
