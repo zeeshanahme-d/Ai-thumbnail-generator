@@ -1,15 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteThumbnail } from "../_requests";
 import { thumbnailKeys } from "./query-keys";
-import type { Thumbnail } from "../../../../types";
 
-export function useDeleteThumbnail() {
+const useDeleteThumbnail = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<Thumbnail, unknown, string>({
-    mutationFn: deleteThumbnail,
+  const { mutate, mutateAsync, isPending, isError, error } = useMutation({
+    mutationFn: (id: string) => deleteThumbnail(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: thumbnailKeys.all });
     },
   });
-}
+
+  return {
+    mutate,
+    mutateAsync,
+    isPending,
+    isError,
+    error,
+  };
+};
+
+export default useDeleteThumbnail;
+export { useDeleteThumbnail };

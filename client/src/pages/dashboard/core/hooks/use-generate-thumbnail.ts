@@ -2,25 +2,25 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateThumbnail } from "../_requests";
 import { thumbnailKeys } from "./query-keys";
 import type { GenerateThumbnailPayload } from "../_models";
-import type { Thumbnail } from "../../../../types";
 
 const useGenerateThumbnail = () => {
   const queryClient = useQueryClient();
 
-  const { mutate: generateThumbnailMutate, mutateAsync: generateThumbnailMutateAsync, isPending, isSuccess, isError, error, data, reset } = useMutation<Thumbnail, unknown, GenerateThumbnailPayload>({
-    mutationFn: generateThumbnail,
+  const { mutate, mutateAsync, isPending, isError, error, data, reset } = useMutation({
+    mutationFn: (payload: GenerateThumbnailPayload) => generateThumbnail(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: thumbnailKeys.mine(false),
+        queryKey: thumbnailKeys.all,
       });
     },
   });
 
   return {
-    generateThumbnailMutate,
-    generateThumbnailMutateAsync,
+    mutate,
+    mutateAsync,
+    generateThumbnailMutate: mutate,
+    generateThumbnailMutateAsync: mutateAsync,
     isPending,
-    isSuccess,
     isError,
     error,
     data,
