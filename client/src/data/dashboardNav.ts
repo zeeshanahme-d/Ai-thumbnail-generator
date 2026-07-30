@@ -29,7 +29,7 @@ export const dashboardNav: IDashboardNavSection[] = [
                 description: "Browse community thumbnails",
             },
             {
-                to: "/dashboard/profile",
+                to: "/dashboard/gallery",
                 icon: User,
                 label: "My Gallery",
                 description: "Your generated thumbnails",
