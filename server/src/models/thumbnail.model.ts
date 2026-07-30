@@ -93,6 +93,11 @@ const thumbnailSchema = new mongoose.Schema(
       default: false,
     },
 
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
+
     deletedAt: {
       type: Date,
       default: null,

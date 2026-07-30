@@ -32,4 +32,9 @@ const generateThumbnailSchema = z.object({
   text_overlay: z.boolean().optional().default(false),
 });
 
-export { generateThumbnailSchema };
+
+const publishThumbnailSchema = z.object({
+  published: z.boolean(),
+});
+
+export { generateThumbnailSchema, publishThumbnailSchema };
