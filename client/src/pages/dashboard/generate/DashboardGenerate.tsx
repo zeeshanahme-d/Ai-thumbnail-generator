@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import toast from "react-hot-toast";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
 import ThumbnailCard from "../../../components/ThumbnailCard";
+import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import Alert from "../../../components/Alert";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import { getApiErrorMessage } from "../../../lib/axios";
@@ -42,7 +43,7 @@ export default function DashboardGenerate() {
       },
       onError: (err) => {
         setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
-      }
+      },
     });
   };
 
@@ -88,9 +89,7 @@ export default function DashboardGenerate() {
         <PromptCard
           label="Your prompt"
           disabled={isPending}
-          submitLabel={
-            isPending ? "Generating..." : "Generate Thumbnail"
-          }
+          submitLabel={isPending ? "Generating..." : "Generate Thumbnail"}
           onSubmit={handleSubmit}
         />
       </div>
@@ -100,7 +99,7 @@ export default function DashboardGenerate() {
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-text-primary">
-            My Generation
+            Recently Generated Thumbnails
           </h2>
           <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
             {generations.length}
@@ -108,20 +107,24 @@ export default function DashboardGenerate() {
         </div>
 
         {isLoading ? (
-          <p className="mt-6 text-sm text-text-muted">Loading your thumbnails...</p>
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <ThumbnailCardSkeleton count={6} />
+          </div>
         ) : generations.length === 0 ? (
           <p className="mt-6 text-sm text-text-muted">
             No thumbnails yet. Generate your first one above.
           </p>
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {generations.map((thumbnail, index) => (
+            {generations?.map((thumbnail, index) => (
               <ThumbnailCard
                 key={thumbnail._id}
                 thumbnail={thumbnail}
                 index={index}
                 showDelete
+                source="generate"
                 onDelete={(id) => setDeleteTarget(id)}
+                showPublish
               />
             ))}
           </div>
@@ -141,4 +144,3 @@ export default function DashboardGenerate() {
     </div>
   );
 }
-
