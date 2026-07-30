@@ -8,11 +8,28 @@ export interface GenerateThumbnailPayload {
   aspect_ratio: string;
   color_scheme: string;
   text_overlay?: boolean;
+  referenceImage?: File | null;
 }
 
-export interface MyThumbnailsResponse {
-  thumbnails: Thumbnail[];
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedMeta {
   total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedThumbnailsResponse {
+  thumbnails: Thumbnail[];
+  meta: PaginatedMeta;
+}
+
+export interface LikeResponse {
+  isLiked: boolean;
 }
 
 export type ApiSuccessEnvelope<T> = ApiSuccess<T>;
