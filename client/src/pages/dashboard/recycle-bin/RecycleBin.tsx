@@ -2,21 +2,24 @@ import { useState } from "react";
 import { Trash2, Trash } from "lucide-react";
 import { motion } from "motion/react";
 import toast from "react-hot-toast";
-import useMyThumbnails from "../core/hooks/use-my-thumbnails";
-import { useRestoreThumbnail } from "../core/hooks/use-restore-thumbnail";
-import { usePermanentDeleteThumbnail } from "../core/hooks/use-permanent-delete-thumbnail";
+import useGetRecycleBinThumbnails from "../core/hooks/useGetRecycleBinThumbnails";
+import useRestoreThumbnail from "../core/hooks/use-restore-thumbnail";
+import usePermanentDeleteThumbnail from "../core/hooks/use-permanent-delete-thumbnail";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import ThumbnailCard from "../../../components/ThumbnailCard";
+import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import { getApiErrorMessage } from "../../../lib/axios";
 
 export default function RecycleBin() {
-  const { data: deletedThumbnails = [], isLoading } = useMyThumbnails(true);
-  const restoreMutation = useRestoreThumbnail();
-  const permanentDeleteMutation = usePermanentDeleteThumbnail();
+  const { data: recycleBinResponse, isPending: isLoading } = useGetRecycleBinThumbnails();
+  const deletedThumbnails = recycleBinResponse?.thumbnails || [];
+
+  const { mutate: restoreMutate, isPending: isRestoring } = useRestoreThumbnail();
+  const { mutate: permanentDeleteMutate, isPending: isPermanentlyDeleting } = usePermanentDeleteThumbnail();
   const [permanentDeleteTarget, setPermanentDeleteTarget] = useState<string | null>(null);
 
   const handleRestore = (id: string) => {
-    restoreMutation.mutate(id, {
+    restoreMutate(id, {
       onSuccess: () => {
         toast.success("Thumbnail restored successfully.");
       },
@@ -29,7 +32,7 @@ export default function RecycleBin() {
   const handlePermanentDeleteConfirm = () => {
     if (!permanentDeleteTarget) return;
 
-    permanentDeleteMutation.mutate(permanentDeleteTarget, {
+    permanentDeleteMutate(permanentDeleteTarget, {
       onSuccess: () => {
         toast.success("Thumbnail permanently deleted.");
         setPermanentDeleteTarget(null);
@@ -42,9 +45,8 @@ export default function RecycleBin() {
   };
 
   return (
-    <div className="px-6 py-10 md:px-10">
+    <main className="px-6 py-10 md:px-10">
       <motion.div
-        className="mx-auto max-w-3xl text-center"
         initial={{ y: 24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 70, mass: 1 }}
@@ -61,9 +63,9 @@ export default function RecycleBin() {
         </p>
       </motion.div>
 
-      <hr className="mx-auto my-12 max-w-6xl border-border" />
+      <hr className="my-8 border-border" />
 
-      <div className="mx-auto max-w-6xl">
+      <div>
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-text-primary">
             Recycle Bin
@@ -74,7 +76,9 @@ export default function RecycleBin() {
         </div>
 
         {isLoading ? (
-          <p className="mt-6 text-sm text-text-muted">Loading deleted thumbnails...</p>
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ThumbnailCardSkeleton count={6} showRecycleBinActions />
+          </div>
         ) : deletedThumbnails.length === 0 ? (
           <div className="mt-16 flex flex-col items-center gap-4 text-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-background-surface-2">
@@ -94,7 +98,7 @@ export default function RecycleBin() {
                 showRecycleBinActions
                 onRestore={handleRestore}
                 onPermanentDelete={(id) => setPermanentDeleteTarget(id)}
-                restoring={restoreMutation.isPending && restoreMutation.variables === thumbnail._id}
+                restoring={isRestoring}
               />
             ))}
           </div>
@@ -109,8 +113,8 @@ export default function RecycleBin() {
         description="This action cannot be undone. The thumbnail and its image will be permanently removed."
         confirmLabel="Delete Forever"
         variant="danger"
-        loading={permanentDeleteMutation.isPending}
+        loading={isPermanentlyDeleting}
       />
-    </div>
+    </main>
   );
 }
