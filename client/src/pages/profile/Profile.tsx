@@ -3,11 +3,14 @@ import { Settings, Plus, Heart, LayoutGrid } from "lucide-react";
 import Wrapper from "../../components/Wrapper";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
+import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
 import { ThumbnailData } from "../../data/thumbnail";
 import Banner from "./components/Banner";
+import useMyThumbnails from "../dashboard/core/hooks/use-my-thumbnails";
 
 export default function Profile() {
   const dummyGenerations = ThumbnailData.slice(0, 9);
+  const { data: generations = [], isLoading } = useMyThumbnails();
   const creationsCount = dummyGenerations.length;
   const likesCount = 0;
 
@@ -24,10 +27,12 @@ export default function Profile() {
           </div>
 
           <div className="mb-2 sm:mb-4">
-            <Button variant="secondary" size="sm" fullWidth={false} className="gap-2 text-xs">
-              <Settings size={14} />
-              Edit Profile
-            </Button>
+            <Link to="/dashboard/settings">
+              <Button variant="secondary" size="sm" fullWidth={false} className="gap-2 text-xs">
+                <Settings size={14} />
+                Edit Profile
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -59,13 +64,13 @@ export default function Profile() {
           </h2>
 
           <div className="flex items-center gap-3">
-            <Link to="/generate">
+            <Link to="/dashboard/generate">
               <Button variant="primary" size="sm" fullWidth={false} className="gap-2">
                 <Plus size={16} />
                 New Thumbnail
               </Button>
             </Link>
-            <Link to="/recreate">
+            <Link to="/dashboard/recreate">
               <Button variant="secondary" size="sm" fullWidth={false} className="gap-2 bg-transparent">
                 Recreate
               </Button>
@@ -73,16 +78,24 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {dummyGenerations.map((thumbnail, index) => (
-            <ThumbnailCard
-              key={thumbnail._id}
-              thumbnail={thumbnail}
-              index={index}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ThumbnailCardSkeleton count={6} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {generations.map((thumbnail, index) => (
+              <ThumbnailCard
+                key={thumbnail._id}
+                thumbnail={thumbnail}
+                index={index}
+                source="profile"
+              />
+            ))}
+          </div>
+        )}
       </Wrapper>
     </main>
   );
 }
+
