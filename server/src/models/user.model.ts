@@ -49,6 +49,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+      url: true
     },
 
     // Auth
@@ -76,7 +77,12 @@ const userSchema = new mongoose.Schema(
       default: UserPlan.Free,
     },
 
-    credits: {
+    totalcredits: {
+      type: Number,
+      default: 20,
+    },
+
+    creditsUsed: {
       type: Number,
       default: 0,
     },
@@ -103,7 +109,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
-    generationsResetAt: {
+    creditsResetAt: {
       type: Date,
       default: null,
     },
