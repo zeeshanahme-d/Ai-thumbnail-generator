@@ -20,18 +20,9 @@ router.get("/", getMyThumbnails);
 router.get("/community", getCommunityThumbnails);
 router.get("/recycle-bin", getRecycleBinThumbnails);
 
-router.post(
-  "/",
-  uploadSingleImage("referenceImage"),
-  validate(generateThumbnailSchema),
-  generateGminiThumbnail
-);
+router.post("/", uploadSingleImage("referenceImage"), validate(generateThumbnailSchema), generateGminiThumbnail);
 
-router.patch(
-  "/:id/publish",
-  validate(publishThumbnailSchema),
-  publishThumbnailToCommunity
-);
+router.patch("/:id/publish", validate(publishThumbnailSchema), publishThumbnailToCommunity);
 
 router.post("/:id/like", likeDislikeThumbnail);
 

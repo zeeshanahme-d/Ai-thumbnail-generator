@@ -28,3 +28,9 @@ export const colorSchemeDescriptions = {
   Pastel:
     "soft pastel colors, low saturation, gentle tones, calm and friendly aesthetic",
 };
+
+export const CREDIT_COST = {
+  SIGNUP_BONUS: 20,
+  GENERATE_COST: 5,
+  RECREATE_COST: 10,
+};

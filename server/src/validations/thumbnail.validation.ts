@@ -29,7 +29,7 @@ const generateThumbnailSchema = z.object({
   style: z.enum(thumbnailStyleValues),
   aspect_ratio: z.enum(aspectRatioValues).optional().default(AspectRatio.Widescreen),
   color_scheme: z.enum(colorSchemeValues).optional().default(ColorScheme.Vibrant),
-  text_overlay: z.boolean().optional().default(false),
+  text_overlay: z.coerce.boolean().optional().default(false),
 });
 
 

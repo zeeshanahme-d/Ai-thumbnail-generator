@@ -3,16 +3,27 @@ import path from "path";
 import fsPromises from "fs/promises";
 import { GenerateContentConfig, HarmBlockThreshold, HarmCategory, } from "@google/genai";
 import genai from "../config/genai.js";
-import { colorSchemeDescriptions, stylePrompts, } from "../constants/constants.js";
+import { colorSchemeDescriptions, CREDIT_COST, stylePrompts, } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { UploadErrorCode } from "../constants/enums.js";
 import uploadFileOnCloudniary, { removeLocalFile, deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { getPaginationParams, formatPaginatedResponse } from "../utils/pagination.js";
+import { verifyAccessToken } from "../helper/token-helpers.js";
+import userModel from "../models/user.model.js";
 
 const resolveUserId = (req: Request): string | undefined => {
-  return req.user?.userId ?? (req.user as { _id?: string } | undefined)?._id;
+  if (req.user?.userId) return req.user.userId;
+  if (req.user?._id) return req.user._id.toString();
+  const accessToken = req.cookies?.accessToken || req.headers?.authorization?.split(" ")[1];
+  if (!accessToken) return undefined;
+  try {
+    const decoded = verifyAccessToken(accessToken) as { userId?: string; _id?: string };
+    return decoded?.userId ?? decoded?._id;
+  } catch {
+    return undefined;
+  }
 };
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
@@ -23,6 +34,7 @@ const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> =>
 
   return new Set(likes.map((item) => item.thumbnailId.toString()));
 };
+
 
 /**
  * POST /thumbnails
@@ -36,10 +48,26 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
   try {
     const userId = resolveUserId(req);
     if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
+      return ApiResponse.error(res, 401, "Authentication required. Please log in to generate thumbnails.");
     }
 
-    const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay, } = req.body;
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return ApiResponse.error(res, 404, "User account not found.");
+    }
+
+    const currentCreditsUsed = user.creditsUsed ?? 0;
+    const totalCredits = user.totalcredits ?? 20;
+
+    if (currentCreditsUsed + CREDIT_COST.GENERATE_COST > totalCredits) {
+      return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${Math.max(0, totalCredits - currentCreditsUsed)} credits.`, "INSUFFICIENT_CREDITS");
+    }
+
+    const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay } = req.body;
+
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return ApiResponse.error(res, 400, "Please provide a thumbnail title.");
+    }
 
     const referenceImage = req.file;
     let referenceImagePart: { inlineData: { mimeType: string; data: string } } | null = null;
@@ -59,11 +87,11 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       userId,
       user_prompt: user_prompt ?? "",
       prompt_used: user_prompt ?? "",
-      style,
-      title,
-      aspect_ratio,
-      text_overlay,
-      color_scheme,
+      style: style || "Bold & Graphic",
+      title: title.trim(),
+      aspect_ratio: aspect_ratio || "16:9",
+      text_overlay: Boolean(text_overlay),
+      color_scheme: color_scheme || "Vibrant",
       isGenerating: true,
     });
     thumbnailId = thumbnail._id.toString();
@@ -81,34 +109,120 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.OFF,
+          threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
         },
         {
           category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.OFF,
+          threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
         },
         {
           category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.OFF,
+          threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
         },
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.OFF,
+          threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
         },
       ],
     };
 
-    let prompt = `Create a ${stylePrompts[style as keyof typeof stylePrompts]} for: ${title}`;
-    if (color_scheme) {
-      prompt += ` Use a ${colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions]} color scheme`;
+    // Craft high-quality prompt for maximum visual impact & high CTR
+    const selectedStylePrompt = stylePrompts[style as keyof typeof stylePrompts];
+    const selectedColorDesc = colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions] || color_scheme;
+
+    const promptParts: string[] = [
+      `You are an award-winning YouTube thumbnail designer. Your job is to create a thumbnail with an extremely high click-through rate (CTR), similar in quality to thumbnails from top creators like MrBeast, GreatStack, Fireship, Ali Abdaal, and MKBHD. The thumbnail should look professionally designed, modern, clean, and instantly eye-catching.`,
+
+      `Video Title: "${title.trim()}"`,
+      `Visual Style: ${selectedStylePrompt}.`,
+      `Color Palette:${selectedColorDesc}.`,
+    ];
+
+    if (text_overlay) {
+      promptParts.push(`
+TEXT OVERLAY: Generate professional thumbnail text.
+
+Rules:
+
+• NEVER place the full video title on the thumbnail.
+• Rewrite the title into a short marketing headline.
+• Maximum 3–8 words.
+• Use only the strongest keywords.
+• Arrange text in 2–4 lines.
+• Large bold typography.
+• High contrast.
+• Easy to read on mobile.
+• Highlight important words using accent colors.
+• Leave enough breathing room around the text.
+• Make it look like a real YouTube thumbnail.
+
+Bad Example:"Build a Full Stack AI Website Builder with MERN Stack | Complete AI SaaS Project Step by Step"
+
+Good Examples:
+• AI WEBSITE BUILDER
+• BUILD AI SAAS
+• FULL STACK AI
+• MERN AI PROJECT
+• BUILD AI FAST
+`);
+    } else {
+      promptParts.push(`Do not include any text, captions, logos, typography, or written words. Only visuals.`);
     }
-    if (user_prompt) {
-      prompt += ` Additional details: ${user_prompt}`;
+
+    if (user_prompt?.trim()) {
+      promptParts.push(`User Requirements: ${user_prompt.trim()}`);
     }
+
     if (referenceImagePart) {
-      prompt += ` Use the attached reference image as visual guidance for style and composition.`;
+      promptParts.push(`
+REFERENCE IMAGE: Use the uploaded reference image ONLY as the source for the provided asset.
+
+The reference image may contain:
+• Person
+• Face
+• Logo
+• Product
+• Mascot
+• Object
+
+Requirements:
+• Preserve identity.
+• Preserve facial features.
+• Preserve hairstyle.
+• Preserve clothing when appropriate.
+• Blend naturally into the new composition.
+• Match lighting and perspective.
+• Do NOT recreate the original background.
+• Do NOT copy the original layout.
+• Do NOT imitate the original thumbnail.
+`);
     }
-    prompt += ` The thumbnail should be ${aspect_ratio}, visually stunning, and designed to maximize click-through rate. Make it professional and impossible to ignore.`;
+
+    promptParts.push(`
+QUALITY REQUIREMENTS
+
+• ${aspect_ratio} aspect ratio
+• Ultra high quality
+• Professional lighting
+• Cinematic depth of field
+• Dramatic shadows
+• High contrast
+• Vibrant colors
+• Strong focal subject
+• Clean composition
+• Balanced spacing
+• No watermark
+• No logo unless requested
+• No border
+• No cropped face
+• Sharp focus
+• Realistic proportions
+• Professional YouTube thumbnail
+• Optimized for maximum CTR
+• 4K quality
+`);
+
+    const prompt = promptParts.join(" ");
 
     const contents = referenceImagePart ? [prompt, referenceImagePart] : [prompt];
 
@@ -122,14 +236,11 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     const imagePart = parts.find((part) => part.inlineData);
 
     if (!imagePart?.inlineData?.data) {
-      thumbnail.isGenerating = false;
-      await thumbnail.save();
-      return ApiResponse.error(
-        res,
-        502,
-        "Image generation failed. Please try again.",
-        "GENERATION_FAILED",
-      );
+      if (thumbnailId) {
+        await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
+        thumbnailId = null;
+      }
+      return ApiResponse.error(res, 502, "AI image generation failed. Please try again in a moment.", "GENERATION_FAILED",);
     }
 
     const imageBuffer = Buffer.from(
@@ -138,19 +249,17 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     );
     const fileName = `thumbnail-output-${Date.now()}-${crypto.randomUUID()}.png`;
     const uploadDir = path.join("public/temp/uploads");
+    await fsPromises.mkdir(uploadDir, { recursive: true });
     outputFilePath = path.join(uploadDir, fileName);
     await fsPromises.writeFile(outputFilePath, imageBuffer);
 
     const finalResult = await uploadFileOnCloudniary(outputFilePath);
     if (!finalResult) {
-      thumbnail.isGenerating = false;
-      await thumbnail.save();
-      return ApiResponse.error(
-        res,
-        502,
-        "Image upload failed. Please try again.",
-        UploadErrorCode.UploadFailed,
-      );
+      if (thumbnailId) {
+        await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
+        thumbnailId = null;
+      }
+      return ApiResponse.error(res, 502, "Failed to upload generated image. Please try again.", UploadErrorCode.UploadFailed,);
     }
 
     thumbnail.thumbnail = {
@@ -165,20 +274,26 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
-    return ApiResponse.success(
-      res,
-      201,
-      "Thumbnail generated successfully.",
-      thumbnail,
+    await userModel.findByIdAndUpdate(
+      userId,
+      {
+        $inc: {
+          creditsUsed: CREDIT_COST.GENERATE_COST,
+        },
+      },
+      {
+        new: true,
+      }
     );
+
+    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", thumbnail,);
+
   } catch (error) {
-    console.error(error);
+    console.error("Thumbnail generation error:", error);
     if (thumbnailId) {
-      await thumbnailModel.findByIdAndUpdate(thumbnailId, {
-        isGenerating: false,
-      });
+      await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
     }
-    return ApiResponse.error(res, 500, "Something went wrong. Please try again later.");
+    return ApiResponse.error(res, 500, "An unexpected error occurred while generating your thumbnail. Please try again.");
   } finally {
     if (referenceImagePath) {
       await removeLocalFile(referenceImagePath);
