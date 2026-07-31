@@ -35,6 +35,7 @@ export default function DashboardGenerate() {
       style: submission.style,
       aspect_ratio: submission.aspectRatio,
       color_scheme: submission.colorScheme,
+      text_overlay: true,
       referenceImage: submission.referenceImage,
     };
     generateThumbnailMutate(payload, {
