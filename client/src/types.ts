@@ -210,6 +210,35 @@ export interface MediaAsset {
   bytes?: number;
 }
 
+export interface IUser {
+  _id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  image_url: string;
+  avatar: MediaAsset;
+  coverUrl: string;
+  bio: string;
+  website: string;
+  provider: "email" | "google" | string;
+  isVerified: boolean;
+  plan: "free" | "pro" | "ultra" | string;
+  totalcredits: number;
+  creditsUsed: number;
+  creditsResetAt: string | null;
+  subscriptionId: string | null;
+  subscriptionStatus: string | null;
+  subscriptionRenewsAt: string | null;
+  generationsThisMonth: number;
+  generationsResetAt: string | null;
+  followersCount: number;
+  followingCount: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  credits: number;
+}
+
 export interface Thumbnail {
   _id: string;
   title: string;
