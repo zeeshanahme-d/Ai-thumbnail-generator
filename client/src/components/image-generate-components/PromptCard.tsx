@@ -88,15 +88,6 @@ const PromptCard = ({
       referenceImage,
       referenceUrl: referenceUrl.trim(),
     });
-
-    console.log({
-      prompt: prompt.trim(),
-      style,
-      aspectRatio,
-      colorScheme,
-      referenceImage,
-      referenceUrl: referenceUrl.trim(),
-    });
   };
 
   return (

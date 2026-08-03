@@ -4,8 +4,11 @@ import Wrapper from "../components/Wrapper";
 import { testimonialsData } from "../data/testimonial";
 import type { ITestimonial } from "../types";
 import Marquee from "react-fast-marquee";
+import { useTheme } from "../store/useTheme";
 
 export default function TestimonialSection() {
+  const { theme } = useTheme();
+  const gradientColor = theme === "dark" ? "#0a0a0a" : "#f9fafb";
   return (
     <section className="py-24">
       <Wrapper>
@@ -54,7 +57,8 @@ export default function TestimonialSection() {
           className="max-w-6xl mx-auto mt-11"
           speed={25}
           gradient={true}
-          gradientColor="#f9fafb"
+          gradientWidth={300}
+          gradientColor={gradientColor}
         >
           <div className="flex items-center justify-center py-5 overflow-hidden">
             {[...testimonialsData, ...testimonialsData].map(
@@ -72,8 +76,8 @@ export default function TestimonialSection() {
           className="max-w-6xl mx-auto"
           gradient={true}
           speed={25}
-          direction="right"
-          gradientColor="#f9fafb"
+          gradientWidth={300}
+          gradientColor={gradientColor}
         >
           <div className="flex items-center justify-center py-5 overflow-hidden">
             {[...testimonialsData, ...testimonialsData].map(

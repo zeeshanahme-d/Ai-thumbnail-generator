@@ -18,6 +18,14 @@ export enum ThumbnailStyle {
   TechFuturistic = "Tech/Futuristic",
 }
 
+export enum THUMBNAIL_SORT {
+  Newest = "newest",
+  Oldest = "oldest",
+  MostLiked = "most-liked",
+  MostViews = "most-views",
+  Trending = "trending",
+}
+
 export enum AspectRatio {
   Widescreen = "16:9",
   Vertical = "9:16",

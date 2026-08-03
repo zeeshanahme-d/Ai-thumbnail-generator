@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { Menu, Moon } from "lucide-react";
+import { Menu } from "lucide-react";
 import Logo from "../../../assets/svgs/logo.svg?react";
 import Button from "../../../components/Button";
+import ThemeButton from "../../../components/ThemeButton";
 
 interface DashboardHeaderProps {
   setIsMobileOpen: (open: boolean) => void;
@@ -24,15 +25,7 @@ export default function DashboardHeader({ setIsMobileOpen }: DashboardHeaderProp
           <Logo className="h-6 w-auto" />
         </Link>
       </div>
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => document.documentElement.classList.toggle("dark")}
-        size="icon"
-        className="rounded-lg"
-      >
-        <Moon size={16} />
-      </Button>
+      <ThemeButton />
     </header>
   );
 }

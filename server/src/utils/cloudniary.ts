@@ -9,7 +9,7 @@ const configureCloudinary = () => {
   });
 };
 
-const removeLocalFile = async (localPath: string) => {
+export const removeLocalFile = async (localPath: string) => {
   try {
     await fs.unlink(localPath);
   } catch (error) {

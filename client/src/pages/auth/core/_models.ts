@@ -15,37 +15,8 @@ export interface ApiError {
     timestamp: string;
 }
 
-export interface IUser {
-    _id: string;
-    fullName: string;
-    username?: string;
-    email: string;
-    image_url?: string;
-    avatar?: {
-        url: string;
-        publicId: string;
-        originalName: string;
-        directory: string;
-        format: string;
-        bytes: number;
-    };
-    coverUrl?: string;
-    bio?: string;
-    website?: string;
-    provider: "email" | "google";
-    isVerified: boolean;
-    plan: "free" | "pro" | "ultra";
-    credits: number;
-    subscriptionId?: string | null;
-    subscriptionStatus?: string | null;
-    subscriptionRenewsAt?: string | null;
-    generationsThisMonth: number;
-    generationsResetAt?: string | null;
-    followersCount: number;
-    followingCount: number;
-    createdAt: string;
-    updatedAt: string;
-}
+import type { IUser } from "../../../types";
+export type { IUser };
 
 export interface LoginPayload {
     email: string;

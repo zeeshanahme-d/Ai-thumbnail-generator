@@ -28,3 +28,30 @@ export const colorSchemeDescriptions = {
   Pastel:
     "soft pastel colors, low saturation, gentle tones, calm and friendly aesthetic",
 };
+
+export const CREDIT_COST = {
+  SIGNUP_BONUS: 20,
+  GENERATE_COST: 5,
+  RECREATE_COST: 10,
+};
+
+export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
+  newest: {
+    createdAt: -1,
+  },
+
+  trending: {
+    likesCount: -1,
+    views: -1,
+    createdAt: -1,
+  },
+
+  "most-liked": {
+    likesCount: -1,
+    createdAt: -1,
+  },
+
+  oldest: {
+    createdAt: 1,
+  },
+};

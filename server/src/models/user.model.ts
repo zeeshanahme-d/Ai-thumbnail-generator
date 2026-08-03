@@ -4,6 +4,7 @@ import {
   SubscriptionStatus,
   UserPlan,
 } from "../constants/enums.js";
+import mediaSchema from "../schemas/media.schema.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -31,32 +32,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    avatar: {
-      url: {
-        type: String,
-        default: "",
-      },
-      publicId: {
-        type: String,
-        default: "",
-      },
-      originalName: {
-        type: String,
-        default: "",
-      },
-      directory: {
-        type: String,
-        default: "",
-      },
-      format: {
-        type: String,
-        default: "",
-      },
-      bytes: {
-        type: Number,
-        default: 0,
-      },
-    },
+    avatar: mediaSchema,
 
     coverUrl: {
       type: String,
@@ -73,6 +49,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+      url: true
     },
 
     // Auth
@@ -100,7 +77,12 @@ const userSchema = new mongoose.Schema(
       default: UserPlan.Free,
     },
 
-    credits: {
+    totalcredits: {
+      type: Number,
+      default: 20,
+    },
+
+    creditsUsed: {
       type: Number,
       default: 0,
     },
@@ -127,7 +109,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
-    generationsResetAt: {
+    creditsResetAt: {
       type: Date,
       default: null,
     },

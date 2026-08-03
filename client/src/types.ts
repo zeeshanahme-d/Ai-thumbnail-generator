@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import type React from "react";
 
 export interface ICapability {
   icon: LucideIcon;
@@ -104,8 +105,9 @@ export interface IDashboardNavSection {
 export type CommunitySort = "trending" | "newest" | "most-liked" | "featured";
 
 export interface CommunityFiltersProps {
-  search: string;
-  onSearchChange: (value: string) => void;
+  setParams?: React.Dispatch<React.SetStateAction<{ [key: string]: any }>>;
+  search?: string;
+  onSearchChange?: (value: string) => void;
   sort: CommunitySort;
   onSortChange: (value: CommunitySort) => void;
   activeStyle: string;
@@ -115,6 +117,15 @@ export interface CommunityFiltersProps {
 export interface ThumbnailCardProps {
   thumbnail: Thumbnail;
   index: number;
+  showDelete?: boolean;
+  showLike?: boolean;
+  showPublish?: boolean;
+  source?: "community" | "gallery" | "generate" | "profile" | "recycle-bin";
+  onDelete?: (id: string) => void;
+  showRecycleBinActions?: boolean;
+  onRestore?: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
+  restoring?: boolean;
 }
 
 export interface SectionTitleProps {
@@ -186,26 +197,73 @@ export interface SectionProps {
 }
 export interface UserId {
   _id: string;
-  name: string;
-  image_url: string;
+  name?: string;
+  fullName?: string;
+  image_url?: string;
+  avatar?: MediaAsset;
 }
+
+export interface MediaAsset {
+  url: string;
+  publicId?: string;
+  originalName?: string;
+  directory?: string;
+  format?: string;
+  bytes?: number;
+}
+
+export interface IUser {
+  _id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  image_url: string;
+  avatar: MediaAsset;
+  coverUrl: string;
+  bio: string;
+  website: string;
+  provider: "email" | "google" | string;
+  isVerified: boolean;
+  plan: "free" | "pro" | "ultra" | string;
+  totalcredits: number;
+  creditsUsed: number;
+  creditsResetAt: string | null;
+  subscriptionId: string | null;
+  subscriptionStatus: string | null;
+  subscriptionRenewsAt: string | null;
+  generationsThisMonth: number;
+  generationsResetAt: string | null;
+  followersCount: number;
+  followingCount: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  credits: number;
+}
+
 export interface Thumbnail {
   _id: string;
   title: string;
-  image_url: string;
+  image_url?: string;
+  thumbnail?: MediaAsset;
   aspect_ratio?: string;
   color_scheme?: string;
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
   isGenerating: boolean;
   model: string;
-  userId?: UserId;
+  userId?: UserId | string;
   prompt_used?: string;
   published?: boolean;
   style?: string;
   text_overlay?: boolean;
   user_prompt?: string;
-  __v: number;
+  deletedAt?: string | null;
+  likesCount?: number;
+  viewsCount?: number;
+  isLiked?: boolean;
+  __v?: number;
 }
 
 export type AuthMode =

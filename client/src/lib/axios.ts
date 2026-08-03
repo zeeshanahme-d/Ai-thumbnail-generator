@@ -28,7 +28,7 @@ api.interceptors.response.use(
             _retry?: boolean;
         };
         const code = error.response?.data?.error;
-        const isExpired = error.response?.status === 401 && code === "TOKEN_EXPIRED";
+        const isExpired = error.response?.status === 401 && code === "TOKEN_EXPIRED" || code === "TOKEN_MISSING";
 
         if (!isExpired || original?._retry) {
             return Promise.reject(error);
