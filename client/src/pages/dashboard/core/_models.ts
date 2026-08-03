@@ -14,7 +14,12 @@ export interface GenerateThumbnailPayload {
 export interface PaginationParams {
   page?: number;
   limit?: number;
+  search?: string;
+  sort?: string;
+  style?: string;
 }
+
+export type GetThumbnailsParams = PaginationParams;
 
 export interface PaginatedMeta {
   total: number;

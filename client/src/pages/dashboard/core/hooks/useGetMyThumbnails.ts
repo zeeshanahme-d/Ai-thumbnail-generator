@@ -15,7 +15,8 @@ const useGetMyThumbnails = (params?: PaginationParams) => {
   });
 
   return {
-    data,
+    data: data?.thumbnails || [],
+    pagination: data?.meta,
     isPending,
     isError,
     error,
