@@ -21,7 +21,7 @@ import useLikeThumbnail from "../pages/dashboard/core/hooks/useLikeThumbnail";
 import usePublishThumbnail from "../pages/dashboard/core/hooks/usePublishThumbnail";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { handleDownloadFile } from "../helpers/herlper-fuctions";
+import { handleDownloadFile } from "../lib/herlper-fuctions";
 import { useSession } from "../store/useSessionStore";
 
 dayjs.extend(relativeTime);
@@ -120,9 +120,8 @@ export default function ThumbnailCard({
 
   return (
     <motion.div
-      className={`group overflow-hidden rounded-2xl border border-border bg-background-card transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-16px_rgba(0,0,0,0.18)] ${
-        !showRecycleBinActions && !thumbnail.isGenerating ? "cursor-pointer" : ""
-      }`}
+      className={`group overflow-hidden rounded-2xl border border-border bg-background-card transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-16px_rgba(0,0,0,0.18)] ${!showRecycleBinActions && !thumbnail.isGenerating ? "cursor-pointer" : ""
+        }`}
       onClick={handleCardClick}
       initial={{ y: 40, opacity: 0 }}
       whileInView={{ y: 0, opacity: 1 }}
@@ -185,11 +184,10 @@ export default function ThumbnailCard({
                 variant="secondary"
                 onClick={handleTogglePublish}
                 disabled={isPublishing}
-                className={`bg-black/60 backdrop-blur border-none text-white ${
-                  published
+                className={`bg-black/60 backdrop-blur border-none text-white ${published
                     ? "text-success hover:text-success/80"
                     : "hover:text-primary"
-                }`}
+                  }`}
                 aria-label={
                   published ? "Unpublish thumbnail" : "Publish thumbnail"
                 }
