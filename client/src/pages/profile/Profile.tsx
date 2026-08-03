@@ -1,18 +1,19 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Settings, Plus, Heart, LayoutGrid } from "lucide-react";
 import Wrapper from "../../components/Wrapper";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
-import { ThumbnailData } from "../../data/thumbnail";
 import Banner from "./components/Banner";
-import useMyThumbnails from "../dashboard/core/hooks/use-my-thumbnails";
+import useGetMyThumbnails from "../dashboard/core/hooks/useGetMyThumbnails";
 
 export default function Profile() {
-  const dummyGenerations = ThumbnailData.slice(0, 9);
-  const { data: generations = [], isLoading } = useMyThumbnails();
-  const creationsCount = dummyGenerations.length;
-  const likesCount = 0;
+  const [params, setParams] = useState<Record<string, any>>({ page: 1, limit: 12, sort: "newest" });
+  const { data: generations = [], pagination, isPending: isLoading } = useGetMyThumbnails(params);
+
+  const creationsCount = pagination?.total ?? generations.length;
+  const likesCount = generations.reduce((acc, curr) => acc + (curr.likesCount || 0), 0);
 
   return (
     <main className="min-h-screen bg-background-surface pb-20">
@@ -94,6 +95,20 @@ export default function Profile() {
             ))}
           </div>
         )}
+
+        {/* Load More Pagination */}
+        {pagination?.total && pagination.total > generations.length ? (
+          <div className="mt-10 flex justify-center">
+            <Button
+              type="button"
+              onClick={() => setParams((prev) => ({ ...prev, limit: (prev.limit || 12) + 12 }))}
+              fullWidth={false}
+              variant="secondary"
+            >
+              Load More
+            </Button>
+          </div>
+        ) : null}
       </Wrapper>
     </main>
   );

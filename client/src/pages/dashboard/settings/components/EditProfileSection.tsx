@@ -9,7 +9,7 @@ import FieldError from "../../../auth/components/FieldError";
 import { useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useSession } from "../../../../store/useSessionStore";
-import { getUserInitial } from "../../../../helpers/herlper-fuctions";
+import { getUserInitial } from "../../../../lib/herlper-fuctions";
 import { useUploadAvatar } from "../core/hooks/use-upload-avatar";
 import { useUpdateProfile } from "../core/hooks/use-update-profile";
 import { updateProfileSchema } from "../core/_schemas";
