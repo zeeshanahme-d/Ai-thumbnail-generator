@@ -1,22 +1,31 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import toast from "react-hot-toast";
+//Components
+import Alert from "../../../components/Alert";
+import Button from "../../../components/Button";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
-import Alert from "../../../components/Alert";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
+//Libs
 import { getApiErrorMessage } from "../../../lib/axios";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
-
+//Types
 import type { PromptSubmission } from "../../../types";
+//Hooks
 import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
-import useMyThumbnails from "../core/hooks/use-my-thumbnails";
 import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
+import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
 
 export default function DashboardGenerate() {
-  const { data: generations = [], isLoading } = useMyThumbnails();
+  const { data: generations = [], isPending: isLoading } = useGetMyThumbnails({
+    limit: 8,
+    page: 1,
+    sort: "newest",
+  });
   const { generateThumbnailMutate, isPending } = useGenerateThumbnail();
   const deleteMutation = useDeleteThumbnail();
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +73,7 @@ export default function DashboardGenerate() {
   };
 
   return (
-    <div className="px-6 py-10 md:px-10">
+    <div className="px-6 py-10">
       <motion.div
         className="mx-auto max-w-3xl text-center"
         initial={{ y: 24, opacity: 0 }}
@@ -98,13 +107,20 @@ export default function DashboardGenerate() {
       <hr className="mx-auto my-12 max-w-6xl border-border" />
 
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-text-primary">
-            Recently Generated Thumbnails
-          </h2>
-          <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
-            {generations.length}
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-text-primary">
+              Recently Generated Thumbnails
+            </h2>
+            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
+              {generations.length}
+            </span>
+          </div>
+          <Link to="/dashboard/gallery">
+            <Button variant="secondary" size="sm" fullWidth={false}>
+              View All
+            </Button>
+          </Link>
         </div>
 
         {isLoading ? (
