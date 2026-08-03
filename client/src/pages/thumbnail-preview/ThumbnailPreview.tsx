@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
@@ -51,14 +50,7 @@ export default function ThumbnailPreview() {
   const authorName = getThumbnailAuthorName(thumbnail);
   const dot = (thumbnail.style && STYLE_DOTS[thumbnail.style]) || "bg-gray-400";
 
-  // Pull community feed for "More thumbnails" section
-  const { data: communityData } = useGetCommunityThumbnails();
-  const relatedThumbnails = useMemo(() => {
-    if (!thumbnail.style || !communityData?.thumbnails) return [];
-    return communityData.thumbnails
-      .filter((t) => t._id !== thumbnail._id && t.style === thumbnail.style)
-      .slice(0, 4);
-  }, [communityData, thumbnail]);
+  const { data: communityThumbnails } = useGetCommunityThumbnails({ style: thumbnail.style, limit: 5, page: 1 });
 
   // Like handler
   const { mutate: likeMutate, isPending: isLiking } = useLikeThumbnail();
@@ -163,7 +155,7 @@ export default function ThumbnailPreview() {
             </motion.div>
 
             {/* More thumbnails */}
-            {relatedThumbnails.length > 0 && (
+            {communityThumbnails.length > 0 && (
               <motion.div
                 className="mt-10"
                 initial={{ y: 20, opacity: 0 }}
@@ -171,7 +163,7 @@ export default function ThumbnailPreview() {
                 transition={{ delay: 0.26, type: "spring", stiffness: 280, damping: 70 }}
               >
                 <PreviewMoreThumbnails
-                  thumbnails={relatedThumbnails}
+                  thumbnails={communityThumbnails}
                   style={thumbnail.style ?? ""}
                   source={source}
                 />
@@ -260,9 +252,8 @@ export default function ThumbnailPreview() {
                   <Loader2 size={16} className="animate-spin text-primary" />
                 ) : (
                   <span
-                    className={`text-xl leading-none ${
-                      thumbnail.isLiked ? "text-primary" : "text-text-muted"
-                    }`}
+                    className={`text-xl leading-none ${thumbnail.isLiked ? "text-primary" : "text-text-muted"
+                      }`}
                     aria-hidden
                   >
                     {thumbnail.isLiked ? "♥" : "♡"}

@@ -1,6 +1,6 @@
 import { Download, Share2 } from "lucide-react";
 import Button from "../../../components/Button";
-import { handleDownloadFile } from "../../../helpers/herlper-fuctions";
+import { handleDownloadFile } from "../../../lib/herlper-fuctions";
 import type { Thumbnail } from "../../../types";
 import { getThumbnailImageUrl } from "../../../lib/thumbnail";
 
