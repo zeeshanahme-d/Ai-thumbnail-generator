@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import type React from "react";
 
 export interface ICapability {
   icon: LucideIcon;
@@ -104,8 +105,9 @@ export interface IDashboardNavSection {
 export type CommunitySort = "trending" | "newest" | "most-liked" | "featured";
 
 export interface CommunityFiltersProps {
-  search: string;
-  onSearchChange: (value: string) => void;
+  setParams?: React.Dispatch<React.SetStateAction<{ [key: string]: any }>>;
+  search?: string;
+  onSearchChange?: (value: string) => void;
   sort: CommunitySort;
   onSortChange: (value: CommunitySort) => void;
   activeStyle: string;
