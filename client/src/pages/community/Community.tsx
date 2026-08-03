@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ALL_STYLES } from "../../data/community";
@@ -7,67 +7,26 @@ import type { CommunitySort } from "../../types";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
-import { getThumbnailAuthorName } from "../../lib/thumbnail";
 import useGetCommunityThumbnails from "../dashboard/core/hooks/useGetCommunityThumbnails";
 
-const PAGE_SIZE = 12;
-
 export default function Community() {
-  const { data: communityResponse, isPending: isLoading } =
-    useGetCommunityThumbnails();
-  const fetchedThumbnails = communityResponse?.thumbnails || [];
+  const [params, setParams] = useState<{ [key: string]: any }>({ page: 1, limit: 10, sort: "newest" });
+  const { data: fetchedThumbnails, isPending: isLoading, pagination } = useGetCommunityThumbnails(params);
 
-  const [search, setSearch] = useState("");
   const [sort, setSort] = useState<CommunitySort>("newest");
   const [activeStyle, setActiveStyle] = useState(ALL_STYLES);
-  const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    const list = fetchedThumbnails.filter((thumbnail) => {
-      const matchesStyle =
-        activeStyle === ALL_STYLES || thumbnail.style === activeStyle;
-      const matchesSearch =
-        !query ||
-        thumbnail.title.toLowerCase().includes(query) ||
-        getThumbnailAuthorName(thumbnail).toLowerCase().includes(query);
-      return matchesStyle && matchesSearch;
-    });
-
-    return [...list].sort((a, b) => {
-      switch (sort) {
-        case "newest":
-          return +new Date(b.createdAt) - +new Date(a.createdAt);
-        case "trending":
-          return (b.viewsCount || 0) - (a.viewsCount || 0);
-        case "most-liked":
-          return (b.likesCount || 0) - (a.likesCount || 0);
-        case "featured":
-          return Number(b.model === "premium") - Number(a.model === "premium");
-        default:
-          return 0;
-      }
-    });
-  }, [fetchedThumbnails, search, sort, activeStyle]);
-
-  const visible = filtered.slice(0, limit);
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setLimit(PAGE_SIZE);
-  };
   const handleSort = (value: CommunitySort) => {
     setSort(value);
-    setLimit(PAGE_SIZE);
+    setParams((prev) => ({ ...prev, sort: value, page: 1 }));
   };
   const handleStyle = (value: string) => {
     setActiveStyle(value);
-    setLimit(PAGE_SIZE);
+    setParams((prev) => ({ ...prev, style: value === ALL_STYLES ? undefined : value, page: 1 }));
   };
 
   return (
-    <main className="px-6 py-10 md:px-10">
+    <main className="px-6 py-10">
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -99,8 +58,7 @@ export default function Community() {
         <hr className="my-8 border-border" />
 
         <CommunityFilters
-          search={search}
-          onSearchChange={handleSearch}
+          setParams={setParams}
           sort={sort}
           onSortChange={handleSort}
           activeStyle={activeStyle}
@@ -108,12 +66,12 @@ export default function Community() {
         />
 
         {isLoading ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             <ThumbnailCardSkeleton count={9} />
           </div>
-        ) : visible.length > 0 ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((thumbnail, index) => (
+        ) : fetchedThumbnails.length > 0 ? (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {fetchedThumbnails.map((thumbnail, index) => (
               <ThumbnailCard
                 key={thumbnail._id}
                 thumbnail={thumbnail}
@@ -129,18 +87,18 @@ export default function Community() {
           </p>
         )}
 
-        {limit < filtered.length && (
+        {(pagination?.total && pagination.total > fetchedThumbnails.length) ? (
           <div className="mt-10 flex justify-center">
             <Button
               type="button"
-              onClick={() => setLimit((prev) => prev + PAGE_SIZE)}
+              onClick={() => setParams((prev) => ({ ...prev, page: prev.page + 1 }))}
               fullWidth={false}
               variant="secondary"
             >
               Load More
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
     </main>
   );
