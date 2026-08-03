@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 @import "tailwindcss";
 
+/* ─── Light theme (default) ─── */
 :root {
   --bg-base: #fff;
   --bg-surface: #f9fafb;
@@ -28,34 +29,59 @@
   --shadow-lg: 0 10px 15px -3px #0000000d, 0 4px 6px -4px #0000000d;
   --shadow-primary: 0 8px 24px #e6394640;
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --backdrop: rgb(0 0 0 / 0.15);
+}
+
+/* ─── Dark theme ─── */
+[data-theme="dark"] {
+  --bg-base: #000;
+  --bg-surface: #0a0a0a;
+  --bg-surface-2: #171717;
+  --bg-card: #0a0a0a;
+  --border: #262626;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --text-on-primary: #fff;
+  --primary: #e63946;
+  --primary-hover: #dc2626;
+  --primary-light: #ef4444;
+  --primary-glow: #ff3b4b26;
+  --primary-glow-strong: #ff3b4b4d;
+  --shadow-sm: 0 1px 2px 0 #00000080;
+  --shadow-md: 0 4px 6px -1px #0006, 0 2px 4px -2px #0006;
+  --shadow-lg: 0 10px 15px -3px #00000080, 0 4px 6px -4px #00000080;
+  --shadow-primary: 0 8px 24px #ff3b4b33;
+  --backdrop: rgba(10, 10, 10, 0.6);
 }
 
 @theme {
   /* Fonts */
   --font-poppins: "Poppins", sans-serif;
 
-  /* Colors */
-  --color-background: #ffffff;
-  --color-background-surface: #f9fafb;
-  --color-background-surface-2: #f3f4f6;
-  --color-background-card: #ffffff;
+  /* Colors — reference CSS vars so they respond to data-theme switching */
+  --color-background: var(--bg-base);
+  --color-background-surface: var(--bg-surface);
+  --color-background-surface-2: var(--bg-surface-2);
+  --color-background-card: var(--bg-card);
 
-  --color-primary: #e63946;
-  --color-primary-hover: #dc2626;
-  --color-primary-light: #ef4444;
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
 
-  --color-primary-glow: #e639461a;
-  --color-primary-glow-strong: #e6394633;
+  --color-primary-glow: var(--primary-glow);
+  --color-primary-glow-strong: var(--primary-glow-strong);
 
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
-  --color-border: #e5e7eb;
+  --color-border: var(--border);
 
-  --color-text-primary: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #9ca3af;
-  --color-text-on-primary: #ffffff;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-backdrop: var(--backdrop);
 
   /* Border Radius */
   --radius-sm: 4px;
@@ -64,13 +90,11 @@
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md:
-    0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg:
-    0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-primary: 0 8px 24px rgb(230 57 70 / 0.25);
+  /* Shadows — reference CSS vars so dark overrides apply */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-primary: var(--shadow-primary);
 
   /* Transition */
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
@@ -184,14 +208,14 @@ body::selection {
 }
 
 .prompt-popover::backdrop {
-  background: rgb(0 0 0 / 0.15);
+  background: var(--color-backdrop);
 }
 
 @media (max-width: 64rem) {
   .prompt-popover {
     position-anchor: initial;
     inset: 0;
-    margin: -10rem 0 0 0;
+    /* margin: -10rem 0 0 0; */
     bottom: 0;
     left: 0;
     width: 100%;

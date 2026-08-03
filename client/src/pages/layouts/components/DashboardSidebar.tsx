@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   LayoutGrid,
   LogOut,
-  Moon,
   X,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -12,6 +11,7 @@ import { dashboardNav } from "../../../data/dashboardNav";
 import { useSession } from "../../../store/useSessionStore";
 import { useLogout } from "../../auth/core/hooks";
 import Button from "../../../components/Button";
+import ThemeButton from "../../../components/ThemeButton";
 
 interface DashboardSidebarProps {
   isCollapsed: boolean;
@@ -154,16 +154,7 @@ export default function DashboardSidebar({
         </div>
 
         <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col" : ""}`}>
-          <Button
-            type="button"
-            variant="secondary"
-            size={isCollapsed ? "icon" : "xs"}
-            onClick={() => document.documentElement.classList.toggle("dark")}
-            className="rounded-lg"
-          >
-            <Moon size={14} />
-            {!isCollapsed && "Dark Mode"}
-          </Button>
+          <ThemeButton showLabel={!isCollapsed} />
           <Link to="/dashboard/settings" aria-label="Settings">
             <Button
               type="button"

@@ -7,6 +7,7 @@ import MobileNav from "./MobileNav";
 //icons
 import Logo from "../assets/svgs/logo.svg?react";
 import Button from "./Button";
+import ThemeButton from "./ThemeButton";
 
 export default function Navbar() {
   const isAuthenticated = useSession((state) => state.isAuthenticated);
@@ -46,6 +47,8 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeButton />
+
             {isAuthenticated ? (
               <Button
                 variant="outline"
