@@ -45,7 +45,7 @@ export default function RecycleBin() {
   };
 
   return (
-    <main className="px-6 py-10 md:px-10">
+    <main className="px-6 py-10">
       <motion.div
         initial={{ y: 24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -55,7 +55,7 @@ export default function RecycleBin() {
           <Trash2 size={12} />
           Recycle Bin
         </span>
-        <h1 className="mt-5 text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.03em] text-text-primary">
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
           Deleted <span className="text-primary">Thumbnails</span>
         </h1>
         <p className="mt-2 text-sm text-text-secondary">
@@ -76,7 +76,7 @@ export default function RecycleBin() {
         </div>
 
         {isLoading ? (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             <ThumbnailCardSkeleton count={6} showRecycleBinActions />
           </div>
         ) : deletedThumbnails.length === 0 ? (
@@ -89,7 +89,7 @@ export default function RecycleBin() {
             </p>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {deletedThumbnails.map((thumbnail, index) => (
               <ThumbnailCard
                 key={thumbnail._id}
