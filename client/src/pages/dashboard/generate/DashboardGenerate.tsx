@@ -1,14 +1,79 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+import toast from "react-hot-toast";
+//Components
+import Alert from "../../../components/Alert";
+import Button from "../../../components/Button";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
-import { ThumbnailData } from "../../../data/thumbnail";
 import ThumbnailCard from "../../../components/ThumbnailCard";
+import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
+import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
+//Libs
+import { getApiErrorMessage } from "../../../lib/axios";
+import { buildThumbnailTitle } from "../../../lib/thumbnail";
+//Types
+import type { PromptSubmission } from "../../../types";
+//Hooks
+import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
+import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
+import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
 
 export default function DashboardGenerate() {
-  const generations = ThumbnailData.slice(0, 6);
+  const { data: generations = [], isPending: isLoading } = useGetMyThumbnails({
+    limit: 8,
+    page: 1,
+    sort: "newest",
+  });
+  const { generateThumbnailMutate, isPending } = useGenerateThumbnail();
+  const deleteMutation = useDeleteThumbnail();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const handleSubmit = async (submission: PromptSubmission) => {
+    setError(null);
+    setSuccess(null);
+
+    console.log("Submitting prompt:", submission);
+
+    const payload = {
+      title: buildThumbnailTitle(submission.prompt),
+      prompt: submission.prompt,
+      style: submission.style,
+      aspect_ratio: submission.aspectRatio,
+      color_scheme: submission.colorScheme,
+      text_overlay: true,
+      referenceImage: submission.referenceImage,
+    };
+    generateThumbnailMutate(payload, {
+      onSuccess: () => {
+        setSuccess("Your thumbnail was generated successfully.");
+      },
+      onError: (err) => {
+        setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
+      },
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return;
+
+    deleteMutation.mutate(deleteTarget, {
+      onSuccess: () => {
+        toast.success("Thumbnail moved to recycle bin.");
+        setDeleteTarget(null);
+      },
+      onError: (err) => {
+        toast.error(getApiErrorMessage(err, "Failed to delete thumbnail."));
+        setDeleteTarget(null);
+      },
+    });
+  };
 
   return (
-    <div className="px-6 py-10 md:px-10">
+    <div className="px-6 py-10">
       <motion.div
         className="mx-auto max-w-3xl text-center"
         initial={{ y: 24, opacity: 0 }}
@@ -27,32 +92,72 @@ export default function DashboardGenerate() {
         </p>
       </motion.div>
 
-      <div className="mx-auto mt-10 max-w-5xl">
-        <PromptCard label="Your prompt" />
+      <div className="mx-auto mt-10 max-w-5xl space-y-4">
+        {error && <Alert variant="error">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+
+        <PromptCard
+          label="Your prompt"
+          disabled={isPending}
+          submitLabel={isPending ? "Generating..." : "Generate Thumbnail"}
+          onSubmit={handleSubmit}
+        />
       </div>
 
       <hr className="mx-auto my-12 max-w-6xl border-border" />
 
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-text-primary">
-            My Generation
-          </h2>
-          <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
-            {generations.length}
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-text-primary">
+              Recently Generated Thumbnails
+            </h2>
+            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
+              {generations.length}
+            </span>
+          </div>
+          <Link to="/dashboard/gallery">
+            <Button variant="secondary" size="sm" fullWidth={false}>
+              View All
+            </Button>
+          </Link>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {generations.map((thumbnail, index) => (
-            <ThumbnailCard
-              key={thumbnail._id}
-              thumbnail={thumbnail}
-              index={index}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <ThumbnailCardSkeleton count={6} />
+          </div>
+        ) : generations.length === 0 ? (
+          <p className="mt-6 text-sm text-text-muted">
+            No thumbnails yet. Generate your first one above.
+          </p>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {generations?.map((thumbnail, index) => (
+              <ThumbnailCard
+                key={thumbnail._id}
+                thumbnail={thumbnail}
+                index={index}
+                showDelete
+                source="generate"
+                onDelete={(id) => setDeleteTarget(id)}
+                showPublish
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Thumbnail?"
+        description="This thumbnail will be moved to the recycle bin. You can restore it later."
+        confirmLabel="Move to Bin"
+        variant="danger"
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }

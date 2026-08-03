@@ -14,5 +14,5 @@ export default function FieldError({ meta }: { meta: AnyFieldMeta }) {
 
     if (!message) return null;
 
-    return <p className="mt-1.5 text-xs text-primary">{message}</p>;
+    return <p className="mt-1 text-xs text-primary">{message}</p>;
 }

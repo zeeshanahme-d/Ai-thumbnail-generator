@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import uploadsRouter from "./routes/uploads-files.routes.js";
 import thumbnailRouter from "./routes/thumbnail.routes.js";
+import thumbnailPublicRouter from "./routes/thumbnail-public.routes.js";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 app.use("/auth", authRouter);
 app.use("/users", authenticationToken, userRouter);
 app.use("/upload", authenticationToken, uploadsRouter);
+app.use("/thumbnail", thumbnailPublicRouter);
 app.use("/thumbnail", authenticationToken, thumbnailRouter);
 
 app.get("/", (req, res) => {

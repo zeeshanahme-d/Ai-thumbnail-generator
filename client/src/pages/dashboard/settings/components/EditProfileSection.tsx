@@ -9,7 +9,7 @@ import FieldError from "../../../auth/components/FieldError";
 import { useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useSession } from "../../../../store/useSessionStore";
-import { getUserInitial } from "../../../../helpers/herlper-fuctions";
+import { getUserInitial } from "../../../../lib/herlper-fuctions";
 import { useUploadAvatar } from "../core/hooks/use-upload-avatar";
 import { useUpdateProfile } from "../core/hooks/use-update-profile";
 import { updateProfileSchema } from "../core/_schemas";
@@ -140,7 +140,7 @@ export default function EditProfileSection() {
                         {/* Username */}
                         <form.Field name="username">
                             {(field) => (
-                                <div className="space-y-1.5">
+                                <div>
                                     <label htmlFor="username" className="pl-1 text-xs text-text-secondary">Username</label>
                                     <Input
                                         icon={AtSign}
@@ -158,7 +158,7 @@ export default function EditProfileSection() {
                         </form.Field>
 
                         {/* Email Address (read-only) */}
-                        <div className="space-y-1.5">
+                        <div>
                             <label htmlFor="email" className="pl-1 text-xs text-text-secondary">Email Address</label>
                             <Input
                                 icon={Mail}
@@ -174,7 +174,7 @@ export default function EditProfileSection() {
                         {/* Website */}
                         <form.Field name="website">
                             {(field) => (
-                                <div className="space-y-1.5">
+                                <div>
                                     <label htmlFor="website" className="pl-1 text-xs text-text-secondary">Website</label>
                                     <Input
                                         icon={Globe}
@@ -195,7 +195,7 @@ export default function EditProfileSection() {
                     {/* Bio */}
                     <form.Field name="bio">
                         {(field) => (
-                            <div className="space-y-1.5">
+                            <div>
                                 <div className="flex items-center justify-between px-1">
                                     <label htmlFor="bio" className="text-xs text-text-secondary">Bio</label>
                                     <span className="text-xs text-text-muted">{field.state.value.length}/200</span>

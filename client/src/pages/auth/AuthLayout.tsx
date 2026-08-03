@@ -19,7 +19,7 @@ export default function AuthLayout({
   topSlot,
 }: AuthLayoutProps) {
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-x-hidden bg-background-surface bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] bg-size-[48px_48px]">
+    <main className="relative flex min-h-dvh overflow-hidden flex-col overflow-x-hidden bg-background-surface bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] bg-size-[48px_48px]">
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] rounded-full bg-primary/12 blur-[120px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/12 blur-[120px] pointer-events-none z-0"></div>
 

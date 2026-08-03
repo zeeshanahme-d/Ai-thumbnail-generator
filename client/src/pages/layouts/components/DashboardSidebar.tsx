@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   LayoutGrid,
   LogOut,
-  Moon,
   X,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -12,6 +11,7 @@ import { dashboardNav } from "../../../data/dashboardNav";
 import { useSession } from "../../../store/useSessionStore";
 import { useLogout } from "../../auth/core/hooks";
 import Button from "../../../components/Button";
+import ThemeButton from "../../../components/ThemeButton";
 
 interface DashboardSidebarProps {
   isCollapsed: boolean;
@@ -32,11 +32,13 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-border bg-background-card transition-all duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isCollapsed ? "w-18" : "w-[272px]"}`}
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-border bg-background-card transition-all duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${
+        isMobileOpen ? "translate-x-0" : "-translate-x-full"
+      } ${isCollapsed ? "w-18" : "w-68"}`}
     >
-
-      <div className={`flex px-4 py-5 ${isCollapsed ? "justify-center" : "justify-between items-center gap-2"}`}>
+      <div
+        className={`flex px-4 py-5 ${isCollapsed ? "justify-center" : "justify-between items-center gap-2"}`}
+      >
         {!isCollapsed && (
           <Link to="/">
             <Logo className="h-7 w-auto" />
@@ -53,8 +55,9 @@ export default function DashboardSidebar({
         >
           <ChevronLeft
             size={18}
-            className={`transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""
-              }`}
+            className={`transition-transform duration-300 ${
+              isCollapsed ? "rotate-180" : ""
+            }`}
           />
         </Button>
         {/* Mobile close button */}
@@ -71,11 +74,14 @@ export default function DashboardSidebar({
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-4 pb-4">
-        {!isCollapsed ? <div className="flex items-center gap-2 mb-4 px-3 py-2 text-xs font-medium tracking-wide text-text-secondary">
-          <LayoutGrid size={14} className="shrink-0" />
-          <span>DASHBOARD</span>
-        </div> : <></>
-        }
+        {!isCollapsed ? (
+          <div className="flex items-center gap-2 mb-4 px-3 py-2 text-xs font-medium tracking-wide text-text-secondary">
+            <LayoutGrid size={14} className="shrink-0" />
+            <span>DASHBOARD</span>
+          </div>
+        ) : (
+          <></>
+        )}
 
         {dashboardNav.map((section) => (
           <div key={section.label}>
@@ -92,9 +98,10 @@ export default function DashboardSidebar({
                   onClick={() => setIsMobileOpen(false)}
                   title={isCollapsed ? label : undefined}
                   className={({ isActive }) =>
-                    `relative rounded-lg px-2.5 py-2.5 flex items-center gap-3 transition ${isActive
-                      ? "bg-primary/8 text-primary"
-                      : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
+                    `relative rounded-lg px-2.5 py-2.5 flex items-center gap-3 transition ${
+                      isActive
+                        ? "bg-primary/8 text-primary"
+                        : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
                     }`
                   }
                 >
@@ -132,10 +139,10 @@ export default function DashboardSidebar({
           {!isCollapsed && (
             <>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm max-w-[140px] font-medium text-text-primary">
+                <p className="truncate text-sm max-w-35 font-medium text-text-primary">
                   {user?.fullName ?? "Guest"}
                 </p>
-                <p className="truncate text-xs max-w-[150px] text-text-muted">
+                <p className="truncate text-xs max-w-37.5 text-text-muted">
                   {user?.email ?? ""}
                 </p>
               </div>
@@ -146,23 +153,17 @@ export default function DashboardSidebar({
           )}
         </div>
 
-        <div className={`mt-4 w-fit! flex gap-2 ${isCollapsed ? "flex-col" : ""}`}>
-          <Button
-            type="button"
-            variant="secondary"
-            size={isCollapsed ? "icon" : "xs"}
-            onClick={() => document.documentElement.classList.toggle("dark")}
-            className="rounded-lg"
-          >
-            <Moon size={14} />
-            {!isCollapsed && "Dark Mode"}
-          </Button>
-          <Link
-            to="/dashboard/settings"
-            aria-label="Settings"
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-text-secondary transition hover:bg-background-surface-2 hover:text-text-primary"
-          >
-            <SettingsIcon size={15} />
+        <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col" : ""}`}>
+          <ThemeButton showLabel={!isCollapsed} />
+          <Link to="/dashboard/settings" aria-label="Settings">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="rounded-lg"
+            >
+              <SettingsIcon size={15} />
+            </Button>
           </Link>
           <Button
             type="button"

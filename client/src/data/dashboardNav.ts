@@ -1,49 +1,55 @@
-import { ImagePlus, RefreshCw, Settings, User, Users } from "lucide-react";
+import { ImagePlus, RefreshCw, Settings, Trash2, User, Users } from "lucide-react";
 import type { IDashboardNavSection } from "../types";
 
 export const dashboardNav: IDashboardNavSection[] = [
     {
-        label: "Tools",
+        label: "Create",
         items: [
             {
                 to: "/dashboard/generate",
                 icon: ImagePlus,
                 label: "Generate",
-                description: "Create from prompt",
+                description: "Create a new thumbnail",
             },
             {
                 to: "/dashboard/recreate",
                 icon: RefreshCw,
                 label: "Recreate",
-                description: "Modify existing image",
+                description: "Generate from a reference image",
             },
         ],
     },
     {
-        label: "Explore",
+        label: "Discover",
         items: [
             {
                 to: "/dashboard/community",
                 icon: Users,
                 label: "Community",
-                description: "Browse creations",
+                description: "Browse community thumbnails",
             },
             {
-                to: "/dashboard/profile",
+                to: "/dashboard/gallery",
                 icon: User,
-                label: "Profile",
-                description: "Your gallery",
+                label: "My Gallery",
+                description: "Your generated thumbnails",
             },
         ],
     },
     {
-        label: "Preferences",
+        label: "Account",
         items: [
             {
                 to: "/dashboard/settings",
                 icon: Settings,
                 label: "Settings",
-                description: "Billing & profile options",
+                description: "Profile & billing",
+            },
+            {
+                to: "/dashboard/recycle-bin",
+                icon: Trash2,
+                label: "Recycle Bin",
+                description: "Restore deleted thumbnails",
             },
         ],
     },

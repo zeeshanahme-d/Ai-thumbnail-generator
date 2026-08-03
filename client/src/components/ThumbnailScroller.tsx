@@ -1,4 +1,5 @@
 import Marquee from "react-fast-marquee";
+import { useTheme } from "../store/useTheme";
 import { Sparkles } from "lucide-react";
 import type { ThumbnailScrollerProps } from "../types";
 
@@ -12,17 +13,18 @@ const ThumbnailScroller = ({
   images = THUMBNAILS,
   direction = "left",
   speed = 25,
-  gradient = true,
-  gradientColor = "#ffffff",
   pauseOnHover = true,
   className = "",
 }: ThumbnailScrollerProps) => {
+  const { theme } = useTheme();
+  const gradientColor = theme === "dark" ? "#000" : "#fff";
   return (
     <Marquee
       className={className}
       direction={direction}
       speed={speed}
-      gradient={gradient}
+      gradient={true}
+      gradientWidth={300}
       gradientColor={gradientColor}
       pauseOnHover={pauseOnHover}
       autoFill
@@ -30,7 +32,7 @@ const ThumbnailScroller = ({
       {images.map((src, index) => (
         <div
           key={`${src}-${index}`}
-          className="group relative mx-2 w-[260px] md:w-[300px] shrink-0 overflow-hidden rounded-xl border border-border shadow-[0_2px_16px_-4px_rgba(0,0,0,0.15)]"
+          className="group relative mx-2 w-65 md:w-75 shrink-0 overflow-hidden rounded-xl border border-border shadow-[0_2px_16px_-4px_rgba(0,0,0,0.15)]"
         >
           <img
             src={src}
