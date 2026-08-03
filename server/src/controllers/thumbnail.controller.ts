@@ -3,13 +3,13 @@ import path from "path";
 import fsPromises from "fs/promises";
 import { GenerateContentConfig, HarmBlockThreshold, HarmCategory, } from "@google/genai";
 import genai from "../config/genai.js";
-import { colorSchemeDescriptions, CREDIT_COST, stylePrompts, } from "../constants/constants.js";
+import { colorSchemeDescriptions, CREDIT_COST, stylePrompts, THUMBNAIL_SORT_OPTIONS, } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { UploadErrorCode } from "../constants/enums.js";
 import uploadFileOnCloudniary, { removeLocalFile, deleteFileFromCloudinary } from "../utils/cloudniary.js";
-import { getPaginationParams, formatPaginatedResponse } from "../utils/pagination.js";
+import { formatPaginatedResponse } from "../utils/pagination.js";
 import { verifyAccessToken } from "../helper/token-helpers.js";
 import userModel from "../models/user.model.js";
 
@@ -63,7 +63,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${Math.max(0, totalCredits - currentCreditsUsed)} credits.`, "INSUFFICIENT_CREDITS");
     }
 
-    const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay } = req.body;
+    const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay } = req.validated!.body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       return ApiResponse.error(res, 400, "Please provide a thumbnail title.");
@@ -315,17 +315,30 @@ const getMyThumbnails = async (req: Request, res: Response) => {
       return ApiResponse.error(res, 401, "Unauthorized.");
     }
 
-    const { page, limit, skip } = getPaginationParams(req);
+    const { page, limit, search, style, sort } = req.validated!.query;
+    const skip = (page - 1) * limit;
 
-    const query = {
+    const query: Record<string, any> = {
       userId,
       deletedAt: null,
     };
 
+    if (style && typeof style === "string") {
+      query.style = style;
+    }
+    if (search && typeof search === "string") {
+      query.title = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
     const [rawThumbnails, total, likedSet] = await Promise.all([
       thumbnailModel
         .find(query)
-        .sort({ createdAt: -1 })
+        .sort(sortQuery)
         .populate("userId", "fullName avatar")
         .lean()
         .skip(skip)
@@ -355,17 +368,30 @@ const getMyThumbnails = async (req: Request, res: Response) => {
 const getCommunityThumbnails = async (req: Request, res: Response) => {
   try {
     const userId = resolveUserId(req);
-    const { page, limit, skip } = getPaginationParams(req);
+    const { page, limit, search, style, sort } = req.validated!.query;
+    const skip = (page - 1) * limit;
 
-    const query = {
+    const query: Record<string, any> = {
       published: true,
       deletedAt: null,
     };
 
+    if (style && typeof style === "string") {
+      query.style = style;
+    }
+    if (search && typeof search === "string") {
+      query.title = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
     const [rawThumbnails, total, likedSet] = await Promise.all([
       thumbnailModel
         .find(query)
-        .sort({ publishedAt: -1, createdAt: -1 })
+        .sort(sortQuery)
         .populate("userId", "fullName avatar")
         .lean()
         .skip(skip)
@@ -399,17 +425,30 @@ const getRecycleBinThumbnails = async (req: Request, res: Response) => {
       return ApiResponse.error(res, 401, "Unauthorized.");
     }
 
-    const { page, limit, skip } = getPaginationParams(req);
+    const { page, limit, search, style, sort } = req.validated!.query;
+    const skip = (page - 1) * limit;
 
-    const query = {
+    const query: Record<string, any> = {
       userId,
       deletedAt: { $ne: null },
     };
 
+    if (style && typeof style === "string") {
+      query.style = style;
+    }
+    if (search && typeof search === "string") {
+      query.title = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
     const [rawThumbnails, total] = await Promise.all([
       thumbnailModel
         .find(query)
-        .sort({ deletedAt: -1 })
+        .sort(sortQuery)
         .populate("userId", "fullName avatar")
         .lean()
         .skip(skip)
@@ -616,7 +655,7 @@ const publishThumbnailToCommunity = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { published } = req.body;
+    const { published } = req.validated!.body;
 
     const thumbnail = await thumbnailModel.findOneAndUpdate(
       {

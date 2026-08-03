@@ -18,9 +18,7 @@ export interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
-export function getPaginationParams(req: Request): PaginationParams {
-  const pageQuery = req.query.page;
-  const limitQuery = req.query.limit;
+export function getPaginationParams(pageQuery: string | number, limitQuery: string | number): PaginationParams {
 
   const parsedPage = parseInt(String(pageQuery), 10);
   const parsedLimit = parseInt(String(limitQuery), 10);
