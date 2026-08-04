@@ -8,6 +8,7 @@ import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
 import useGetCommunityThumbnails from "../dashboard/core/hooks/useGetCommunityThumbnails";
+import Wrapper from "../../components/Wrapper";
 
 export default function Community() {
   const [params, setParams] = useState<{ [key: string]: any }>({ page: 1, limit: 10, sort: "newest" });
@@ -27,7 +28,7 @@ export default function Community() {
 
   return (
     <main className="px-6 py-10">
-      <div>
+      <Wrapper>
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -99,7 +100,7 @@ export default function Community() {
             </Button>
           </div>
         ) : null}
-      </div>
+      </Wrapper>
     </main>
   );
 }
