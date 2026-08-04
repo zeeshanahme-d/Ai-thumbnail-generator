@@ -2,9 +2,12 @@ import api from "../../../lib/axios";
 import type {
     ApiSuccess,
     AuthResponse,
+    ForgotPasswordPayload,
     LoginPayload,
     MeResponse,
+    ResetPasswordPayload,
     SignupPayload,
+    VerifyOtpPayload,
 } from "./_models";
 
 export const AUTH_URL = {
@@ -14,6 +17,9 @@ export const AUTH_URL = {
     verify: "/auth/verify",
     logout: "/auth/logout",
     me: "/auth/me",
+    forgotPassword: "/auth/forgot-password",
+    verifyOtp: "/auth/verify-otp",
+    resetPassword: "/auth/reset-password",
 };
 
 export async function login(payload: LoginPayload) {
@@ -26,6 +32,30 @@ export async function login(payload: LoginPayload) {
 
 export async function signup(payload: SignupPayload) {
     const { data } = await api.post<ApiSuccess<never>>(AUTH_URL.signup, payload);
+    return data;
+}
+
+export async function forgotPassword(payload: ForgotPasswordPayload) {
+    const { data } = await api.post<ApiSuccess<never>>(
+        AUTH_URL.forgotPassword,
+        payload,
+    );
+    return data;
+}
+
+export async function verifyOtp(payload: VerifyOtpPayload) {
+    const { data } = await api.post<ApiSuccess<never>>(
+        AUTH_URL.verifyOtp,
+        payload,
+    );
+    return data;
+}
+
+export async function resetPassword(payload: ResetPasswordPayload) {
+    const { data } = await api.post<ApiSuccess<never>>(
+        AUTH_URL.resetPassword,
+        payload,
+    );
     return data;
 }
 

@@ -29,6 +29,21 @@ export interface SignupPayload {
     password: string;
 }
 
+export interface ForgotPasswordPayload {
+    email: string;
+}
+
+export interface VerifyOtpPayload {
+    email: string;
+    otp: string;
+}
+
+export interface ResetPasswordPayload {
+    email: string;
+    otp: string;
+    newPassword: string;
+}
+
 export interface AuthResponse {
     user: IUser;
 }
