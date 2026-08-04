@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
 import { useLogout } from "../pages/auth/core/hooks";
 import { navlinks } from "../data/navlinks";
+import Button from "./Button";
 
 const MENU_ID = "mobile-nav-menu";
 
@@ -26,13 +27,16 @@ export default function MobileNav() {
 
     return (
         <>
-            <button
+            <Button
+                type="button"
+                variant="secondary"
+                size="icon"
                 popoverTarget={MENU_ID}
                 aria-label={isOpen ? "Close menu" : "Open menu"}
-                className="flex size-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:bg-background-surface-2 active:scale-90 md:hidden"
+                className="md:hidden!"
             >
                 {isOpen ? <XIcon size={18} /> : <MenuIcon size={18} />}
-            </button>
+            </Button>
 
             {/* Native Popover API — light-dismiss and Esc come for free */}
             <div

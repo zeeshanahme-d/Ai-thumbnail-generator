@@ -47,16 +47,16 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeButton />
+            <ThemeButton showLabel={false} />
 
             {isAuthenticated ? (
               <Button
-                variant="outline"
-                size="sm"
+                variant="secondary"
+                size="icon"
                 onClick={handleNavigateToProfile}
-                className="hidden p-0! md:flex items-center rounded-full"
+                className="hidden md:flex items-center"
               >
-                <img src={user?.avatar?.url} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+                <img src={user?.avatar?.url} alt="" className="h-full w-full rounded-full object-cover" />
               </Button>
             ) : (
               <Link
