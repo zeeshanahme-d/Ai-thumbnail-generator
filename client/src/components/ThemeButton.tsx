@@ -4,9 +4,10 @@ import { useTheme } from "../store/useTheme";
 
 interface ThemeButtonProps {
   showLabel?: boolean;
+  className?: string;
 }
 
-export default function ThemeButton({ showLabel = false }: ThemeButtonProps) {
+export default function ThemeButton({ showLabel = false, className }: ThemeButtonProps) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
 
@@ -17,7 +18,7 @@ export default function ThemeButton({ showLabel = false }: ThemeButtonProps) {
       size={showLabel ? "xs" : "icon"}
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="rounded-lg"
+      className={className}
     >
       {isDark ? <Sun size={14} /> : <Moon size={14} />}
       {showLabel && (isDark ? "Light Mode" : "Dark Mode")}
