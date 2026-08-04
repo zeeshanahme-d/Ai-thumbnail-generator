@@ -17,7 +17,6 @@ export default function DashboardHeader({ setIsMobileOpen }: DashboardHeaderProp
           variant="secondary"
           size="icon"
           onClick={() => setIsMobileOpen(true)}
-          className="rounded-lg"
         >
           <Menu size={18} />
         </Button>
