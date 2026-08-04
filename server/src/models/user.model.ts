@@ -59,6 +59,26 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    resetPasswordOtp: {
+      type: String,
+      select: false,
+    },
+
+    resetPasswordOtpExpiresAt: {
+      type: Date,
+      select: false,
+    },
+
+    emailVerificationOtp: {
+      type: String,
+      select: false,
+    },
+
+    emailVerificationOtpExpiresAt: {
+      type: Date,
+      select: false,
+    },
+
     provider: {
       type: String,
       enum: Object.values(AuthProvider),

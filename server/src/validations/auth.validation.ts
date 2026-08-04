@@ -11,11 +11,10 @@ const signupSchema = z.object({
 
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Must contain one uppercase letter")
-    .regex(/[a-z]/, "Must contain one lowercase letter")
-    .regex(/[0-9]/, "Must contain one number")
-    .regex(/[!@#$%^&*]/, "Must contain one special character"),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
+      "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
+    ),
 });
 
 const updateProfileSchema = z.object({
@@ -55,5 +54,37 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
-export { signupSchema, loginSchema, updateProfileSchema };
+const forgotPasswordSchema = z.object({
+  email: z.email("Invalid email address").trim().toLowerCase(),
+});
 
+const verifyOtpSchema = z.object({
+  email: z.email("Invalid email address").trim().toLowerCase(),
+  otp: z
+    .string()
+    .length(6, "OTP must be 6 digits")
+    .regex(/^\d{6}$/, "OTP must be numeric"),
+})
+
+const resetPasswordSchema = z.object({
+  email: z.email("Invalid email address").trim().toLowerCase(),
+  otp: z
+    .string()
+    .length(6, "OTP must be 6 digits")
+    .regex(/^\d{6}$/, "OTP must be numeric"),
+  newPassword: z
+    .string()
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
+      "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
+    ),
+});
+
+export {
+  signupSchema,
+  loginSchema,
+  updateProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyOtpSchema
+};
