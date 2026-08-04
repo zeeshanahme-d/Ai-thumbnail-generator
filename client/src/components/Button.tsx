@@ -3,7 +3,7 @@ import React from "react";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "outline" | "ghost";
-  size?: "xs" | "sm" | "md" | "icon" | "iconSm";
+  size?: "xs" | "sm" | "md" | "icon" | "iconSm" | "iconLg";
   rounded?: "full" | "lg";
   fullWidth?: boolean;
   className?: string;
@@ -26,6 +26,7 @@ const Button: React.FC<ButtonProps> = ({
     sm: "px-5 py-2.5 text-sm font-medium",
     md: "px-6 py-3.25 text-sm font-medium",
     icon: "size-8 shrink-0",
+    iconLg: "size-9 px-2 rounded-full",
     iconSm: "size-6 px-1.5",
   };
 
@@ -36,8 +37,7 @@ const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary: "bg-primary hover:bg-primary-hover text-text-on-primary",
-    secondary:
-      "border border-border text-text-secondary hover:bg-background-surface-2 hover:text-text-primary",
+    secondary: "border border-border text-text-secondary hover:bg-background-surface-2 hover:text-text-primary",
     outline: "bg-transparent border border-white/20 hover:bg-white/10",
     ghost: "bg-primary/10 text-primary hover:bg-primary/20",
   };
