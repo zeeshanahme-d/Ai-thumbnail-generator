@@ -32,9 +32,8 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-border bg-background-card transition-all duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${
-        isMobileOpen ? "translate-x-0" : "-translate-x-full"
-      } ${isCollapsed ? "w-18" : "w-68"}`}
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-border bg-background-card transition-all duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        } ${isCollapsed ? "w-18" : "w-68"}`}
     >
       <div
         className={`flex px-4 py-5 ${isCollapsed ? "justify-center" : "justify-between items-center gap-2"}`}
@@ -55,9 +54,8 @@ export default function DashboardSidebar({
         >
           <ChevronLeft
             size={18}
-            className={`transition-transform duration-300 ${
-              isCollapsed ? "rotate-180" : ""
-            }`}
+            className={`transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""
+              }`}
           />
         </Button>
         {/* Mobile close button */}
@@ -98,10 +96,9 @@ export default function DashboardSidebar({
                   onClick={() => setIsMobileOpen(false)}
                   title={isCollapsed ? label : undefined}
                   className={({ isActive }) =>
-                    `relative rounded-lg px-2.5 py-2.5 flex items-center gap-3 transition ${
-                      isActive
-                        ? "bg-primary/8 text-primary"
-                        : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
+                    `relative rounded-lg px-2.5 py-2.5 flex items-center gap-3 transition ${isActive
+                      ? "bg-primary/8 text-primary"
+                      : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
                     }`
                   }
                 >
@@ -154,7 +151,7 @@ export default function DashboardSidebar({
         </div>
 
         <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col" : ""}`}>
-          <ThemeButton showLabel={!isCollapsed} />
+          <ThemeButton showLabel={!isCollapsed} className="rounded-lg" />
           <Link to="/dashboard/settings" aria-label="Settings">
             <Button
               type="button"
