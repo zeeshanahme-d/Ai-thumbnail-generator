@@ -55,3 +55,6 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
     createdAt: 1,
   },
 };
+
+export const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
