@@ -46,6 +46,7 @@ function AppRoutes() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/community" element={<Community />} />
                     <Route path="/preview" element={<YtPreview />} />
+                    <Route path="/profile/:username" element={<PublicProfile />} />
                     <Route path="/profile" element={<PublicProfile />} />
                     {/* Thumbnail preview — public, shareable */}
                     <Route path="/thumbnail/:id" element={<ThumbnailPreview />} />
