@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use("/auth", authRouter);
-app.use("/users", authenticationToken, userRouter);
+app.use("/users", userRouter);
 app.use("/upload", authenticationToken, uploadsRouter);
 app.use("/thumbnail", thumbnailPublicRouter);
 app.use("/thumbnail", authenticationToken, thumbnailRouter);
