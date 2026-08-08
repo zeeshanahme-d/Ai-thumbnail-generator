@@ -129,7 +129,7 @@ export default function DashboardSidebar({
 
       {/* Account */}
       <div className="border-t border-border p-4">
-        <div className="w-fit! flex items-center gap-3">
+        <Link to="/profile" className="w-fit! flex items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-teal-500 text-sm font-semibold text-white">
             {initial}
           </span>
@@ -148,9 +148,9 @@ export default function DashboardSidebar({
               </span>
             </>
           )}
-        </div>
+        </Link>
 
-        <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col" : ""}`}>
+        <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col px-0.5" : ""}`}>
           <ThemeButton showLabel={!isCollapsed} className="rounded-lg" />
           <Link to="/dashboard/settings" aria-label="Settings">
             <Button
