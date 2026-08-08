@@ -17,6 +17,7 @@ export interface PaginationParams {
   search?: string;
   sort?: string;
   style?: string;
+  userId?: string;
 }
 
 export type GetThumbnailsParams = PaginationParams;
