@@ -184,7 +184,7 @@ export default function ThumbnailPreview() {
                 This{" "}
                 <span className="font-medium text-primary">{thumbnail.title}</span>{" "}
                 thumbnail was generated using{" "}
-                <span className="font-medium text-primary">ThumbnailGo's AI thumbnail generator</span>{" "}
+                <span className="font-medium text-primary">Thumblify's AI thumbnail generator</span>{" "}
                 {thumbnail.style ? `in the ${thumbnail.style} style. ` : ". "}
                 It was published by{" "}
                 <span className="font-medium text-text-primary">@{authorName.toLowerCase().replace(/\s+/g, "_")}</span>{" "}
@@ -195,10 +195,10 @@ export default function ThumbnailPreview() {
                 <a href="/dashboard/generate" className="font-medium text-primary hover:underline">
                   generate a similar {thumbnail.style ?? ""} thumbnail
                 </a>{" "}
-                for free using ThumbnailGo — no sign-up required.
+                for free using Thumblify — no sign-up required.
               </p>
               <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-                ThumbnailGo lets content creators generate stunning YouTube thumbnails, social media graphics,
+                Thumblify lets content creators generate stunning YouTube thumbnails, social media graphics,
                 and video covers using AI in seconds. Choose from 10+ style presets including cinematic,
                 anime, neon, photorealistic, and more.
               </p>
