@@ -1,17 +1,18 @@
 //icons
-import { User, AtSign, Mail, Globe, Loader2 } from "lucide-react";
+import { User, AtSign, Mail, Globe, Loader2, CheckCircle2, XCircle } from "lucide-react";
 //components
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import Alert from "../../../../components/Alert";
 import FieldError from "../../../auth/components/FieldError";
 //hooks & utils
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useSession } from "../../../../store/useSessionStore";
-import { getUserInitial } from "../../../../lib/herlper-fuctions";
+import { getUserInitial, debounce } from "../../../../lib/herlper-fuctions";
 import { useUploadAvatar } from "../core/hooks/use-upload-avatar";
 import { useUpdateProfile } from "../core/hooks/use-update-profile";
+import { useCheckUsername } from "../../../profile/core/hooks/useCheckUsername";
 import { updateProfileSchema } from "../core/_schemas";
 import { getApiErrorMessage } from "../../../../lib/axios";
 
@@ -21,7 +22,23 @@ export default function EditProfileSection() {
     const { mutate: uploadAvatar, isPending: isUploading } = useUploadAvatar();
     const { mutateAsync: updateProfile, isPending: isUpdating, error, isSuccess } = useUpdateProfile();
 
-    const initial = getUserInitial(user?.fullName);
+    const [debouncedUsername, setDebouncedUsername] = useState(user?.username ?? "");
+
+    const handleDebouncedUsernameChange = useCallback(
+        debounce((value: string) => {
+            setDebouncedUsername(value);
+        }, 400),
+        [],
+    );
+
+    const isUsernameUnchanged = debouncedUsername.trim().toLowerCase() === (user?.username ?? "").toLowerCase();
+
+    const { data: checkData, isFetching: isCheckingUsername } = useCheckUsername(
+        !isUsernameUnchanged ? debouncedUsername : undefined,
+        user?._id,
+    );
+
+    const isUsernameTaken = !isUsernameUnchanged && checkData?.available === false;
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -48,6 +65,7 @@ export default function EditProfileSection() {
         },
         validators: { onChange: updateProfileSchema, onSubmit: updateProfileSchema },
         onSubmit: async ({ value }) => {
+            if (isUsernameTaken || isCheckingUsername) return;
             try {
                 await updateProfile(value);
             } catch {
@@ -76,7 +94,7 @@ export default function EditProfileSection() {
                         {user?.avatar?.url ? (
                             <img src={user.avatar.url} alt="Avatar" className="size-full object-cover" />
                         ) : (
-                            initial
+                            getUserInitial(user?.fullName)
                         )}
                     </div>
                     <button
@@ -150,8 +168,29 @@ export default function EditProfileSection() {
                                         placeholder="username"
                                         value={field.state.value}
                                         onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            field.handleChange(val);
+                                            handleDebouncedUsernameChange(val);
+                                        }}
                                     />
+                                    {!isUsernameUnchanged && debouncedUsername.trim().length >= 3 && (
+                                        <div className="mt-1">
+                                            {isCheckingUsername ? (
+                                                <span className="flex items-center gap-1 text-xs text-text-muted">
+                                                    <Loader2 size={12} className="animate-spin" /> Checking availability...
+                                                </span>
+                                            ) : checkData?.available === true ? (
+                                                <span className="flex items-center gap-1 text-xs font-medium text-emerald-500">
+                                                    <CheckCircle2 size={13} /> Username is available
+                                                </span>
+                                            ) : checkData?.available === false ? (
+                                                <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                                                    <XCircle size={13} /> Username is already taken
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                    )}
                                     <FieldError meta={field.state.meta} />
                                 </div>
                             )}
@@ -226,7 +265,7 @@ export default function EditProfileSection() {
                                     variant="primary"
                                     size="sm"
                                     fullWidth={false}
-                                    disabled={isSubmitting || isUpdating}
+                                    disabled={isSubmitting || isUpdating || isUsernameTaken || isCheckingUsername}
                                 >
                                     {isSubmitting || isUpdating ? "Saving..." : "Save Profile"}
                                 </Button>
