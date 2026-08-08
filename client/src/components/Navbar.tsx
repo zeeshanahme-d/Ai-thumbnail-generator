@@ -16,7 +16,11 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const handleNavigateToProfile = () => {
-    navigate("/profile")
+    if (user?.username) {
+      navigate(`/profile/${user.username}`);
+    } else {
+      navigate("/profile");
+    }
   };
 
   return (
