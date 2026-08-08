@@ -12,6 +12,7 @@ const ITEM_CLASSES =
     "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-text-secondary transition hover:bg-background-surface-2 hover:text-text-primary";
 
 export default function MobileNav() {
+    const user = useSession((state) => state.user);
     const isAuthenticated = useSession((state) => state.isAuthenticated);
     const { mutate: logout } = useLogout();
     const { pathname } = useLocation();
@@ -67,7 +68,7 @@ export default function MobileNav() {
 
                     <hr className="my-3 border-border" />
 
-                    <Link to="/dashboard/profile" onClick={closeMenu} className={ITEM_CLASSES}>
+                    <Link to={user?.username ? `/profile/${user.username}` : "/profile"} onClick={closeMenu} className={ITEM_CLASSES}>
                         <User size={16} />
                         Profile
                     </Link>
