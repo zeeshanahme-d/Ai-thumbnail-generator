@@ -34,6 +34,7 @@ const getThumbnailSchema = z.object({
   search: z.string().trim().max(100).optional().default(""),
   style: z.enum(ThumbnailStyle).optional(),
   sort: z.enum(THUMBNAIL_SORT).optional().default(THUMBNAIL_SORT.Newest),
+  userId: z.string().optional(),
 });
 
 export { generateThumbnailSchema, publishThumbnailSchema, getThumbnailSchema };
