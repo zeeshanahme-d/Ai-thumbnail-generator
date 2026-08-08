@@ -199,6 +199,7 @@ export interface UserId {
   _id: string;
   name?: string;
   fullName?: string;
+  username?: string;
   image_url?: string;
   avatar?: MediaAsset;
 }
