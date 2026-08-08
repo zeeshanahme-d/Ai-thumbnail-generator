@@ -339,7 +339,7 @@ const getMyThumbnails = async (req: Request, res: Response) => {
       thumbnailModel
         .find(query)
         .sort(sortQuery)
-        .populate("userId", "fullName avatar")
+        .populate("userId", "fullName username avatar")
         .lean()
         .skip(skip)
         .limit(limit),
@@ -368,7 +368,7 @@ const getMyThumbnails = async (req: Request, res: Response) => {
 const getCommunityThumbnails = async (req: Request, res: Response) => {
   try {
     const userId = resolveUserId(req);
-    const { page, limit, search, style, sort } = req.validated!.query;
+    const { page, limit, search, style, sort, userId: filterUserId } = req.validated!.query;
     const skip = (page - 1) * limit;
 
     const query: Record<string, any> = {
@@ -376,6 +376,9 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
       deletedAt: null,
     };
 
+    if (filterUserId && typeof filterUserId === "string") {
+      query.userId = filterUserId;
+    }
     if (style && typeof style === "string") {
       query.style = style;
     }
@@ -392,7 +395,7 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
       thumbnailModel
         .find(query)
         .sort(sortQuery)
-        .populate("userId", "fullName avatar")
+        .populate("userId", "fullName username avatar")
         .lean()
         .skip(skip)
         .limit(limit),
@@ -449,7 +452,7 @@ const getRecycleBinThumbnails = async (req: Request, res: Response) => {
       thumbnailModel
         .find(query)
         .sort(sortQuery)
-        .populate("userId", "fullName avatar")
+        .populate("userId", "fullName username avatar")
         .lean()
         .skip(skip)
         .limit(limit),
