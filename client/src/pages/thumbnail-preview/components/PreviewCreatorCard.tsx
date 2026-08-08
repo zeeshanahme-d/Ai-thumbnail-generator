@@ -20,9 +20,12 @@ export default function PreviewCreatorCard({ userId }: PreviewCreatorCardProps) 
   const name = isObject
     ? (userId as UserId).fullName ?? (userId as UserId).name ?? "Anonymous"
     : "You";
+  const username = isObject ? (userId as UserId).username : undefined;
   const avatarUrl = isObject ? (userId as UserId).avatar?.url : undefined;
   const initial = name.charAt(0).toUpperCase();
   const color = avatarColor(name);
+
+  const profileHref = username ? `/profile/${username}` : "/profile";
 
   return (
     <div className="rounded-2xl border border-border bg-background-card p-5">
@@ -46,12 +49,14 @@ export default function PreviewCreatorCard({ userId }: PreviewCreatorCardProps) 
         )}
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-text-primary">{name}</p>
-          <p className="truncate text-xs text-text-muted">@{name.toLowerCase().replace(/\s+/g, "_")}</p>
+          <p className="truncate text-xs text-text-muted">
+            @{username || name.toLowerCase().replace(/\s+/g, "_")}
+          </p>
         </div>
       </div>
 
       <Link
-        to="/profile"
+        to={profileHref}
         className="mt-4 flex w-full items-center justify-center rounded-xl border border-border py-2 text-sm font-medium text-text-primary transition hover:bg-background-surface-2"
       >
         View Profile
