@@ -17,7 +17,7 @@ import {
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode } from "../constants/enums.js";
 import { sendOtpEmail } from "../utils/email.js";
-import { generateOtp } from "../utils/helpers.js";
+import { generateOtp, generateUniqueUsername } from "../utils/helpers.js";
 import { OTP_EXPIRY_MS } from "../constants/constants.js";
 
 // ────────────────────────────────────────────── Helpers
@@ -257,9 +257,11 @@ async function handleSignupUser(req: Request, res: Response) {
     }
 
     const hashedPassword = await hashPassword(password);
+    const username = await generateUniqueUsername(fullName, userModel);
 
     await userModel.create({
       fullName,
+      username,
       email,
       password: hashedPassword,
     });
