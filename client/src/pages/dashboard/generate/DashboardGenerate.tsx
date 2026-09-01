@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
 //Components
 import Alert from "../../../components/Alert";
@@ -10,11 +10,14 @@ import PromptCard from "../../../components/image-generate-components/PromptCard
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
+import GenerationSkeleton from "./components/GenerationSkeleton";
+import GenerationResultCard from "./components/GenerationResultCard";
 //Libs
 import { getApiErrorMessage } from "../../../lib/axios";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
 //Types
-import type { PromptSubmission } from "../../../types";
+import type { PromptSubmission, Thumbnail } from "../../../types";
+import type { GenerateThumbnailPayload } from "../core/_models";
 //Hooks
 import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
 import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
@@ -32,13 +35,28 @@ export default function DashboardGenerate() {
   const [success, setSuccess] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const handleSubmit = async (submission: PromptSubmission) => {
+  const [lastGeneratedThumbnail, setLastGeneratedThumbnail] =
+    useState<Thumbnail | null>(null);
+  const [lastSubmissionPayload, setLastSubmissionPayload] =
+    useState<GenerateThumbnailPayload | null>(null);
+
+  const executeGeneration = (payload: GenerateThumbnailPayload) => {
     setError(null);
     setSuccess(null);
 
-    console.log("Submitting prompt:", submission);
+    generateThumbnailMutate(payload, {
+      onSuccess: (newThumbnail) => {
+        setSuccess("Your thumbnail was generated successfully.");
+        setLastGeneratedThumbnail(newThumbnail);
+      },
+      onError: (err) => {
+        setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
+      },
+    });
+  };
 
-    const payload = {
+  const handleSubmit = async (submission: PromptSubmission) => {
+    const payload: GenerateThumbnailPayload = {
       title: buildThumbnailTitle(submission.prompt),
       prompt: submission.prompt,
       style: submission.style,
@@ -47,14 +65,20 @@ export default function DashboardGenerate() {
       text_overlay: true,
       referenceImage: submission.referenceImage,
     };
-    generateThumbnailMutate(payload, {
-      onSuccess: () => {
-        setSuccess("Your thumbnail was generated successfully.");
-      },
-      onError: (err) => {
-        setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
-      },
-    });
+    setLastSubmissionPayload(payload);
+    executeGeneration(payload);
+  };
+
+  const handleRegenerate = () => {
+    if (lastSubmissionPayload) {
+      executeGeneration(lastSubmissionPayload);
+    }
+  };
+
+  const handleNewPrompt = () => {
+    setLastGeneratedThumbnail(null);
+    setError(null);
+    setSuccess(null);
   };
 
   const handleDeleteConfirm = () => {
@@ -63,6 +87,9 @@ export default function DashboardGenerate() {
     deleteMutation.mutate(deleteTarget, {
       onSuccess: () => {
         toast.success("Thumbnail moved to recycle bin.");
+        if (lastGeneratedThumbnail?._id === deleteTarget) {
+          setLastGeneratedThumbnail(null);
+        }
         setDeleteTarget(null);
       },
       onError: (err) => {
@@ -94,14 +121,29 @@ export default function DashboardGenerate() {
 
       <div className="mx-auto mt-10 max-w-5xl space-y-4">
         {error && <Alert variant="error">{error}</Alert>}
-        {success && <Alert variant="success">{success}</Alert>}
+        {success && !isPending && <Alert variant="success">{success}</Alert>}
 
-        <PromptCard
-          label="Your prompt"
-          disabled={isPending}
-          submitLabel={isPending ? "Generating..." : "Generate Thumbnail"}
-          onSubmit={handleSubmit}
-        />
+        <AnimatePresence mode="wait">
+          {isPending ? (
+            <GenerationSkeleton key="skeleton" />
+          ) : lastGeneratedThumbnail ? (
+            <GenerationResultCard
+              key="result"
+              thumbnail={lastGeneratedThumbnail}
+              onRegenerate={handleRegenerate}
+              onNewPrompt={handleNewPrompt}
+              isRegenerating={isPending}
+            />
+          ) : (
+            <PromptCard
+              key="prompt-card"
+              label="Your prompt"
+              disabled={isPending}
+              submitLabel="Generate Thumbnail"
+              onSubmit={handleSubmit}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       <hr className="mx-auto my-12 max-w-6xl border-border" />
