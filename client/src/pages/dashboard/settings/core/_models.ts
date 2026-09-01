@@ -1,4 +1,4 @@
-import type { IUser } from "../../../auth/core/_models";
+import type { IUser } from "../../../../types";
 
 export interface UploadAvatarResponse {
     user: IUser;
