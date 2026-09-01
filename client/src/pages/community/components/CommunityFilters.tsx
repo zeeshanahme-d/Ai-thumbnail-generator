@@ -21,7 +21,7 @@ export default function CommunityFilters({
   const debouncedSetParams = useMemo(() =>
     debounce((value: string) => {
       if (setParams) {
-        setParams((prev) => ({ ...prev, search: value, page: 1 }));
+        setParams((prev) => ({ ...prev, search: value || undefined, page: 1 }));
       }
       if (onSearchChange) {
         onSearchChange(value);
