@@ -22,6 +22,8 @@ export default function ProfileHeader({ user, isOwnProfile, totalCount, likesCou
               <img
                 src={user.avatar.url}
                 alt={user.fullName}
+                loading="lazy"
+                decoding="async"
                 className="size-full object-cover"
               />
             ) : (

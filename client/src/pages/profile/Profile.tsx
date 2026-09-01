@@ -15,6 +15,9 @@ import useGetMyThumbnails from "../dashboard/core/hooks/useGetMyThumbnails";
 import useGetCommunityThumbnails from "../dashboard/core/hooks/useGetCommunityThumbnails";
 import { useSession } from "../../store/useSessionStore";
 import { usePublicProfile } from "./core/hooks/usePublicProfile";
+import type { Thumbnail } from "../../types";
+
+const PAGE_SIZE = 12;
 
 export default function Profile() {
   const { username: urlUsername } = useParams<{ username?: string }>();
@@ -27,9 +30,11 @@ export default function Profile() {
 
   const [params, setParams] = useState<Record<string, any>>({
     page: 1,
-    limit: 12,
+    limit: PAGE_SIZE,
     sort: "newest",
   });
+
+  const [thumbnails, setThumbnails] = useState<Thumbnail[]>([]);
 
   // Query for logged in user's own profile
   const {
@@ -58,6 +63,23 @@ export default function Profile() {
       : undefined,
   );
 
+  const fetchedThumbnails = isOwnProfile ? myGenerations : publicThumbnails;
+
+  useEffect(() => {
+    if (!fetchedThumbnails) return;
+    if (params.page === 1) {
+      setThumbnails(fetchedThumbnails);
+    } else if (fetchedThumbnails.length > 0) {
+      setThumbnails((prev) => {
+        const existingIds = new Set(prev.map((t) => t._id));
+        const nextItems = fetchedThumbnails.filter(
+          (t) => !existingIds.has(t._id)
+        );
+        return [...prev, ...nextItems];
+      });
+    }
+  }, [fetchedThumbnails, params.page]);
+
   useEffect(() => {
     if (!urlUsername) {
       if (isAuthenticated && currentUser?.username) {
@@ -80,15 +102,18 @@ export default function Profile() {
 
   // Active user data & thumbnails
   const profileUser = isOwnProfile ? currentUser : publicUser;
-  const thumbnails = isOwnProfile ? myGenerations : publicThumbnails;
   const isProfileLoading = isOwnProfile ? false : isPublicProfileLoading;
   const isThumbnailsLoading = isOwnProfile
     ? isMyLoading
-    : isPublicProfileLoading || (Boolean(publicUser?._id) && isPublicThumbnailsLoading);
+    : isPublicProfileLoading ||
+      (Boolean(publicUser?._id) && isPublicThumbnailsLoading);
 
   const paginationMeta = isOwnProfile ? myPagination : publicPagination;
   const totalCount = paginationMeta?.total ?? thumbnails.length;
-  const likesCount = thumbnails.reduce((acc, curr) => acc + (curr.likesCount || 0), 0);
+  const likesCount = thumbnails.reduce(
+    (acc, curr) => acc + (curr.likesCount || 0),
+    0
+  );
 
   return (
     <main className="min-h-screen bg-background-surface pb-20">
@@ -136,21 +161,29 @@ export default function Profile() {
         </div>
 
         {/* Thumbnails Grid / Skeleton */}
-        {isThumbnailsLoading ? (
+        {isThumbnailsLoading && params.page === 1 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <ThumbnailCardSkeleton count={6} />
           </div>
         ) : thumbnails.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {thumbnails.map((thumbnail, index) => (
-              <ThumbnailCard
-                key={thumbnail._id}
-                thumbnail={thumbnail}
-                index={index}
-                source="profile"
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {thumbnails.map((thumbnail, index) => (
+                <ThumbnailCard
+                  key={thumbnail._id}
+                  thumbnail={thumbnail}
+                  index={index}
+                  source="profile"
+                />
+              ))}
+            </div>
+
+            {isThumbnailsLoading && params.page > 1 && (
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <ThumbnailCardSkeleton count={3} />
+              </div>
+            )}
+          </>
         ) : (
           <div className="py-12 text-center text-text-muted">
             <p className="text-sm">No public creations yet.</p>
@@ -165,13 +198,14 @@ export default function Profile() {
               onClick={() =>
                 setParams((prev) => ({
                   ...prev,
-                  limit: (prev.limit || 12) + 12,
+                  page: (prev.page || 1) + 1,
                 }))
               }
+              disabled={isThumbnailsLoading}
               fullWidth={false}
               variant="secondary"
             >
-              Load More
+              {isThumbnailsLoading ? "Loading..." : "Load More"}
             </Button>
           </div>
         ) : null}
