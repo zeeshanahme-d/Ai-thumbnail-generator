@@ -18,6 +18,8 @@ import PublicProfile from '../pages/profile/Profile';
 import MainLayout from '../pages/layouts/MainLayout';
 import MyGallery from '../pages/dashboard/gallery/MyGallery';
 import ThumbnailPreview from '../pages/thumbnail-preview/ThumbnailPreview';
+import NotFound from '../pages/not-found/NotFound';
+
 function AppRoutes() {
     return (
         <BrowserRouter>
@@ -50,6 +52,9 @@ function AppRoutes() {
                     <Route path="/profile" element={<PublicProfile />} />
                     {/* Thumbnail preview — public, shareable */}
                     <Route path="/thumbnail/:id" element={<ThumbnailPreview />} />
+
+                    {/* Catch-all 404 Route */}
+                    <Route path="*" element={<NotFound />} />
                 </Route>
             </Routes>
         </BrowserRouter>
