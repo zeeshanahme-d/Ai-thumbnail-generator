@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { IUser } from "../pages/auth/core/_models";
+import type { IUser } from "../types";
 
 const STORAGE_KEY = "tg_session";
 
