@@ -38,6 +38,8 @@ export default function PreviewCreatorCard({ userId }: PreviewCreatorCardProps) 
           <img
             src={avatarUrl}
             alt={name}
+            loading="lazy"
+            decoding="async"
             className="size-10 rounded-full object-cover"
           />
         ) : (

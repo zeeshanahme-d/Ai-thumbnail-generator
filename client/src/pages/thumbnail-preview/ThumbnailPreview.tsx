@@ -90,6 +90,8 @@ export default function ThumbnailPreview() {
                   <img
                     src={imageUrl}
                     alt={thumbnail.title}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 )}
