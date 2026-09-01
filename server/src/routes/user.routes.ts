@@ -6,7 +6,7 @@ import { updateProfileSchema } from "../validations/auth.validation.js";
 
 const router = express.Router();
 
-router.get("/check-username/:username", handleCheckUsername);
+router.get("/check-username/:username", authenticationToken, handleCheckUsername);
 router.get("/:username/profile", handleGetPublicProfile);
 
 // Protected routes
