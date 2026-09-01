@@ -615,8 +615,12 @@ const likeDislikeThumbnail = async (req: Request, res: Response) => {
     if (existingLike) {
       await existingLike.deleteOne();
       await thumbnailModel.findByIdAndUpdate(id, {
-        $inc: { likesCount: -1 },
-      });
+        _id: id,
+        likesCount: { $gt: 0 },
+      },
+        {
+          $inc: { likesCount: -1 },
+        });
       return ApiResponse.success(
         res,
         200,
