@@ -1,30 +1,67 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ALL_STYLES } from "../../data/community";
 import CommunityFilters from "./components/CommunityFilters";
-import type { CommunitySort } from "../../types";
+import type { CommunitySort, Thumbnail } from "../../types";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
 import useGetCommunityThumbnails from "../dashboard/core/hooks/useGetCommunityThumbnails";
 import Wrapper from "../../components/Wrapper";
 
-export default function Community() {
-  const [params, setParams] = useState<{ [key: string]: any }>({ page: 1, limit: 10, sort: "newest" });
-  const { data: fetchedThumbnails, isPending: isLoading, pagination } = useGetCommunityThumbnails(params);
+const PAGE_SIZE = 12;
 
+export default function Community() {
+  const [params, setParams] = useState<Record<string, any>>({
+    page: 1,
+    limit: PAGE_SIZE,
+    sort: "newest",
+  });
+  const { data: fetchedThumbnails, isPending: isLoading, pagination } =
+    useGetCommunityThumbnails(params);
+
+  const [thumbnails, setThumbnails] = useState<Thumbnail[]>([]);
   const [sort, setSort] = useState<CommunitySort>("newest");
   const [activeStyle, setActiveStyle] = useState(ALL_STYLES);
+
+  useEffect(() => {
+    if (!fetchedThumbnails) return;
+    if (params.page === 1) {
+      setThumbnails(fetchedThumbnails);
+    } else if (fetchedThumbnails.length > 0) {
+      setThumbnails((prev) => {
+        const existingIds = new Set(prev.map((t) => t._id));
+        const nextItems = fetchedThumbnails.filter(
+          (t) => !existingIds.has(t._id)
+        );
+        return [...prev, ...nextItems];
+      });
+    }
+  }, [fetchedThumbnails, params.page]);
 
   const handleSort = (value: CommunitySort) => {
     setSort(value);
     setParams((prev) => ({ ...prev, sort: value, page: 1 }));
   };
+
   const handleStyle = (value: string) => {
     setActiveStyle(value);
-    setParams((prev) => ({ ...prev, style: value === ALL_STYLES ? undefined : value, page: 1 }));
+    setParams((prev) => ({
+      ...prev,
+      style: value === ALL_STYLES ? undefined : value,
+      page: 1,
+    }));
   };
+
+  const handleLoadMore = () => {
+    setParams((prev) => ({
+      ...prev,
+      page: (prev.page || 1) + 1,
+    }));
+  };
+
+  const totalCount = pagination?.total ?? thumbnails.length;
 
   return (
     <main className="px-6 py-10">
@@ -34,7 +71,7 @@ export default function Community() {
             <div className="flex items-center gap-2">
               <Users size={18} className="text-primary" />
               <span className="rounded-full border border-border bg-background-card px-3 py-1 text-xs font-medium text-text-secondary">
-                {fetchedThumbnails.length}+ Thumbnails
+                {totalCount} Thumbnails
               </span>
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
@@ -66,37 +103,48 @@ export default function Community() {
           onStyleChange={handleStyle}
         />
 
-        {isLoading ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {/* Grid */}
+        {isLoading && params.page === 1 ? (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
             <ThumbnailCardSkeleton count={9} />
           </div>
-        ) : fetchedThumbnails.length > 0 ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {fetchedThumbnails.map((thumbnail, index) => (
-              <ThumbnailCard
-                key={thumbnail._id}
-                thumbnail={thumbnail}
-                index={index}
-                showLike
-                source="community"
-              />
-            ))}
-          </div>
+        ) : thumbnails.length > 0 ? (
+          <>
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+              {thumbnails.map((thumbnail, index) => (
+                <ThumbnailCard
+                  key={thumbnail._id}
+                  thumbnail={thumbnail}
+                  index={index}
+                  showLike
+                  source="community"
+                />
+              ))}
+            </div>
+
+            {isLoading && params.page > 1 && (
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                <ThumbnailCardSkeleton count={3} />
+              </div>
+            )}
+          </>
         ) : (
           <p className="mt-16 text-center text-text-secondary">
             No thumbnails found in the community gallery.
           </p>
         )}
 
-        {(pagination?.total && pagination.total > fetchedThumbnails.length) ? (
+        {/* Load More */}
+        {pagination?.total && pagination.total > thumbnails.length ? (
           <div className="mt-10 flex justify-center">
             <Button
               type="button"
-              onClick={() => setParams((prev) => ({ ...prev, page: prev.page + 1 }))}
+              onClick={handleLoadMore}
+              disabled={isLoading}
               fullWidth={false}
               variant="secondary"
             >
-              Load More
+              {isLoading ? "Loading..." : "Load More"}
             </Button>
           </div>
         ) : null}
