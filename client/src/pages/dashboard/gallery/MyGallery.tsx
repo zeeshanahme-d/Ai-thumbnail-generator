@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImagePlus, LayoutGrid, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -11,18 +11,36 @@ import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
 import useDeleteThumbnail from "../core/hooks/use-delete-thumbnail";
 import { getApiErrorMessage } from "../../../lib/axios";
 import { ALL_STYLES } from "../../../data/community";
-import type { CommunitySort } from "../../../types";
+import type { CommunitySort, Thumbnail } from "../../../types";
 
 const PAGE_SIZE = 12;
 
 export default function MyGallery() {
-  const [params, setParams] = useState<Record<string, any>>({ page: 1, limit: PAGE_SIZE, sort: "newest" });
+  const [params, setParams] = useState<Record<string, any>>({
+    page: 1,
+    limit: PAGE_SIZE,
+    sort: "newest",
+  });
   const { data: generations, pagination, isPending: isLoading } = useGetMyThumbnails(params);
   const { mutate: deleteMutate, isPending: isDeleting } = useDeleteThumbnail();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
+  const [thumbnails, setThumbnails] = useState<Thumbnail[]>([]);
   const [sort, setSort] = useState<CommunitySort>("newest");
   const [activeStyle, setActiveStyle] = useState(ALL_STYLES);
+
+  useEffect(() => {
+    if (!generations) return;
+    if (params.page === 1) {
+      setThumbnails(generations);
+    } else if (generations.length > 0) {
+      setThumbnails((prev) => {
+        const existingIds = new Set(prev.map((t) => t._id));
+        const newItems = generations.filter((t) => !existingIds.has(t._id));
+        return [...prev, ...newItems];
+      });
+    }
+  }, [generations, params.page]);
 
   const handleSort = (value: CommunitySort) => {
     setSort(value);
@@ -44,6 +62,7 @@ export default function MyGallery() {
     deleteMutate(deleteTarget, {
       onSuccess: () => {
         toast.success("Thumbnail moved to recycle bin.");
+        setThumbnails((prev) => prev.filter((t) => t._id !== deleteTarget));
         setDeleteTarget(null);
       },
       onError: (err) => {
@@ -52,6 +71,15 @@ export default function MyGallery() {
       },
     });
   };
+
+  const handleLoadMore = () => {
+    setParams((prev) => ({
+      ...prev,
+      page: (prev.page || 1) + 1,
+    }));
+  };
+
+  const totalCount = pagination?.total ?? thumbnails.length;
 
   return (
     <main className="px-6 py-10">
@@ -62,7 +90,7 @@ export default function MyGallery() {
             <div className="flex items-center gap-2">
               <LayoutGrid size={18} className="text-primary" />
               <span className="rounded-full border border-border bg-background-card px-3 py-1 text-xs font-medium text-text-secondary">
-                {pagination?.total ?? generations.length} Thumbnails
+                {totalCount} Thumbnails
               </span>
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
@@ -98,24 +126,32 @@ export default function MyGallery() {
         />
 
         {/* Grid */}
-        {isLoading ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {isLoading && params.page === 1 ? (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
             <ThumbnailCardSkeleton count={8} />
           </div>
-        ) : generations.length > 0 ? (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {generations.map((thumbnail, index) => (
-              <ThumbnailCard
-                key={thumbnail._id}
-                thumbnail={thumbnail}
-                index={index}
-                showDelete
-                showPublish
-                source="gallery"
-                onDelete={(id) => setDeleteTarget(id)}
-              />
-            ))}
-          </div>
+        ) : thumbnails.length > 0 ? (
+          <>
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+              {thumbnails.map((thumbnail, index) => (
+                <ThumbnailCard
+                  key={thumbnail._id}
+                  thumbnail={thumbnail}
+                  index={index}
+                  showDelete
+                  showPublish
+                  source="gallery"
+                  onDelete={(id) => setDeleteTarget(id)}
+                />
+              ))}
+            </div>
+
+            {isLoading && params.page > 1 && (
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <ThumbnailCardSkeleton count={4} />
+              </div>
+            )}
+          </>
         ) : (
           <div className="mt-16 flex flex-col items-center gap-4 text-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-background-surface-2">
@@ -143,15 +179,16 @@ export default function MyGallery() {
         )}
 
         {/* Load More */}
-        {pagination?.total && pagination.total > generations.length ? (
+        {pagination?.total && pagination.total > thumbnails.length ? (
           <div className="mt-10 flex justify-center">
             <Button
               type="button"
-              onClick={() => setParams((prev) => ({ ...prev, limit: (prev.limit || PAGE_SIZE) + PAGE_SIZE }))}
+              onClick={handleLoadMore}
+              disabled={isLoading}
               fullWidth={false}
               variant="secondary"
             >
-              Load More
+              {isLoading ? "Loading..." : "Load More"}
             </Button>
           </div>
         ) : null}
