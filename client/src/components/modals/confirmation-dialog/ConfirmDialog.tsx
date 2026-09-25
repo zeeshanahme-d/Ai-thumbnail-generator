@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import Button from "../../Button";
 
@@ -12,6 +12,9 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: "danger" | "default";
   loading?: boolean;
+  confirmDisabled?: boolean;
+  /** Extra content shown under the description, such as a confirmation input. */
+  children?: ReactNode;
 }
 
 export default function ConfirmDialog({
@@ -24,6 +27,8 @@ export default function ConfirmDialog({
   cancelLabel = "Cancel",
   variant = "default",
   loading = false,
+  confirmDisabled = false,
+  children,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -78,6 +83,8 @@ export default function ConfirmDialog({
           {description}
         </p>
 
+        {children && <div className="mt-4">{children}</div>}
+
         {/* Actions */}
         <div className="mt-6 flex gap-3">
           <Button
@@ -96,7 +103,7 @@ export default function ConfirmDialog({
             size="sm"
             rounded="lg"
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || confirmDisabled}
             className={
               variant === "danger"
                 ? "bg-red-600 hover:bg-red-700 text-white"

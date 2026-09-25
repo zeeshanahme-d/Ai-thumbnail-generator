@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ImagePlus, LayoutGrid, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -7,52 +7,37 @@ import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import CommunityFilters from "../../community/components/CommunityFilters";
 import Button from "../../../components/Button";
-import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
+import useInfiniteThumbnails from "../core/hooks/useInfiniteThumbnails";
 import useDeleteThumbnail from "../core/hooks/use-delete-thumbnail";
 import { getApiErrorMessage } from "../../../lib/axios";
 import { ALL_STYLES } from "../../../data/community";
-import type { CommunitySort, Thumbnail } from "../../../types";
+import type { CommunitySort, ThumbnailFilters } from "../../../types";
 
 const PAGE_SIZE = 12;
 
 export default function MyGallery() {
-  const [params, setParams] = useState<Record<string, any>>({
-    page: 1,
+  const [filters, setFilters] = useState<ThumbnailFilters>({
     limit: PAGE_SIZE,
     sort: "newest",
   });
-  const { data: generations, pagination, isPending: isLoading } = useGetMyThumbnails(params);
+  const { thumbnails, total, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteThumbnails("mine", filters);
   const { mutate: deleteMutate, isPending: isDeleting } = useDeleteThumbnail();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const [thumbnails, setThumbnails] = useState<Thumbnail[]>([]);
   const [sort, setSort] = useState<CommunitySort>("newest");
   const [activeStyle, setActiveStyle] = useState(ALL_STYLES);
 
-  useEffect(() => {
-    if (!generations) return;
-    if (params.page === 1) {
-      setThumbnails(generations);
-    } else if (generations.length > 0) {
-      setThumbnails((prev) => {
-        const existingIds = new Set(prev.map((t) => t._id));
-        const newItems = generations.filter((t) => !existingIds.has(t._id));
-        return [...prev, ...newItems];
-      });
-    }
-  }, [generations, params.page]);
-
   const handleSort = (value: CommunitySort) => {
     setSort(value);
-    setParams((prev) => ({ ...prev, sort: value, page: 1 }));
+    setFilters((prev) => ({ ...prev, sort: value }));
   };
 
   const handleStyle = (value: string) => {
     setActiveStyle(value);
-    setParams((prev) => ({
+    setFilters((prev) => ({
       ...prev,
       style: value === ALL_STYLES ? undefined : value,
-      page: 1,
     }));
   };
 
@@ -62,7 +47,6 @@ export default function MyGallery() {
     deleteMutate(deleteTarget, {
       onSuccess: () => {
         toast.success("Thumbnail moved to recycle bin.");
-        setThumbnails((prev) => prev.filter((t) => t._id !== deleteTarget));
         setDeleteTarget(null);
       },
       onError: (err) => {
@@ -71,15 +55,6 @@ export default function MyGallery() {
       },
     });
   };
-
-  const handleLoadMore = () => {
-    setParams((prev) => ({
-      ...prev,
-      page: (prev.page || 1) + 1,
-    }));
-  };
-
-  const totalCount = pagination?.total ?? thumbnails.length;
 
   return (
     <main className="px-6 py-10">
@@ -90,7 +65,7 @@ export default function MyGallery() {
             <div className="flex items-center gap-2">
               <LayoutGrid size={18} className="text-primary" />
               <span className="rounded-full border border-border bg-background-card px-3 py-1 text-xs font-medium text-text-secondary">
-                {totalCount} Thumbnails
+                {total} Thumbnails
               </span>
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
@@ -118,7 +93,7 @@ export default function MyGallery() {
 
         {/* Filters */}
         <CommunityFilters
-          setParams={setParams}
+          setParams={setFilters}
           sort={sort}
           onSortChange={handleSort}
           activeStyle={activeStyle}
@@ -126,7 +101,7 @@ export default function MyGallery() {
         />
 
         {/* Grid */}
-        {isLoading && params.page === 1 ? (
+        {isPending ? (
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
             <ThumbnailCardSkeleton count={8} />
           </div>
@@ -146,7 +121,7 @@ export default function MyGallery() {
               ))}
             </div>
 
-            {isLoading && params.page > 1 && (
+            {isFetchingNextPage && (
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 <ThumbnailCardSkeleton count={4} />
               </div>
@@ -158,11 +133,11 @@ export default function MyGallery() {
               <ImagePlus size={28} className="text-text-muted" />
             </div>
             <p className="text-sm text-text-muted">
-              {params.search || params.style
+              {filters.search || filters.style
                 ? "No thumbnails match your filters."
                 : "Your gallery is empty. Generate your first thumbnail!"}
             </p>
-            {!params.search && !params.style && (
+            {!filters.search && !filters.style && (
               <Link to="/dashboard/generate">
                 <Button
                   variant="primary"
@@ -179,19 +154,19 @@ export default function MyGallery() {
         )}
 
         {/* Load More */}
-        {pagination?.total && pagination.total > thumbnails.length ? (
+        {hasNextPage && (
           <div className="mt-10 flex justify-center">
             <Button
               type="button"
-              onClick={handleLoadMore}
-              disabled={isLoading}
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
               fullWidth={false}
               variant="secondary"
             >
-              {isLoading ? "Loading..." : "Load More"}
+              {isFetchingNextPage ? "Loading..." : "Load More"}
             </Button>
           </div>
-        ) : null}
+        )}
       </div>
 
       <ConfirmDialog

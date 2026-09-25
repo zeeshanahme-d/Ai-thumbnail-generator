@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
 import DashboardHeader from "./components/DashboardHeader";
 import DashboardSidebar from "./components/DashboardSidebar";
+import PageLoader from "../../components/PageLoader";
 
 export default function DashboardLayout() {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -28,7 +29,9 @@ export default function DashboardLayout() {
                 <DashboardHeader setIsMobileOpen={setIsMobileOpen} />
 
                 <div className="flex-1 min-h-0">
-                    <Outlet />
+                    <Suspense fallback={<PageLoader />}>
+                        <Outlet />
+                    </Suspense>
                 </div>
             </main>
         </div>

@@ -9,8 +9,8 @@ const useUploadAvatar = () => {
 
     const { mutate: uploadAvatarMutate, isPending } = useMutation({
         mutationFn: (formData: FormData) => uploadAvatarRequest(formData),
-        onSuccess: (res: any) => {
-            const user = res?.data?.user || res?.user;
+        onSuccess: (res) => {
+            const user = res.data?.user;
             if (user) {
                 setSession(user);
                 queryClient.setQueryData(authKeys.me(), user);

@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useSession } from "../store/useSessionStore";
 import { useVerifySession } from "../pages/auth/core/hooks";
+import PageLoader from "./PageLoader";
 
 // Restores the session on every page load by hitting /auth/verify, which
 // returns the current access token (or a fresh one from the refresh cookie).
@@ -17,11 +18,7 @@ export default function SessionProvider({ children }: { children: ReactNode }) {
   }, [verify]);
 
   if (isRestoring) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center bg-background-surface">
-        <span className="size-8 animate-spin rounded-full border-2 border-border border-t-primary" />
-      </div>
-    );
+    return <PageLoader fullScreen />;
   }
 
   return <>{children}</>;

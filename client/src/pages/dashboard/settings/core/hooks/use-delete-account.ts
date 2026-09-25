@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { deleteAccountRequest } from "../_requests";
+import type { DeleteAccountPayload } from "../_models";
 
 const useDeleteAccount = () => {
     const { mutate: deleteAccountMutate, isPending } = useMutation({
-        mutationFn: () => deleteAccountRequest(),
+        mutationFn: (body: DeleteAccountPayload) => deleteAccountRequest(body),
     });
 
     return { deleteAccountMutate, isPending };

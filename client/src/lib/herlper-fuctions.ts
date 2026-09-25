@@ -16,19 +16,15 @@ export const handleDownloadFile = async (url: string, fileName: string) => {
     document.body.removeChild(link);
   } catch (error: unknown) {
     console.error(error);
-    toast.error((error as any)?.message || "Error downloading the file.");
+    toast.error((error instanceof Error && error.message) || "Error downloading the file.");
   }
 };
 
-export const debounce = <T extends (...args: any[]) => void>(func: T, wait: number): T => {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+export const debounce = <Args extends unknown[]>(func: (...args: Args) => void, wait: number) => {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
 
-  return function (this: any, ...args: Parameters<T>) {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => {
-      func.apply(this, args);
-    }, wait);
-  } as T;
+  return (...args: Args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 };

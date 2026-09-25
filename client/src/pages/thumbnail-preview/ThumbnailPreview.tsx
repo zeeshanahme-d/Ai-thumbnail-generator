@@ -27,6 +27,12 @@ export default function ThumbnailPreview() {
   const state = location.state as ThumbnailPreviewState | null;
   const isAuthenticated = useSession((s) => s.isAuthenticated);
 
+  const { data: communityThumbnails } = useGetCommunityThumbnails(
+    { style: state?.thumbnail?.style, limit: 5, page: 1 },
+    { enabled: Boolean(state?.thumbnail) },
+  );
+  const { mutate: likeMutate, isPending: isLiking } = useLikeThumbnail();
+
   // Guard: if no state was passed, navigate back
   if (!state?.thumbnail) {
     return (
@@ -50,10 +56,6 @@ export default function ThumbnailPreview() {
   const authorName = getThumbnailAuthorName(thumbnail);
   const dot = (thumbnail.style && STYLE_DOTS[thumbnail.style]) || "bg-gray-400";
 
-  const { data: communityThumbnails } = useGetCommunityThumbnails({ style: thumbnail.style, limit: 5, page: 1 });
-
-  // Like handler
-  const { mutate: likeMutate, isPending: isLiking } = useLikeThumbnail();
   const handleLike = () => {
     if (!isAuthenticated) {
       toast.error("Please log in to like thumbnails.");
@@ -238,8 +240,8 @@ export default function ThumbnailPreview() {
               </motion.div>
             )}
 
-            {/* Like button (sidebar) */}
-            {isAuthenticated && (
+            {/* Like button (sidebar). Only published thumbnails can be liked. */}
+            {isAuthenticated && thumbnail.published && (
               <motion.button
                 type="button"
                 onClick={handleLike}

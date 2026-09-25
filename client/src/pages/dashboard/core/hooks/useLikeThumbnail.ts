@@ -1,18 +1,18 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { likeThumbnail } from "../_requests";
 import { thumbnailKeys } from "./query-keys";
 import type { PaginatedThumbnailsResponse } from "../_models";
 import type { Thumbnail } from "../../../../types";
 
-const updateThumbnailInResponse = (
-  response: PaginatedThumbnailsResponse | undefined,
-  targetId: string
-): PaginatedThumbnailsResponse | undefined => {
-  if (!response?.thumbnails) return response;
+type ThumbnailListData = PaginatedThumbnailsResponse | InfiniteData<PaginatedThumbnailsResponse>;
 
+const toggleLikeInPage = (
+  page: PaginatedThumbnailsResponse,
+  targetId: string
+): PaginatedThumbnailsResponse => {
   return {
-    ...response,
-    thumbnails: response.thumbnails.map((t: Thumbnail) => {
+    ...page,
+    thumbnails: page.thumbnails.map((t: Thumbnail) => {
       if (t._id === targetId) {
         const isCurrentlyLiked = !!t.isLiked;
         return {
@@ -26,6 +26,15 @@ const updateThumbnailInResponse = (
   };
 };
 
+// List caches hold either one page or every loaded page of an infinite list.
+const updateThumbnailInCache = (data: ThumbnailListData | undefined, targetId: string) => {
+  if (!data) return data;
+  if ("pages" in data) {
+    return { ...data, pages: data.pages.map((page) => toggleLikeInPage(page, targetId)) };
+  }
+  return data.thumbnails ? toggleLikeInPage(data, targetId) : data;
+};
+
 const useLikeThumbnail = () => {
   const queryClient = useQueryClient();
 
@@ -34,13 +43,13 @@ const useLikeThumbnail = () => {
     onMutate: async (targetId: string) => {
       await queryClient.cancelQueries({ queryKey: thumbnailKeys.all });
 
-      const previousQueries = queryClient.getQueriesData<PaginatedThumbnailsResponse>({
+      const previousQueries = queryClient.getQueriesData<ThumbnailListData>({
         queryKey: thumbnailKeys.all,
       });
 
-      queryClient.setQueriesData<PaginatedThumbnailsResponse>(
+      queryClient.setQueriesData<ThumbnailListData>(
         { queryKey: thumbnailKeys.all },
-        (oldData) => updateThumbnailInResponse(oldData, targetId)
+        (oldData) => updateThumbnailInCache(oldData, targetId)
       );
 
       return { previousQueries };

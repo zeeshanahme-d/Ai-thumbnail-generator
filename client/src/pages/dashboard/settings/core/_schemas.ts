@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "../../../../lib/passwordValidation";
 
 export const updateProfileSchema = z.object({
     fullName: z
@@ -33,12 +34,7 @@ export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
 export const changePasswordSchema = z
     .object({
         currentPassword: z.string().min(1, "Current password is required"),
-        newPassword: z
-            .string()
-            .regex(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
-                "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
-            ),
+        newPassword: passwordSchema,
         confirmPassword: z.string().min(1, "Please confirm your new password"),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {

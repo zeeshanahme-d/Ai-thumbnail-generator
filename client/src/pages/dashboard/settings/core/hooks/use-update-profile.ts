@@ -10,8 +10,8 @@ const useUpdateProfile = () => {
 
     const { mutate: updateProfileMutate, isPending } = useMutation({
         mutationFn: (body: UpdateProfilePayload) => updateProfileRequest(body),
-        onSuccess: (res: any) => {
-            const user = res?.data?.user || res?.user;
+        onSuccess: (res) => {
+            const user = res.data?.user;
             if (user) {
                 setSession(user);
                 queryClient.setQueryData(authKeys.me(), user);

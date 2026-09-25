@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 //components
@@ -11,13 +11,13 @@ import UserNotFound from "./components/UserNotFound";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileHeaderSkeleton from "./components/ProfileHeaderSkeleton";
 //hooks
-import useGetMyThumbnails from "../dashboard/core/hooks/useGetMyThumbnails";
-import useGetCommunityThumbnails from "../dashboard/core/hooks/useGetCommunityThumbnails";
+import useInfiniteThumbnails from "../dashboard/core/hooks/useInfiniteThumbnails";
 import { useSession } from "../../store/useSessionStore";
 import { usePublicProfile } from "./core/hooks/usePublicProfile";
-import type { Thumbnail } from "../../types";
+import type { ThumbnailFilters } from "../../types";
 
 const PAGE_SIZE = 12;
+const PROFILE_FILTERS: ThumbnailFilters = { limit: PAGE_SIZE, sort: "newest" };
 
 export default function Profile() {
   const { username: urlUsername } = useParams<{ username?: string }>();
@@ -28,21 +28,6 @@ export default function Profile() {
     Boolean(currentUser?.username) &&
     urlUsername?.toLowerCase() === currentUser?.username?.toLowerCase();
 
-  const [params, setParams] = useState<Record<string, any>>({
-    page: 1,
-    limit: PAGE_SIZE,
-    sort: "newest",
-  });
-
-  const [thumbnails, setThumbnails] = useState<Thumbnail[]>([]);
-
-  // Query for logged in user's own profile
-  const {
-    data: myGenerations = [],
-    pagination: myPagination,
-    isPending: isMyLoading,
-  } = useGetMyThumbnails(isOwnProfile ? params : { page: 1, limit: 0 });
-
   // Query for another user's public profile data
   const {
     data: publicProfileData,
@@ -52,33 +37,17 @@ export default function Profile() {
 
   const publicUser = publicProfileData?.user;
 
-  // Query for another user's public thumbnails
-  const {
-    data: publicThumbnails = [],
-    pagination: publicPagination,
-    isPending: isPublicThumbnailsLoading,
-  } = useGetCommunityThumbnails(
-    !isOwnProfile && publicUser?._id
-      ? { ...params, userId: publicUser._id }
-      : undefined,
+  // Results are not kept between loads, so one user's grid never shows on another's profile.
+  const myThumbnails = useInfiniteThumbnails("mine", PROFILE_FILTERS, {
+    enabled: isOwnProfile,
+    keepResultsWhileLoading: false,
+  });
+  const publicThumbnails = useInfiniteThumbnails(
+    "community",
+    { ...PROFILE_FILTERS, userId: publicUser?._id },
+    { enabled: !isOwnProfile && Boolean(publicUser?._id), keepResultsWhileLoading: false },
   );
-
-  const fetchedThumbnails = isOwnProfile ? myGenerations : publicThumbnails;
-
-  useEffect(() => {
-    if (!fetchedThumbnails) return;
-    if (params.page === 1) {
-      setThumbnails(fetchedThumbnails);
-    } else if (fetchedThumbnails.length > 0) {
-      setThumbnails((prev) => {
-        const existingIds = new Set(prev.map((t) => t._id));
-        const nextItems = fetchedThumbnails.filter(
-          (t) => !existingIds.has(t._id)
-        );
-        return [...prev, ...nextItems];
-      });
-    }
-  }, [fetchedThumbnails, params.page]);
+  const list = isOwnProfile ? myThumbnails : publicThumbnails;
 
   useEffect(() => {
     if (!urlUsername) {
@@ -103,13 +72,8 @@ export default function Profile() {
   // Active user data & thumbnails
   const profileUser = isOwnProfile ? currentUser : publicUser;
   const isProfileLoading = isOwnProfile ? false : isPublicProfileLoading;
-  const isThumbnailsLoading = isOwnProfile
-    ? isMyLoading
-    : isPublicProfileLoading ||
-      (Boolean(publicUser?._id) && isPublicThumbnailsLoading);
-
-  const paginationMeta = isOwnProfile ? myPagination : publicPagination;
-  const totalCount = paginationMeta?.total ?? thumbnails.length;
+  const { thumbnails } = list;
+  const totalCount = list.total;
   const likesCount = thumbnails.reduce(
     (acc, curr) => acc + (curr.likesCount || 0),
     0
@@ -161,7 +125,7 @@ export default function Profile() {
         </div>
 
         {/* Thumbnails Grid / Skeleton */}
-        {isThumbnailsLoading && params.page === 1 ? (
+        {list.isPending ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <ThumbnailCardSkeleton count={6} />
           </div>
@@ -178,7 +142,7 @@ export default function Profile() {
               ))}
             </div>
 
-            {isThumbnailsLoading && params.page > 1 && (
+            {list.isFetchingNextPage && (
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <ThumbnailCardSkeleton count={3} />
               </div>
@@ -191,24 +155,19 @@ export default function Profile() {
         )}
 
         {/* Load More Pagination */}
-        {paginationMeta?.total && paginationMeta.total > thumbnails.length ? (
+        {list.hasNextPage && (
           <div className="mt-10 flex justify-center">
             <Button
               type="button"
-              onClick={() =>
-                setParams((prev) => ({
-                  ...prev,
-                  page: (prev.page || 1) + 1,
-                }))
-              }
-              disabled={isThumbnailsLoading}
+              onClick={() => list.fetchNextPage()}
+              disabled={list.isFetchingNextPage}
               fullWidth={false}
               variant="secondary"
             >
-              {isThumbnailsLoading ? "Loading..." : "Load More"}
+              {list.isFetchingNextPage ? "Loading..." : "Load More"}
             </Button>
           </div>
-        ) : null}
+        )}
       </Wrapper>
     </main>
   );

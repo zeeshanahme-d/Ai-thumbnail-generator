@@ -3,14 +3,14 @@ import Input from './Input'
 import { Search } from 'lucide-react'
 import { debounce } from '../lib/herlper-fuctions';
 
-export interface DebounceSearchProps<T extends { [key: string]: any }> {
+export interface DebounceSearchProps<T extends Record<string, unknown>> {
   setParams: Dispatch<SetStateAction<T>>;
   placeholder?: string;
   className?: string;
   debounceMs?: number;
   searchKey?: keyof T;
 }
-function DebounceSearch<T extends { [key: string]: any }>({ setParams, placeholder = 'Search...', className = "", debounceMs = 600, searchKey = 'search', }: DebounceSearchProps<T>) {
+function DebounceSearch<T extends Record<string, unknown>>({ setParams, placeholder = 'Search...', className = "", debounceMs = 600, searchKey = 'search', }: DebounceSearchProps<T>) {
 
   const [search, setSearch] = useState('');
 
@@ -18,7 +18,7 @@ function DebounceSearch<T extends { [key: string]: any }>({ setParams, placehold
     debounce((value: string) => {
       setParams((prev) => ({ ...prev, [searchKey]: value, page: 1 }));
     }, debounceMs),
-    [setParams, debounceMs]
+    [setParams, debounceMs, searchKey]
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -5,7 +5,7 @@ import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import FieldError from "../../../auth/components/FieldError";
 //hooks & utils
-import { useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useSession } from "../../../../store/useSessionStore";
 import { getUserInitial, debounce } from "../../../../lib/herlper-fuctions";
@@ -13,6 +13,7 @@ import { useUploadAvatar } from "../core/hooks/use-upload-avatar";
 import { useUpdateProfile } from "../core/hooks/use-update-profile";
 import { useCheckUsername } from "../../../profile/core/hooks/useCheckUsername";
 import { updateProfileSchema } from "../core/_schemas";
+import { getApiErrorMessage } from "../../../../lib/axios";
 import toast from "react-hot-toast";
 
 export default function EditProfileSection() {
@@ -23,10 +24,8 @@ export default function EditProfileSection() {
 
     const [debouncedUsername, setDebouncedUsername] = useState(user?.username ?? "");
 
-    const handleDebouncedUsernameChange = useCallback(
-        debounce((value: string) => {
-            setDebouncedUsername(value);
-        }, 400),
+    const handleDebouncedUsernameChange = useMemo(
+        () => debounce((value: string) => setDebouncedUsername(value), 400),
         [],
     );
 
@@ -47,12 +46,11 @@ export default function EditProfileSection() {
         formData.append("avatar", file);
 
         uploadAvatarMutate(formData, {
-            onSuccess: (res: any) => {
-                toast.success(res?.message || "Avatar uploaded successfully.");
+            onSuccess: (res) => {
+                toast.success(res.message || "Avatar uploaded successfully.");
             },
-            onError: (error: any) => {
-                const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to upload avatar.";
-                toast.error(message);
+            onError: (error) => {
+                toast.error(getApiErrorMessage(error, "Failed to upload avatar."));
             },
             onSettled: () => {
                 if (fileInputRef.current) {
@@ -73,12 +71,11 @@ export default function EditProfileSection() {
         onSubmit: ({ value }) => {
             if (isUsernameTaken || isCheckingUsername) return;
             updateProfileMutate(value, {
-                onSuccess: (res: any) => {
-                    toast.success(res?.message || "Profile updated successfully.");
+                onSuccess: (res) => {
+                    toast.success(res.message || "Profile updated successfully.");
                 },
-                onError: (error: any) => {
-                    const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to update profile.";
-                    toast.error(message);
+                onError: (error) => {
+                    toast.error(getApiErrorMessage(error, "Failed to update profile."));
                 },
             });
         },

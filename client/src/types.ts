@@ -104,8 +104,17 @@ export interface IDashboardNavSection {
 
 export type CommunitySort = "trending" | "newest" | "most-liked" | "featured";
 
+/** Query filters shared by the thumbnail list pages. */
+export interface ThumbnailFilters {
+  search?: string;
+  sort?: string;
+  style?: string;
+  userId?: string;
+  limit?: number;
+}
+
 export interface CommunityFiltersProps {
-  setParams?: React.Dispatch<React.SetStateAction<{ [key: string]: any }>>;
+  setParams?: React.Dispatch<React.SetStateAction<ThumbnailFilters>>;
   search?: string;
   onSearchChange?: (value: string) => void;
   sort: CommunitySort;
@@ -285,6 +294,11 @@ export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+}
+
+export interface PageLoaderProps {
+  /** Fill the whole screen, for loads that happen before any layout is shown. */
+  fullScreen?: boolean;
 }
 
 export interface ErrorBoundaryProps {

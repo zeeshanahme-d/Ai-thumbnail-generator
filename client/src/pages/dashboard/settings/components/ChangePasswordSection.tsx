@@ -12,6 +12,7 @@ import { useSession } from "../../../../store/useSessionStore";
 import { useChangePassword } from "../core/hooks/use-change-password";
 import { changePasswordSchema } from "../core/_schemas";
 import type { ChangePasswordPayload } from "../core/_models";
+import { getApiErrorMessage } from "../../../../lib/axios";
 
 export default function ChangePasswordSection() {
     const { changePasswordMutate, isPending } = useChangePassword();
@@ -41,16 +42,15 @@ export default function ChangePasswordSection() {
         if (!pendingValues) return;
 
         changePasswordMutate(pendingValues, {
-            onSuccess: (res: any) => {
+            onSuccess: (res) => {
                 // The server ended every session, this one included.
                 clearSession();
                 queryClient.clear();
-                toast.success(res?.message || "Password changed. Log in with your new password.");
+                toast.success(res.message || "Password changed. Log in with your new password.");
                 navigate("/login", { replace: true });
             },
-            onError: (error: any) => {
-                const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to update password.";
-                toast.error(message);
+            onError: (error) => {
+                toast.error(getApiErrorMessage(error, "Failed to update password."));
                 setPendingValues(null);
             },
         });

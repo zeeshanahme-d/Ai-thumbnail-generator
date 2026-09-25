@@ -1,5 +1,5 @@
 import type { ApiSuccess } from "../../auth/core/_models";
-import type { Thumbnail } from "../../../types";
+import type { Thumbnail, ThumbnailFilters } from "../../../types";
 
 export interface GenerateThumbnailPayload {
   title: string;
@@ -11,14 +11,11 @@ export interface GenerateThumbnailPayload {
   referenceImage?: File | null;
 }
 
-export interface PaginationParams {
+export interface PaginationParams extends ThumbnailFilters {
   page?: number;
-  limit?: number;
-  search?: string;
-  sort?: string;
-  style?: string;
-  userId?: string;
 }
+
+export type ThumbnailListSource = "mine" | "community";
 
 export type GetThumbnailsParams = PaginationParams;
 

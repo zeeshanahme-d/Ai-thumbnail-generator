@@ -17,3 +17,7 @@ export interface UpdateProfilePayload {
 export interface UpdateProfileResponse {
     user: IUser;
 }
+
+export interface DeleteAccountPayload {
+    password: string;
+}

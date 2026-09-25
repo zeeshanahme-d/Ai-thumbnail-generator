@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { STYLE_DOTS } from "../../../data/community";
-import { getThumbnailImageUrl, getThumbnailAuthorName } from "../../../lib/thumbnail";
+import { getThumbnailCardImageUrl, getThumbnailAuthorName } from "../../../lib/thumbnail";
 import type { Thumbnail } from "../../../types";
 import type { PreviewSource } from "../_types";
 
@@ -48,7 +48,7 @@ export default function PreviewMoreThumbnails({
 
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {thumbnails.slice(0, 4).map((thumbnail, index) => {
-          const imageUrl = getThumbnailImageUrl(thumbnail);
+          const imageUrl = getThumbnailCardImageUrl(thumbnail);
           const authorName = getThumbnailAuthorName(thumbnail);
           const thumbDot = STYLE_DOTS[thumbnail.style ?? ""] || "bg-gray-400";
 

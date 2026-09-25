@@ -1,34 +1,47 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertTriangle, Lock, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../../../components/Button";
+import Input from "../../../../components/Input";
 import ConfirmDialog from "../../../../components/modals/confirmation-dialog/ConfirmDialog";
 import { useSession } from "../../../../store/useSessionStore";
 import { useDeleteAccount } from "../core/hooks/use-delete-account";
+import { getApiErrorMessage } from "../../../../lib/axios";
 
 export default function DangerZoneSection() {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [password, setPassword] = useState("");
     const { deleteAccountMutate, isPending } = useDeleteAccount();
     const clearSession = useSession((state) => state.clearSession);
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
+    const closeConfirm = () => {
+        setIsConfirmOpen(false);
+        setPassword("");
+    };
+
     const handleDelete = () => {
-        deleteAccountMutate(undefined, {
-            onSuccess: (res: any) => {
+        if (!password || isPending) return;
+
+        deleteAccountMutate({ password }, {
+            onSuccess: (res) => {
                 clearSession();
                 queryClient.clear();
-                toast.success(res?.message || "Your account has been deleted successfully.");
+                toast.success(res.message || "Your account has been deleted successfully.");
                 navigate("/login", { replace: true });
             },
-            onError: (error: any) => {
-                const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to delete account.";
-                toast.error(message);
-                setIsConfirmOpen(false);
+            onError: (error) => {
+                toast.error(getApiErrorMessage(error, "Failed to delete account."));
+                setPassword("");
             },
         });
+    };
+
+    const handlePasswordKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter") handleDelete();
     };
 
     return (
@@ -66,14 +79,29 @@ export default function DangerZoneSection() {
 
             <ConfirmDialog
                 open={isConfirmOpen}
-                onClose={() => setIsConfirmOpen(false)}
+                onClose={closeConfirm}
                 onConfirm={handleDelete}
                 title="Delete Account"
                 description="Are you absolutely sure you want to delete your account? All your generated thumbnails, credits, and profile settings will be permanently removed. This action cannot be reversed."
                 confirmLabel="Delete My Account"
                 variant="danger"
                 loading={isPending}
-            />
+                confirmDisabled={!password}
+            >
+                <label htmlFor="delete-account-password" className="mb-1.5 block pl-1 text-left text-xs font-medium text-text-secondary">
+                    Enter your password to confirm
+                </label>
+                <Input
+                    icon={Lock}
+                    id="delete-account-password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Current password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    onKeyDown={handlePasswordKeyDown}
+                />
+            </ConfirmDialog>
         </section>
     );
 }

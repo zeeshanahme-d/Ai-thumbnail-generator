@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "../../../lib/passwordValidation";
 
 // Mirrors server/src/validations/auth.validation.ts so the client and API agree.
 export const loginSchema = z.object({
@@ -13,13 +14,7 @@ export const signupSchema = z.object({
         .min(2, "Full name must be at least 2 characters")
         .max(50, "Full name must be at most 50 characters"),
     email: z.email("Enter a valid email address"),
-    password: z
-        .string()
-        .min(8, "Password must be at least 8 characters")
-        .regex(/[A-Z]/, "Must contain one uppercase letter")
-        .regex(/[a-z]/, "Must contain one lowercase letter")
-        .regex(/[0-9]/, "Must contain one number")
-        .regex(/[!@#$%^&*]/, "Must contain one special character"),
+    password: passwordSchema,
 });
 
 export const forgotPasswordSchema = z.object({
@@ -33,12 +28,7 @@ export const verifyOtpSchema = z.object({
 
 export const resetPasswordSchema = z
     .object({
-        newPassword: z
-            .string()
-            .regex(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
-                "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
-            ),
+        newPassword: passwordSchema,
         confirmPassword: z.string(),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {

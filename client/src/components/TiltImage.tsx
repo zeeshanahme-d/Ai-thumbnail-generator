@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type MouseEvent } from 'react';
 import { motion, useMotionValue, useSpring } from 'motion/react';
 
 const springValues = {
@@ -17,7 +17,7 @@ export default function TiltedImage({ rotateAmplitude = 3, }) {
 
     const [lastY, setLastY] = useState(0);
 
-    function handleMouse(e: any) {
+    function handleMouse(e: MouseEvent<HTMLElement>) {
         if (!ref.current) return;
 
         const rect = ref.current.getBoundingClientRect();

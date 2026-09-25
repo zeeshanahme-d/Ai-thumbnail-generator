@@ -1,4 +1,5 @@
-import type { PaginationParams } from "../_models";
+import type { PaginationParams, ThumbnailListSource } from "../_models";
+import type { ThumbnailFilters } from "../../../../types";
 
 export const thumbnailKeys = {
   all: ["thumbnails"] as const,
@@ -8,4 +9,6 @@ export const thumbnailKeys = {
     [...thumbnailKeys.all, "community", params] as const,
   recycleBin: (params?: PaginationParams) =>
     [...thumbnailKeys.all, "recycleBin", params] as const,
+  infinite: (source: ThumbnailListSource, filters: ThumbnailFilters) =>
+    [...thumbnailKeys.all, "infinite", source, filters] as const,
 };

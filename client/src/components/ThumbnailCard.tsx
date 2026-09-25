@@ -13,7 +13,11 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { STYLE_DOTS } from "../data/community";
-import { getThumbnailAuthorName, getThumbnailImageUrl } from "../lib/thumbnail";
+import {
+  getThumbnailAuthorName,
+  getThumbnailCardImageUrl,
+  getThumbnailImageUrl,
+} from "../lib/thumbnail";
 import type { ThumbnailCardProps } from "../types";
 import type { PreviewSource } from "../pages/thumbnail-preview/_types";
 import Button from "./Button";
@@ -142,7 +146,7 @@ export default function ThumbnailCard({
           </div>
         ) : (
           <img
-            src={imageUrl}
+            src={getThumbnailCardImageUrl(thumbnail)}
             alt={title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
