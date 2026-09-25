@@ -21,7 +21,7 @@ function TabSwitcher({
   return (
     <div
       className={twc(
-        "flex items-center bg-[#f4f6f8] rounded-[160px] p-0.75 gap-0 h-8",
+        "flex items-center bg-background-surface-2 rounded-[160px] p-0.75 gap-0 h-8",
         className,
       )}
     >
@@ -35,7 +35,7 @@ function TabSwitcher({
             className={twc(
               "flex items-center cursor-pointer gap-1.5 px-4 h-5.75 rounded-[50px] text-xs transition-all whitespace-nowrap",
               active
-                ? "bg-white font-semibold text-text-primary shadow-sm"
+                ? "bg-background-card font-semibold text-text-primary shadow-sm"
                 : "font-normal text-text-secondary",
             )}
           >
@@ -45,8 +45,8 @@ function TabSwitcher({
                 className={twc(
                   "inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 rounded-full text-xxs font-medium transition-all",
                   active
-                    ? "bg-[#f4f6f8] text-text-primary"
-                    : "bg-[#e5e7eb] text-text-secondary",
+                    ? "bg-background-surface-2 text-text-primary"
+                    : "bg-border text-text-secondary",
                 )}
               >
                 {tab.count}

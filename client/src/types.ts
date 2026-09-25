@@ -297,6 +297,51 @@ export interface ChangePasswordPayload {
   confirmPassword: string;
 }
 
+export type YtPreviewTheme = "light" | "dark";
+export type YtPreviewLayout = "home" | "search" | "mobile";
+
+/** One video tile in the YouTube preview mockups. */
+export interface IYtPreviewVideo {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  channelName: string;
+  channelAvatarUrl?: string;
+  views: string;
+  publishedAgo: string;
+  duration: string;
+}
+
+export interface YtPreviewState {
+  thumbnail: Thumbnail;
+}
+
+export interface YtVideoProps {
+  video: IYtPreviewVideo;
+  theme: YtPreviewTheme;
+}
+
+export interface YtThumbnailProps {
+  video: IYtPreviewVideo;
+  className?: string;
+}
+
+export interface YtAvatarProps {
+  name: string;
+  imageUrl?: string;
+  className?: string;
+}
+
+export interface YtFeedProps {
+  videos: IYtPreviewVideo[];
+  theme: YtPreviewTheme;
+}
+
+export interface YtHeaderProps {
+  theme: YtPreviewTheme;
+  query?: string;
+}
+
 export interface PageLoaderProps {
   /** Fill the whole screen, for loads that happen before any layout is shown. */
   fullScreen?: boolean;

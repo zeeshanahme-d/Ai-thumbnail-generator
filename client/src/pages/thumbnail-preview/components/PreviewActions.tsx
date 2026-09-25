@@ -1,7 +1,8 @@
-import { Download, Share2 } from "lucide-react";
+import { Download, MonitorPlay, Share2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../../components/Button";
 import { handleDownloadFile } from "../../../lib/herlper-fuctions";
-import type { Thumbnail } from "../../../types";
+import type { Thumbnail, YtPreviewState } from "../../../types";
 import { getThumbnailImageUrl } from "../../../lib/thumbnail";
 
 interface PreviewActionsProps {
@@ -9,6 +10,7 @@ interface PreviewActionsProps {
 }
 
 export default function PreviewActions({ thumbnail }: PreviewActionsProps) {
+  const navigate = useNavigate();
   const imageUrl = getThumbnailImageUrl(thumbnail);
 
   const handleDownload = () => {
@@ -56,6 +58,18 @@ export default function PreviewActions({ thumbnail }: PreviewActionsProps) {
       >
         <Share2 size={15} />
         Share
+      </Button>
+
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        fullWidth={false}
+        onClick={() => navigate("/preview", { state: { thumbnail } satisfies YtPreviewState })}
+        className="gap-2"
+      >
+        <MonitorPlay size={15} />
+        YouTube preview
       </Button>
     </div>
   );

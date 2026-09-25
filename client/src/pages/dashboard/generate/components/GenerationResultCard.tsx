@@ -8,15 +8,17 @@ import {
   Globe,
   GlobeLock,
   Loader2,
+  MonitorPlay,
   Plus,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../../../../components/Button";
 import GenerationPreviewModal from "./GenerationPreviewModal";
 import { handleDownloadFile } from "../../../../lib/herlper-fuctions";
 import { getThumbnailImageUrl } from "../../../../lib/thumbnail";
 import usePublishThumbnail from "../../../dashboard/core/hooks/usePublishThumbnail";
-import type { Thumbnail } from "../../../../types";
+import type { Thumbnail, YtPreviewState } from "../../../../types";
 
 interface GenerationResultCardProps {
   thumbnail: Thumbnail;
@@ -31,6 +33,7 @@ export default function GenerationResultCard({
   onNewPrompt,
   isRegenerating = false,
 }: GenerationResultCardProps) {
+  const navigate = useNavigate();
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const imageUrl = getThumbnailImageUrl(thumbnail);
   const { mutate: publishMutate, isPending: isPublishing } = usePublishThumbnail();
@@ -171,6 +174,17 @@ export default function GenerationResultCard({
             >
               <Maximize2 size={15} />
               Fullscreen
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              fullWidth={false}
+              onClick={() => navigate("/preview", { state: { thumbnail } satisfies YtPreviewState })}
+              className="gap-2"
+            >
+              <MonitorPlay size={15} />
+              YouTube Preview
             </Button>
           </div>
 
