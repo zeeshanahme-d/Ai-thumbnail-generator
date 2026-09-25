@@ -5,6 +5,7 @@ import { AlertTriangle, Lock, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
+import FieldError from "../../../auth/components/FieldError";
 import ConfirmDialog from "../../../../components/modals/confirmation-dialog/ConfirmDialog";
 import { useSession } from "../../../../store/useSessionStore";
 import { useDeleteAccount } from "../core/hooks/use-delete-account";
@@ -13,6 +14,7 @@ import { getApiErrorMessage } from "../../../../lib/axios";
 export default function DangerZoneSection() {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [password, setPassword] = useState("");
+    const [passwordError, setPasswordError] = useState<string | null>(null);
     const { deleteAccountMutate, isPending } = useDeleteAccount();
     const clearSession = useSession((state) => state.clearSession);
     const queryClient = useQueryClient();
@@ -21,6 +23,7 @@ export default function DangerZoneSection() {
     const closeConfirm = () => {
         setIsConfirmOpen(false);
         setPassword("");
+        setPasswordError(null);
     };
 
     const handleDelete = () => {
@@ -34,7 +37,7 @@ export default function DangerZoneSection() {
                 navigate("/login", { replace: true });
             },
             onError: (error) => {
-                toast.error(getApiErrorMessage(error, "Failed to delete account."));
+                setPasswordError(getApiErrorMessage(error, "Failed to delete account."));
                 setPassword("");
             },
         });
@@ -98,9 +101,13 @@ export default function DangerZoneSection() {
                     autoComplete="current-password"
                     placeholder="Current password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) => {
+                        setPassword(event.target.value);
+                        setPasswordError(null);
+                    }}
                     onKeyDown={handlePasswordKeyDown}
                 />
+                <FieldError message={passwordError} />
             </ConfirmDialog>
         </section>
     );
