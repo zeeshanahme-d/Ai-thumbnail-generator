@@ -1,3 +1,5 @@
+import { GenerationErrorCode } from "./enums.js";
+
 export const stylePrompts = {
   "Bold & Graphic":
     "eye-catching thumbnail, bold typography, vibrant colors, expressive facial reaction, dramatic lighting, high contrast, click-worthy composition, professional style",
@@ -33,6 +35,29 @@ export const CREDIT_COST = {
   SIGNUP_BONUS: 20,
   GENERATE_COST: 5,
   RECREATE_COST: 10,
+};
+
+export const GEMINI_TIMEOUT_MS = 60 * 1000;
+export const GEMINI_MAX_ATTEMPTS = 3;
+export const GEMINI_RETRY_BASE_DELAY_MS = 1000;
+
+export const GENERATION_FAILURES: Record<GenerationErrorCode, { status: number; message: string }> = {
+  [GenerationErrorCode.Failed]: {
+    status: 502,
+    message: "AI image generation failed. Please try again in a moment.",
+  },
+  [GenerationErrorCode.Blocked]: {
+    status: 422,
+    message: "The safety filter blocked this prompt or reference image. Try rewording it or using a different image.",
+  },
+  [GenerationErrorCode.Busy]: {
+    status: 503,
+    message: "The image service is busy right now. Please try again in a minute.",
+  },
+  [GenerationErrorCode.TimedOut]: {
+    status: 504,
+    message: "Generation took too long. Please try again.",
+  },
 };
 
 export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {

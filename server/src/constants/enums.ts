@@ -87,6 +87,15 @@ export enum RequestErrorCode {
   ValidationFailed = "VALIDATION_FAILED",
 }
 
+// ---------------------------------------------------------------- generation
+
+export enum GenerationErrorCode {
+  Failed = "GENERATION_FAILED",
+  Blocked = "CONTENT_BLOCKED",
+  Busy = "GENERATION_BUSY",
+  TimedOut = "GENERATION_TIMEOUT",
+}
+
 // ------------------------------------------------------------------ uploads
 
 export enum UploadErrorCode {

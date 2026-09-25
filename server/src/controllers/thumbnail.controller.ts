@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import path from "path";
 import fsPromises from "fs/promises";
 import { GenerateContentConfig, HarmBlockThreshold, HarmCategory, } from "@google/genai";
-import genai from "../config/genai.js";
-import { colorSchemeDescriptions, CREDIT_COST, stylePrompts, THUMBNAIL_SORT_OPTIONS, } from "../constants/constants.js";
+import { generateImage } from "../utils/gemini-image.js";
+import { colorSchemeDescriptions, CREDIT_COST, GENERATION_FAILURES, stylePrompts, THUMBNAIL_SORT_OPTIONS, } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
@@ -220,27 +220,22 @@ QUALITY REQUIREMENTS
 
     const contents = referenceImagePart ? [prompt, referenceImagePart] : [prompt];
 
-    const aiResponse = await genai()?.models.generateContent({
+    const result = await generateImage({
       model,
       contents,
       config: generateConfig,
     });
 
-    const parts = aiResponse?.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find((part) => part.inlineData);
-
-    if (!imagePart?.inlineData?.data) {
+    if (!result.ok) {
       if (thumbnailId) {
         await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
         thumbnailId = null;
       }
-      return ApiResponse.error(res, 502, "AI image generation failed. Please try again in a moment.", "GENERATION_FAILED",);
+      const failure = GENERATION_FAILURES[result.code];
+      return ApiResponse.error(res, failure.status, failure.message, result.code);
     }
 
-    const imageBuffer = Buffer.from(
-      imagePart.inlineData.data as string,
-      "base64",
-    );
+    const imageBuffer = Buffer.from(result.imageBase64, "base64");
     const fileName = `thumbnail-output-${Date.now()}-${crypto.randomUUID()}.png`;
     const uploadDir = path.join("public/temp/uploads");
     await fsPromises.mkdir(uploadDir, { recursive: true });
