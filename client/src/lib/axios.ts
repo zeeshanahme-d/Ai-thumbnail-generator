@@ -50,21 +50,14 @@ api.interceptors.response.use(
     },
 );
 
-interface ApiErrorBody {
-    message?: string;
-    // Validation errors carry their message here instead of at the top level.
-    error?: string | { message?: string };
-}
-
 // Pulls the server's `message` out of an axios error for display in the UI.
 export function getApiErrorMessage(
     error: unknown,
     fallback = "Something went wrong.",
 ): string {
     if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiErrorBody | undefined;
-        const validationMessage = typeof data?.error === "object" ? data.error.message : undefined;
-        return data?.message ?? validationMessage ?? error.message ?? fallback;
+        const data = error.response?.data as { message?: string } | undefined;
+        return data?.message ?? error.message ?? fallback;
     }
     return fallback;
 }

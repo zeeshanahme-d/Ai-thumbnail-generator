@@ -84,6 +84,7 @@ export enum AuthErrorCode {
 
 export enum RequestErrorCode {
   RateLimited = "RATE_LIMITED",
+  ValidationFailed = "VALIDATION_FAILED",
 }
 
 // ------------------------------------------------------------------ uploads
