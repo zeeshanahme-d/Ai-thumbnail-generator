@@ -1,5 +1,8 @@
 import type { Thumbnail } from "../types";
 
+// One shared empty list, so hooks return the same reference while data loads.
+export const NO_THUMBNAILS: Thumbnail[] = [];
+
 const CARD_IMAGE_WIDTH = 640;
 const CLOUDINARY_UPLOAD_PATH = "/image/upload/";
 

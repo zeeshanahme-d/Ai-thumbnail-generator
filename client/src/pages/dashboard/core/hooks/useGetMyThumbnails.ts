@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { NO_THUMBNAILS } from "../../../../lib/thumbnail";
 import { getMyThumbnails } from "../_requests";
 import { thumbnailKeys } from "./query-keys";
 import { useSession } from "../../../../store/useSessionStore";
@@ -15,7 +16,7 @@ const useGetMyThumbnails = (params?: PaginationParams) => {
   });
 
   return {
-    data: data?.thumbnails || [],
+    data: data?.thumbnails ?? NO_THUMBNAILS,
     pagination: data?.meta,
     isPending,
     isError,
