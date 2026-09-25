@@ -4,7 +4,7 @@ import type { CheckUsernameResponse, PublicProfileResponse } from "./_models";
 
 export async function getPublicProfileRequest(username: string) {
   const { data } = await api.get<ApiSuccess<PublicProfileResponse>>(
-    `/users/${username}/profile`,
+    `/users/${encodeURIComponent(username)}/profile`,
   );
   return data.data as PublicProfileResponse;
 }
@@ -14,7 +14,7 @@ export async function checkUsernameRequest(
   excludeUserId?: string,
 ) {
   const { data } = await api.get<ApiSuccess<CheckUsernameResponse>>(
-    `/users/check-username/${username}`,
+    `/users/check-username/${encodeURIComponent(username)}`,
     {
       params: excludeUserId ? { excludeUserId } : undefined,
     },
