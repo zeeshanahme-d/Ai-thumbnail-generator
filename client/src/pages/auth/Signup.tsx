@@ -29,7 +29,6 @@ export default function Signup() {
       }
     },
   });
-  console.log(error);
 
   return (
     <AuthLayout
