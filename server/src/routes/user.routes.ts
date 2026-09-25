@@ -1,6 +1,11 @@
 import express from "express";
 import authenticationToken from "../middlewares/auth.middleware.js";
-import { handleUpdateUserProfile, handleCheckUsername, handleGetPublicProfile } from "../controllers/user.controller.js";
+import {
+  handleUpdateUserProfile,
+  handleCheckUsername,
+  handleGetPublicProfile,
+  handleDeleteAccount,
+} from "../controllers/user.controller.js";
 import validate from "../middlewares/validate.js";
 import { updateProfileSchema } from "../validations/auth.validation.js";
 
@@ -10,7 +15,9 @@ router.get("/check-username/:username", authenticationToken, handleCheckUsername
 router.get("/:username/profile", handleGetPublicProfile);
 
 // Protected routes
-router.patch("/profile", authenticationToken, validate(updateProfileSchema), handleUpdateUserProfile,);
+router.patch("/profile", authenticationToken, validate(updateProfileSchema), handleUpdateUserProfile);
+router.delete("/account", authenticationToken, handleDeleteAccount);
 
 export default router;
+
 

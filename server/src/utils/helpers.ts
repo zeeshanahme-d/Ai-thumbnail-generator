@@ -25,3 +25,7 @@ export async function generateUniqueUsername(fullName: string, userModel: Model<
     // Extremely unlikely fallback — fully random.
     return `user_${crypto.randomUUID().slice(0, 8)}`;
 }
+
+export const escapeRegex = (value: string) => {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};

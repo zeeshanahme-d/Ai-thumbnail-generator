@@ -11,6 +11,7 @@ import {
   handleForgotPassword,
   handleResetPassword,
   handleVerifyOtp,
+  handleChangePassword,
 } from "../controllers/auth.controller.js";
 import {
   loginSchema,
@@ -18,6 +19,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyOtpSchema,
+  changePasswordSchema,
 } from "../validations/auth.validation.js";
 
 const router = express.Router();
@@ -31,5 +33,7 @@ router.get("/me", authenticationToken, handleGetMe);
 router.post("/forgot-password", validate(forgotPasswordSchema), handleForgotPassword);
 router.post("/verify-otp", validate(verifyOtpSchema), handleVerifyOtp);
 router.post("/reset-password", validate(resetPasswordSchema), handleResetPassword);
+router.post("/change-password", authenticationToken, validate(changePasswordSchema), handleChangePassword);
 
 export default router;
+

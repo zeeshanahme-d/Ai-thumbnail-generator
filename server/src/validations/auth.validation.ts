@@ -19,12 +19,12 @@ const signupSchema = z.object({
 
 const updateProfileSchema = z.object({
   fullName: z
-    .string()
+    .string({ error: "Full name is required" })
     .trim()
     .min(2, "Full name must be at least 2 characters")
     .max(50, "Full name must be at most 50 characters"),
   username: z
-    .string()
+    .string({ error: "Username is required" })
     .trim()
     .toLowerCase()
     .min(3, "Username must be at least 3 characters")
@@ -80,11 +80,29 @@ const resetPasswordSchema = z.object({
     ),
 });
 
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
+        "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
+      ),
+    confirmPassword: z.string().min(1, "Confirm password is required"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export {
   signupSchema,
   loginSchema,
   updateProfileSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-  verifyOtpSchema
+  verifyOtpSchema,
+  changePasswordSchema,
 };
+
