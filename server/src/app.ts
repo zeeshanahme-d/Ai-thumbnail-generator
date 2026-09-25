@@ -8,17 +8,20 @@ import userRouter from "./routes/user.routes.js";
 import uploadsRouter from "./routes/uploads-files.routes.js";
 import thumbnailRouter from "./routes/thumbnail.routes.js";
 import thumbnailPublicRouter from "./routes/thumbnail-public.routes.js";
+import errorHandler from "./middlewares/error.middleware.js";
+import mongoose from "mongoose";
 
 const app = express();
 
 app.use(helmet());
+mongoose.set("sanitizeFilter", true);
 
 app.use(express.json({
   limit: "2mb",
 }));
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: [ "http://localhost:5173" , "http://localhost:5174" , ],
     credentials: true,
   }),
 );
@@ -31,8 +34,12 @@ app.use("/upload", authenticationToken, uploadsRouter);
 app.use("/thumbnail", thumbnailPublicRouter);
 app.use("/thumbnail", authenticationToken, thumbnailRouter);
 
-app.get("/", (req, res) => {
-  res.send("Hello TypeScript");
+app.use("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
+// Global Express Error Handler
+app.use(errorHandler);
+
 export default app;
+
