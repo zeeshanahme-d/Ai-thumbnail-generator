@@ -16,6 +16,7 @@ import GenerationResultCard from "./components/GenerationResultCard";
 import { getApiErrorMessage } from "../../../lib/axios";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
 import { clearPendingPrompt, readPendingPrompt } from "../../../lib/pendingPrompt";
+import { GENERATION_CREDIT_COST, getRemainingCredits } from "../../../lib/credits";
 //Types
 import type { PromptSubmission, Thumbnail } from "../../../types";
 import type { GenerateThumbnailPayload } from "../core/_models";
@@ -54,6 +55,8 @@ export default function DashboardGenerate() {
     useResendVerification();
   // New accounts start with no credits until the email is verified.
   const needsVerification = Boolean(user && !user.isVerified && !user.totalcredits);
+  const remainingCredits = getRemainingCredits(user);
+  const hasEnoughCredits = remainingCredits >= GENERATION_CREDIT_COST;
 
   const handleVerifyEmail = () => {
     if (!user?.email) return;
@@ -169,6 +172,11 @@ export default function DashboardGenerate() {
             </span>
           </Alert>
         )}
+        {!needsVerification && !hasEnoughCredits && (
+          <Alert variant="warning">
+            You don't have enough credits for another thumbnail.
+          </Alert>
+        )}
         {error && <Alert variant="error">{error}</Alert>}
         {success && !isPending && <Alert variant="success">{success}</Alert>}
 
@@ -188,12 +196,17 @@ export default function DashboardGenerate() {
               key="prompt-card"
               label="Your prompt"
               defaultValue={homepagePrompt}
-              disabled={isPending}
+              disabled={isPending || !hasEnoughCredits}
               submitLabel="Generate Thumbnail"
               onSubmit={handleSubmit}
             />
           )}
         </AnimatePresence>
+
+        <p className="text-right text-xs text-text-muted">
+          <span className="font-semibold text-text-primary">{remainingCredits}</span> credits left
+          {" · "}each thumbnail costs {GENERATION_CREDIT_COST} credits
+        </p>
       </div>
 
       <hr className="mx-auto my-12 max-w-6xl border-border" />

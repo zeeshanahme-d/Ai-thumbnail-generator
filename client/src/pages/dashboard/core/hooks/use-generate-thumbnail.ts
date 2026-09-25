@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateThumbnail } from "../_requests";
 import { thumbnailKeys } from "./query-keys";
+import { useSyncSessionUser } from "../../../auth/core/hooks";
 import type { GenerateThumbnailPayload, PaginatedThumbnailsResponse } from "../_models";
 import type { Thumbnail } from "../../../../types";
 
 const useGenerateThumbnail = () => {
   const queryClient = useQueryClient();
+  const syncSessionUser = useSyncSessionUser();
 
   const { mutate, mutateAsync, isPending, isError, error, data, reset } = useMutation({
     mutationFn: (payload: GenerateThumbnailPayload) => generateThumbnail(payload),
@@ -34,6 +36,9 @@ const useGenerateThumbnail = () => {
       queryClient.invalidateQueries({
         queryKey: thumbnailKeys.all,
       });
+
+      // The balance shown on the page comes from the session user.
+      syncSessionUser().catch(() => {});
     },
   });
 

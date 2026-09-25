@@ -1,13 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMe, verifyEmail } from "../_requests";
-import { authKeys } from "./query-keys";
+import { useMutation } from "@tanstack/react-query";
+import { verifyEmail } from "../_requests";
+import { useSyncSessionUser } from "./use-sync-session-user";
 import { useSession } from "../../../../store/useSessionStore";
 import type { ApiSuccess, VerifyEmailPayload } from "../_models";
 
 export function useVerifyEmail() {
-    const queryClient = useQueryClient();
     const isAuthenticated = useSession((state) => state.isAuthenticated);
-    const setSession = useSession((state) => state.setSession);
+    const syncSessionUser = useSyncSessionUser();
 
     return useMutation<ApiSuccess<never>, unknown, VerifyEmailPayload>({
         mutationFn: verifyEmail,
@@ -15,9 +14,7 @@ export function useVerifyEmail() {
             if (!isAuthenticated) return;
             // Pull the new credits and verified status into the session right away.
             try {
-                const user = await getMe();
-                setSession(user);
-                queryClient.setQueryData(authKeys.me(), user);
+                await syncSessionUser();
             } catch {
                 // Verification already succeeded; the next session check picks up the change.
             }

@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import {
   ChevronLeft,
+  Coins,
   LayoutGrid,
   LogOut,
   X,
@@ -9,6 +10,7 @@ import {
 import Logo from "../../../assets/svgs/logo.svg?react";
 import { dashboardNav } from "../../../data/dashboardNav";
 import { useSession } from "../../../store/useSessionStore";
+import { getRemainingCredits } from "../../../lib/credits";
 import { useLogout } from "../../auth/core/hooks";
 import Button from "../../../components/Button";
 import ThemeButton from "../../../components/ThemeButton";
@@ -129,6 +131,15 @@ export default function DashboardSidebar({
 
       {/* Account */}
       <div className="border-t border-border p-4">
+        {!isCollapsed && (
+          <div className="mb-4 flex items-center justify-between rounded-lg bg-background-surface-2 px-3 py-2 text-xs">
+            <span className="flex items-center gap-1.5 text-text-secondary">
+              <Coins size={14} className="text-primary" />
+              Credits left
+            </span>
+            <span className="font-semibold text-text-primary">{getRemainingCredits(user)}</span>
+          </div>
+        )}
         <Link to="/profile" className="w-fit! flex items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-teal-500 text-sm font-semibold text-white">
             {initial}

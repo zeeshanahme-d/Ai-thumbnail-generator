@@ -9,4 +9,5 @@ export { useVerifyOtp } from "./use-verify-otp";
 export { useResetPassword } from "./use-reset-password";
 export { useVerifyEmail } from "./use-verify-email";
 export { useResendVerification } from "./use-resend-verification";
+export { useSyncSessionUser } from "./use-sync-session-user";
 export { authKeys } from "./query-keys";
