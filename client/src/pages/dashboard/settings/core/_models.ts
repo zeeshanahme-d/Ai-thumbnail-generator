@@ -1,6 +1,9 @@
-import type { IUser } from "../../../../types";
+import type { ChangePasswordPayload, IUser } from "../../../../types";
+
+export type { ChangePasswordPayload };
 
 export interface UploadAvatarResponse {
+
     user: IUser;
 }
 

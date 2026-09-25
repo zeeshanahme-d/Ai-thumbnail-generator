@@ -2,6 +2,8 @@ import { List } from "lucide-react";
 import BillingSection from "./components/BillingSection";
 import InvoicesSection from "./components/InvoicesSection";
 import EditProfileSection from "./components/EditProfileSection";
+import ChangePasswordSection from "./components/ChangePasswordSection";
+import DangerZoneSection from "./components/DangerZoneSection";
 import Wrapper from "../../../components/Wrapper";
 
 export default function Settings() {
@@ -30,8 +32,11 @@ export default function Settings() {
                     <BillingSection />
                     <InvoicesSection />
                     <EditProfileSection />
+                    <ChangePasswordSection />
+                    <DangerZoneSection />
                 </div>
             </Wrapper>
         </div>
     );
 }
+

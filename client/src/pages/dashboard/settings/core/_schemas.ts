@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-// Mirrors server/src/validations/auth.validation.ts → updateProfileSchema
 export const updateProfileSchema = z.object({
     fullName: z
         .string()
         .trim()
-        .min(2, "Full name must be at least 2 characters")
+        // .min(2, "Full name must be at least 2 characters")
         .max(50, "Full name must be at most 50 characters"),
     username: z
         .string()
@@ -30,3 +29,22 @@ export const updateProfileSchema = z.object({
 });
 
 export type UpdateProfileValues = z.infer<typeof updateProfileSchema>;
+
+export const changePasswordSchema = z
+    .object({
+        currentPassword: z.string().min(1, "Current password is required"),
+        newPassword: z
+            .string()
+            .regex(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
+                "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+            ),
+        confirmPassword: z.string().min(1, "Please confirm your new password"),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    });
+
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+

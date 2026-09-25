@@ -1,33 +1,36 @@
 import api from "../../../../lib/axios";
-import type { ApiSuccess } from "../../../auth/core/_models";
 import type {
+    ChangePasswordPayload,
     UpdateProfilePayload,
-    UpdateProfileResponse,
-    UploadAvatarResponse,
 } from "./_models";
 
 export const SETTINGS_URL = {
     uploadAvatar: "/upload/avatar",
     updateProfile: "/users/profile",
+    changePassword: "/auth/change-password",
+    deleteAccount: "/users/account",
 };
 
-export async function uploadAvatarRequest(formData: FormData) {
-    const { data } = await api.post<ApiSuccess<UploadAvatarResponse>>(
-        SETTINGS_URL.uploadAvatar,
-        formData,
-        {
+export const uploadAvatarRequest = (formData: FormData) => {
+    return api
+        .post(SETTINGS_URL.uploadAvatar, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
-        },
-    );
-    return data.data as UploadAvatarResponse;
-}
+        })
+        .then((response) => response.data);
+};
 
-export async function updateProfileRequest(payload: UpdateProfilePayload) {
-    const { data } = await api.patch<ApiSuccess<UpdateProfileResponse>>(
-        SETTINGS_URL.updateProfile,
-        payload,
-    );
-    return data.data as UpdateProfileResponse;
-}
+export const updateProfileRequest = (body: UpdateProfilePayload) => {
+    return api.patch(SETTINGS_URL.updateProfile, body).then((response) => response.data);
+};
+
+export const changePasswordRequest = (body: ChangePasswordPayload) => {
+    return api.post(SETTINGS_URL.changePassword, body).then((response) => response.data);
+};
+
+export const deleteAccountRequest = () => {
+    return api.delete(SETTINGS_URL.deleteAccount).then((response) => response.data);
+};
+
+

@@ -1,20 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authKeys } from "../../../../auth/core/hooks/query-keys";
 import { useSession } from "../../../../../store/useSessionStore";
-import type { UploadAvatarResponse } from "../_models";
 import { uploadAvatarRequest } from "../_requests";
 
-export function useUploadAvatar() {
+const useUploadAvatar = () => {
     const queryClient = useQueryClient();
     const setSession = useSession((state) => state.setSession);
 
-    return useMutation<UploadAvatarResponse, Error, FormData>({
-        mutationFn: uploadAvatarRequest,
-        onSuccess: ({ user }) => {
+    const { mutate: uploadAvatarMutate, isPending } = useMutation({
+        mutationFn: (formData: FormData) => uploadAvatarRequest(formData),
+        onSuccess: (res: any) => {
+            const user = res?.data?.user || res?.user;
             if (user) {
                 setSession(user);
                 queryClient.setQueryData(authKeys.me(), user);
             }
         },
     });
-}
+
+    return { uploadAvatarMutate, isPending };
+};
+
+export default useUploadAvatar;
+export { useUploadAvatar };

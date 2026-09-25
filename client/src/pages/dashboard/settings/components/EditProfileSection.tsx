@@ -3,7 +3,6 @@ import { User, AtSign, Mail, Globe, Loader2, CheckCircle2, XCircle } from "lucid
 //components
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
-import Alert from "../../../../components/Alert";
 import FieldError from "../../../auth/components/FieldError";
 //hooks & utils
 import { useRef, useState, useCallback } from "react";
@@ -14,13 +13,13 @@ import { useUploadAvatar } from "../core/hooks/use-upload-avatar";
 import { useUpdateProfile } from "../core/hooks/use-update-profile";
 import { useCheckUsername } from "../../../profile/core/hooks/useCheckUsername";
 import { updateProfileSchema } from "../core/_schemas";
-import { getApiErrorMessage } from "../../../../lib/axios";
+import toast from "react-hot-toast";
 
 export default function EditProfileSection() {
     const { user } = useSession((state) => state);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { mutate: uploadAvatar, isPending: isUploading } = useUploadAvatar();
-    const { mutateAsync: updateProfile, isPending: isUpdating, error, isSuccess } = useUpdateProfile();
+    const { uploadAvatarMutate, isPending: isUploading } = useUploadAvatar();
+    const { updateProfileMutate, isPending: isUpdating } = useUpdateProfile();
 
     const [debouncedUsername, setDebouncedUsername] = useState(user?.username ?? "");
 
@@ -47,7 +46,14 @@ export default function EditProfileSection() {
         const formData = new FormData();
         formData.append("avatar", file);
 
-        uploadAvatar(formData, {
+        uploadAvatarMutate(formData, {
+            onSuccess: (res: any) => {
+                toast.success(res?.message || "Avatar uploaded successfully.");
+            },
+            onError: (error: any) => {
+                const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to upload avatar.";
+                toast.error(message);
+            },
             onSettled: () => {
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
@@ -64,15 +70,20 @@ export default function EditProfileSection() {
             website: user?.website ?? "",
         },
         validators: { onChange: updateProfileSchema, onSubmit: updateProfileSchema },
-        onSubmit: async ({ value }) => {
+        onSubmit: ({ value }) => {
             if (isUsernameTaken || isCheckingUsername) return;
-            try {
-                await updateProfile(value);
-            } catch {
-                // Server error is rendered from the mutation's `error` state below.
-            }
+            updateProfileMutate(value, {
+                onSuccess: (res: any) => {
+                    toast.success(res?.message || "Profile updated successfully.");
+                },
+                onError: (error: any) => {
+                    const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to update profile.";
+                    toast.error(message);
+                },
+            });
         },
     });
+
 
     return (
         <section className="mb-10">
@@ -112,18 +123,6 @@ export default function EditProfileSection() {
                         )}
                     </button>
                 </div>
-
-                {/* Alerts */}
-                {!!error && (
-                    <Alert variant="error" className="mb-6">
-                        {getApiErrorMessage(error)}
-                    </Alert>
-                )}
-                {isSuccess && (
-                    <Alert variant="success" className="mb-6">
-                        Profile updated successfully!
-                    </Alert>
-                )}
 
                 <form
                     noValidate

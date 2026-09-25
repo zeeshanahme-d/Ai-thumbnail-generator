@@ -1,20 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authKeys } from "../../../../auth/core/hooks/query-keys";
-import { useSession } from "../../../../../store/useSessionStore";
-import type { UpdateProfilePayload, UpdateProfileResponse } from "../_models";
 import { updateProfileRequest } from "../_requests";
+import type { UpdateProfilePayload } from "../_models";
+import { useSession } from "../../../../../store/useSessionStore";
+import { authKeys } from "../../../../auth/core/hooks/query-keys";
 
-export function useUpdateProfile() {
+const useUpdateProfile = () => {
     const queryClient = useQueryClient();
     const setSession = useSession((state) => state.setSession);
 
-    return useMutation<UpdateProfileResponse, Error, UpdateProfilePayload>({
-        mutationFn: updateProfileRequest,
-        onSuccess: ({ user }) => {
+    const { mutate: updateProfileMutate, isPending } = useMutation({
+        mutationFn: (body: UpdateProfilePayload) => updateProfileRequest(body),
+        onSuccess: (res: any) => {
+            const user = res?.data?.user || res?.user;
             if (user) {
                 setSession(user);
                 queryClient.setQueryData(authKeys.me(), user);
             }
         },
     });
-}
+
+    return { updateProfileMutate, isPending };
+};
+
+export default useUpdateProfile;
+export { useUpdateProfile };
