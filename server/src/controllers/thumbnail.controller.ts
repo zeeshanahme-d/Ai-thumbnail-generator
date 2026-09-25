@@ -10,21 +10,10 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { UploadErrorCode } from "../constants/enums.js";
 import uploadFileOnCloudniary, { removeLocalFile, deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { formatPaginatedResponse } from "../utils/pagination.js";
-import { verifyAccessToken } from "../helper/token-helpers.js";
 import userModel from "../models/user.model.js";
+import mongoose from "mongoose";
+import { escapeRegex } from "../utils/helpers.js";
 
-const resolveUserId = (req: Request): string | undefined => {
-  if (req.user?.userId) return req.user.userId;
-  if (req.user?._id) return req.user._id.toString();
-  const accessToken = req.cookies?.accessToken || req.headers?.authorization?.split(" ")[1];
-  if (!accessToken) return undefined;
-  try {
-    const decoded = verifyAccessToken(accessToken) as { userId?: string; _id?: string };
-    return decoded?.userId ?? decoded?._id;
-  } catch {
-    return undefined;
-  }
-};
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
   const likes = await likeDislikeModel
@@ -46,10 +35,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
   let outputFilePath: string | null = null;
 
   try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Authentication required. Please log in to generate thumbnails.");
-    }
+    const userId = req.user!.userId;
 
     const user = await userModel.findById(userId);
     if (!user) {
@@ -270,7 +256,6 @@ QUALITY REQUIREMENTS
       format: finalResult.format,
       bytes: finalResult.bytes,
     };
-    thumbnail.prompt_used = prompt;
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
@@ -286,14 +271,13 @@ QUALITY REQUIREMENTS
       }
     );
 
-    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", thumbnail,);
+    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", thumbnail);
 
   } catch (error) {
-    console.error("Thumbnail generation error:", error);
     if (thumbnailId) {
       await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
     }
-    return ApiResponse.error(res, 500, "An unexpected error occurred while generating your thumbnail. Please try again.");
+    throw error;
   } finally {
     if (referenceImagePath) {
       await removeLocalFile(referenceImagePath);
@@ -309,56 +293,52 @@ QUALITY REQUIREMENTS
  * Fetch active thumbnails owned by the currently authenticated user.
  */
 const getMyThumbnails = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
 
-    const { page, limit, search, style, sort } = req.validated!.query;
-    const skip = (page - 1) * limit;
-
-    const query: Record<string, any> = {
-      userId,
-      deletedAt: null,
-    };
-
-    if (style && typeof style === "string") {
-      query.style = style;
-    }
-    if (search && typeof search === "string") {
-      query.title = {
-        $regex: search,
-        $options: "i",
-      };
-    }
-
-    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
-
-    const [rawThumbnails, total, likedSet] = await Promise.all([
-      thumbnailModel
-        .find(query)
-        .sort(sortQuery)
-        .populate("userId", "fullName username avatar")
-        .lean()
-        .skip(skip)
-        .limit(limit),
-      thumbnailModel.countDocuments(query),
-      getUserLikedThumbnailIds(userId),
-    ]);
-
-    const thumbnails = rawThumbnails.map((thumbnail) => ({
-      ...thumbnail,
-      isLiked: likedSet.has(thumbnail._id.toString()),
-    }));
-
-    const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
-
-    return ApiResponse.success(res, 200, "User thumbnails fetched.", paginatedData);
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!userId) {
+    return ApiResponse.error(res, 401, "Unauthorized.");
   }
+
+  const { page, limit, search, style, sort } = req.validated!.query;
+  const skip = (page - 1) * limit;
+
+  const query: Record<string, any> = {
+    userId,
+    deletedAt: null,
+  };
+
+  if (style && typeof style === "string") {
+    query.style = style;
+  }
+  if (search && typeof search === "string") {
+    query.title = {
+      $regex: escapeRegex(search.trim()),
+      $options: "i",
+    };
+  }
+
+  const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
+  const [rawThumbnails, total, likedSet] = await Promise.all([
+    thumbnailModel
+      .find(query)
+      .sort(sortQuery)
+      .populate("userId", "fullName username avatar")
+      .lean()
+      .skip(skip)
+      .limit(limit),
+    thumbnailModel.countDocuments(query),
+    getUserLikedThumbnailIds(userId),
+  ]);
+
+  const thumbnails = rawThumbnails.map((thumbnail) => ({
+    ...thumbnail,
+    isLiked: likedSet.has(thumbnail._id.toString()),
+  }));
+
+  const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
+
+  return ApiResponse.success(res, 200, "User thumbnails fetched.", paginatedData);
 };
 
 /**
@@ -366,55 +346,50 @@ const getMyThumbnails = async (req: Request, res: Response) => {
  * Fetch all published community thumbnails (available publicly or for logged-in user).
  */
 const getCommunityThumbnails = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    const { page, limit, search, style, sort, userId: filterUserId } = req.validated!.query;
-    const skip = (page - 1) * limit;
+  const userId = req.user?.userId;
+  const { page, limit, search, style, sort, userId: filterUserId } = req.validated!.query;
+  const skip = (page - 1) * limit;
 
-    const query: Record<string, any> = {
-      published: true,
-      deletedAt: null,
-    };
+  const query: Record<string, any> = {
+    published: true,
+    deletedAt: null,
+  };
 
-    if (filterUserId && typeof filterUserId === "string") {
-      query.userId = filterUserId;
-    }
-    if (style && typeof style === "string") {
-      query.style = style;
-    }
-    if (search && typeof search === "string") {
-      query.title = {
-        $regex: search,
-        $options: "i",
-      };
-    }
-
-    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
-
-    const [rawThumbnails, total, likedSet] = await Promise.all([
-      thumbnailModel
-        .find(query)
-        .sort(sortQuery)
-        .populate("userId", "fullName username avatar")
-        .lean()
-        .skip(skip)
-        .limit(limit),
-      thumbnailModel.countDocuments(query),
-      userId ? getUserLikedThumbnailIds(userId) : Promise.resolve(new Set<string>()),
-    ]);
-
-    const thumbnails = rawThumbnails.map((thumbnail) => ({
-      ...thumbnail,
-      isLiked: likedSet.has(thumbnail._id.toString()),
-    }));
-
-    const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
-
-    return ApiResponse.success(res, 200, "Community thumbnails fetched.", paginatedData);
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (filterUserId && typeof filterUserId === "string") {
+    query.userId = filterUserId;
   }
+  if (style && typeof style === "string") {
+    query.style = style;
+  }
+  if (search && typeof search === "string") {
+    query.title = {
+      $regex: escapeRegex(search.trim()),
+      $options: "i",
+    };
+  }
+
+  const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
+  const [rawThumbnails, total, likedSet] = await Promise.all([
+    thumbnailModel
+      .find(query)
+      .sort(sortQuery)
+      .populate("userId", "fullName username avatar")
+      .lean()
+      .skip(skip)
+      .limit(limit),
+    thumbnailModel.countDocuments(query),
+    userId ? getUserLikedThumbnailIds(userId) : Promise.resolve(new Set<string>()),
+  ]);
+
+  const thumbnails = rawThumbnails.map((thumbnail) => ({
+    ...thumbnail,
+    isLiked: likedSet.has(thumbnail._id.toString()),
+  }));
+
+  const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
+
+  return ApiResponse.success(res, 200, "Community thumbnails fetched.", paginatedData);
 };
 
 /**
@@ -422,91 +397,79 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
  * Fetch soft-deleted thumbnails owned by the currently authenticated user.
  */
 const getRecycleBinThumbnails = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
 
-    const { page, limit, search, style, sort } = req.validated!.query;
-    const skip = (page - 1) * limit;
+  const { page, limit, search, style, sort } = req.validated!.query;
+  const skip = (page - 1) * limit;
 
-    const query: Record<string, any> = {
-      userId,
-      deletedAt: { $ne: null },
-    };
+  const query: Record<string, any> = {
+    userId,
+    deletedAt: { $ne: null },
+  };
 
-    if (style && typeof style === "string") {
-      query.style = style;
-    }
-    if (search && typeof search === "string") {
-      query.title = {
-        $regex: search,
-        $options: "i",
-      };
-    }
-
-    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
-
-    const [rawThumbnails, total] = await Promise.all([
-      thumbnailModel
-        .find(query)
-        .sort(sortQuery)
-        .populate("userId", "fullName username avatar")
-        .lean()
-        .skip(skip)
-        .limit(limit),
-      thumbnailModel.countDocuments(query),
-    ]);
-
-    const paginatedData = formatPaginatedResponse(rawThumbnails, total, page, limit);
-
-    return ApiResponse.success(res, 200, "Recycle bin thumbnails fetched.", paginatedData);
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (style && typeof style === "string") {
+    query.style = style;
   }
+  if (search && typeof search === "string") {
+    query.title = {
+      $regex: escapeRegex(search.trim()),
+      $options: "i",
+    };
+  }
+
+  const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
+  const [rawThumbnails, total] = await Promise.all([
+    thumbnailModel
+      .find(query)
+      .sort(sortQuery)
+      .populate("userId", "fullName username avatar")
+      .lean()
+      .skip(skip)
+      .limit(limit),
+    thumbnailModel.countDocuments(query),
+  ]);
+
+  const paginatedData = formatPaginatedResponse(rawThumbnails, total, page, limit);
+
+  return ApiResponse.success(res, 200, "Recycle bin thumbnails fetched.", paginatedData);
 };
+
 
 /**
  * DELETE /thumbnails/:id
  * Soft delete a thumbnail by setting deletedAt to current timestamp.
  */
 const softDeleteThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-
-    const thumbnail = await thumbnailModel.findOneAndUpdate(
-      {
-        _id: id,
-        userId,
-        deletedAt: null,
-      },
-      {
-        $set: { deletedAt: new Date() },
-      },
-      { new: true }
-    );
-
-    if (!thumbnail) {
-      return ApiResponse.error(res, 404, "Thumbnail not found.");
-    }
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail moved to recycle bin.",
-      thumbnail,
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+
+  const thumbnail = await thumbnailModel.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+      deletedAt: null,
+    },
+    {
+      $set: { deletedAt: new Date() },
+    },
+    { new: true }
+  );
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Thumbnail moved to recycle bin.",
+    thumbnail,
+  );
 };
 
 /**
@@ -514,40 +477,35 @@ const softDeleteThumbnail = async (req: Request, res: Response) => {
  * Restore a soft-deleted thumbnail.
  */
 const restoreThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-
-    const thumbnail = await thumbnailModel.findOneAndUpdate(
-      {
-        _id: id,
-        userId,
-        deletedAt: { $ne: null },
-      },
-      {
-        $set: { deletedAt: null },
-      },
-      { new: true }
-    );
-
-    if (!thumbnail) {
-      return ApiResponse.error(res, 404, "Thumbnail not found in recycle bin.");
-    }
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail restored successfully.",
-      thumbnail,
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+
+  const thumbnail = await thumbnailModel.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+      deletedAt: { $ne: null },
+    },
+    {
+      $set: { deletedAt: null },
+    },
+    { new: true }
+  );
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found in recycle bin.");
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Thumbnail restored successfully.",
+    thumbnail,
+  );
 };
 
 /**
@@ -555,43 +513,38 @@ const restoreThumbnail = async (req: Request, res: Response) => {
  * Permanently delete a thumbnail asset from Cloudinary and database.
  */
 const permanentDeleteThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-
-    const thumbnail = await thumbnailModel.findOne({
-      _id: id,
-      userId,
-      deletedAt: { $ne: null },
-    });
-
-    if (!thumbnail) {
-      return ApiResponse.error(
-        res,
-        404,
-        "Thumbnail not found in recycle bin.",
-      );
-    }
-
-    if (thumbnail.thumbnail?.publicId) {
-      await deleteFileFromCloudinary(thumbnail.thumbnail.publicId);
-    }
-
-    await thumbnailModel.findByIdAndDelete(id);
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail permanently deleted.",
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+
+  const thumbnail = await thumbnailModel.findOne({
+    _id: id,
+    userId,
+    deletedAt: { $ne: null },
+  });
+
+  if (!thumbnail) {
+    return ApiResponse.error(
+      res,
+      404,
+      "Thumbnail not found in recycle bin.",
+    );
+  }
+
+  if (thumbnail.thumbnail?.publicId) {
+    await deleteFileFromCloudinary(thumbnail.thumbnail.publicId);
+  }
+
+  await thumbnailModel.findByIdAndDelete(id);
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Thumbnail permanently deleted.",
+  );
 };
 
 /**
@@ -599,55 +552,61 @@ const permanentDeleteThumbnail = async (req: Request, res: Response) => {
  * Toggle like/unlike status for a thumbnail atomically.
  */
 const likeDislikeThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
 
-    const id = req.params.id as string;
+  const { id } = req.params;
 
-    const existingLike = await likeDislikeModel.findOne({
-      userId,
-      thumbnailId: id,
-    });
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
+  }
 
-    if (existingLike) {
-      await existingLike.deleteOne();
-      await thumbnailModel.findByIdAndUpdate(id, {
-        _id: id,
+  const thumbnailId = new mongoose.Types.ObjectId(id as string);
+
+  const thumbnail = await thumbnailModel.findById(thumbnailId);
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  const existingLike = await likeDislikeModel.findOne({
+    userId,
+    thumbnailId: thumbnailId,
+  });
+
+  if (existingLike) {
+    await existingLike.deleteOne();
+
+    await thumbnailModel.findOneAndUpdate(
+      {
+        _id: thumbnailId,
         likesCount: { $gt: 0 },
       },
-        {
-          $inc: { likesCount: -1 },
-        });
-      return ApiResponse.success(
-        res,
-        200,
-        "Thumbnail unliked successfully.",
-        { isLiked: false }
-      );
-    }
-
-    await likeDislikeModel.create({
-      userId,
-      thumbnailId: id,
-    });
-
-    await thumbnailModel.findByIdAndUpdate(id, {
-      $inc: { likesCount: 1 },
-    });
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail liked successfully.",
-      { isLiked: true }
+      {
+        $inc: {
+          likesCount: -1,
+        },
+      }
     );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+
+    return ApiResponse.success(res, 200, "Thumbnail unliked successfully.", {
+      isLiked: false,
+    });
   }
+
+  await likeDislikeModel.create({
+    userId,
+    thumbnailId: thumbnailId,
+  });
+
+  await thumbnailModel.findByIdAndUpdate(thumbnailId, {
+    $inc: {
+      likesCount: 1,
+    },
+  });
+
+  return ApiResponse.success(res, 200, "Thumbnail liked successfully.", {
+    isLiked: true,
+  });
 };
 
 /**
@@ -655,49 +614,45 @@ const likeDislikeThumbnail = async (req: Request, res: Response) => {
  * Publish or unpublish a thumbnail to the community feed.
  */
 const publishThumbnailToCommunity = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-    const { published } = req.validated!.body;
-
-    const thumbnail = await thumbnailModel.findOneAndUpdate(
-      {
-        _id: id,
-        userId,
-        deletedAt: null,
-      },
-      {
-        $set: {
-          published,
-          publishedAt: published ? new Date() : null,
-        },
-      },
-      {
-        new: true,
-      }
-    );
-
-    if (!thumbnail) {
-      return ApiResponse.error(res, 404, "Thumbnail not found.");
-    }
-
-    return ApiResponse.success(
-      res,
-      200,
-      published
-        ? "Thumbnail published successfully."
-        : "Thumbnail unpublished successfully.",
-      thumbnail
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+  const { published } = req.validated!.body;
+
+  const thumbnail = await thumbnailModel.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+      deletedAt: null,
+    },
+    {
+      $set: {
+        published,
+        publishedAt: published ? new Date() : null,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    published
+      ? "Thumbnail published successfully."
+      : "Thumbnail unpublished successfully.",
+    thumbnail
+  );
 };
+
 
 export {
   generateGminiThumbnail,
