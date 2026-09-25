@@ -1,14 +1,25 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import toast from "react-hot-toast";
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
+import ConfirmDialog from "../../../../components/modals/confirmation-dialog/ConfirmDialog";
 import FieldError from "../../../auth/components/FieldError";
+import { useSession } from "../../../../store/useSessionStore";
 import { useChangePassword } from "../core/hooks/use-change-password";
 import { changePasswordSchema } from "../core/_schemas";
+import type { ChangePasswordPayload } from "../core/_models";
 
 export default function ChangePasswordSection() {
     const { changePasswordMutate, isPending } = useChangePassword();
+    const clearSession = useSession((state) => state.clearSession);
+    const queryClient = useQueryClient();
+    const navigate = useNavigate();
+    // Validated form values, held while the sign-out warning is open.
+    const [pendingValues, setPendingValues] = useState<ChangePasswordPayload | null>(null);
 
     const form = useForm({
         defaultValues: {
@@ -20,19 +31,30 @@ export default function ChangePasswordSection() {
             onChange: changePasswordSchema,
             onSubmit: changePasswordSchema,
         },
+        // Nothing is sent yet: the user first confirms they will be signed out everywhere.
         onSubmit: ({ value }) => {
-            changePasswordMutate(value, {
-                onSuccess: (res: any) => {
-                    toast.success(res?.message || "Password updated successfully!");
-                    form.reset();
-                },
-                onError: (error: any) => {
-                    const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to update password.";
-                    toast.error(message);
-                },
-            });
+            setPendingValues(value);
         },
     });
+
+    const handleConfirmChange = () => {
+        if (!pendingValues) return;
+
+        changePasswordMutate(pendingValues, {
+            onSuccess: (res: any) => {
+                // The server ended every session, this one included.
+                clearSession();
+                queryClient.clear();
+                toast.success(res?.message || "Password changed. Log in with your new password.");
+                navigate("/login", { replace: true });
+            },
+            onError: (error: any) => {
+                const message = error?.response?.data?.message || error?.response?.data?.error?.message || "Failed to update password.";
+                toast.error(message);
+                setPendingValues(null);
+            },
+        });
+    };
 
     return (
         <section className="mb-10">
@@ -139,6 +161,17 @@ export default function ChangePasswordSection() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmDialog
+                open={pendingValues !== null}
+                onClose={() => setPendingValues(null)}
+                onConfirm={handleConfirmChange}
+                title="Sign out of all sessions?"
+                description="Changing your password signs you out everywhere, including this browser and any other device. You'll need to log in again with your new password."
+                confirmLabel="Change password"
+                variant="danger"
+                loading={isPending}
+            />
         </section>
     );
 }

@@ -28,6 +28,11 @@ api.interceptors.response.use(
             _retry?: boolean;
         };
         const code = error.response?.data?.error;
+        // Sessions were ended elsewhere (password changed or reset): sign out here too.
+        if (error.response?.status === 401 && code === "TOKEN_REVOKED") {
+            useSession.getState().clearSession();
+            return Promise.reject(error);
+        }
         const isExpired = error.response?.status === 401 && (code === "TOKEN_EXPIRED" || code === "TOKEN_MISSING");
         if (!isExpired || original?._retry) {
             return Promise.reject(error);
