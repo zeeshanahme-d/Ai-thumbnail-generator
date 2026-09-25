@@ -28,6 +28,7 @@ const PromptCard = ({
   id = "prompt-input",
   label,
   value,
+  defaultValue = "",
   onChange,
   onSubmit,
   placeholder = "Describe your thumbnail vision in detail... a cinematic gaming battle with fire and lightning at sunset",
@@ -38,7 +39,7 @@ const PromptCard = ({
   className = "",
 }: PromptCardProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [internalValue, setInternalValue] = useState("");
+  const [internalValue, setInternalValue] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
   const [style, setStyle] = useState(THUMBNAIL_STYLES[0].label);
   const [colorScheme, setColorScheme] = useState<string>(

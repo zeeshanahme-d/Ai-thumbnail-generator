@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import AuthTabs from "./components/AuthTabs";
-import SocialAuth from "./components/SocialAuth";
 import FieldError from "./components/FieldError";
 import Input from "../../components/Input";
 import Alert from "../../components/Alert";
@@ -44,7 +43,6 @@ export default function Signup() {
           {getApiErrorMessage(error)}
         </Alert>
       )}
-      <SocialAuth />
       <form
         noValidate
         onSubmit={(e) => {

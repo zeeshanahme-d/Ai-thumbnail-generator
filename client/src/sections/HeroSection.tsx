@@ -1,10 +1,21 @@
 import { CheckIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PromptCard from "../components/image-generate-components/PromptCard";
 import ThumbnailScroller from "../components/ThumbnailScroller";
 import Wrapper from "../components/Wrapper";
 import { motion } from "motion/react";
+import { savePendingPrompt } from "../lib/pendingPrompt";
+import type { PromptSubmission } from "../types";
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+
+  // Signed-out visitors pass through login first; the prompt waits in the generator.
+  const handleGenerate = ({ prompt }: PromptSubmission) => {
+    savePendingPrompt(prompt);
+    navigate("/dashboard/generate");
+  };
+
   const specialFeatures = [
     "No design skills needed",
     "Fast generation",
@@ -75,7 +86,7 @@ export default function HeroSection() {
             showTools={false}
             submitLabel="Generate Free"
             className="mx-auto max-w-[720px]"
-            onSubmit={() => {}}
+            onSubmit={handleGenerate}
           />
         </motion.div>
         <motion.div

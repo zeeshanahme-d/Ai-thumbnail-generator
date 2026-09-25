@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -15,6 +15,7 @@ import GenerationResultCard from "./components/GenerationResultCard";
 //Libs
 import { getApiErrorMessage } from "../../../lib/axios";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
+import { clearPendingPrompt, readPendingPrompt } from "../../../lib/pendingPrompt";
 //Types
 import type { PromptSubmission, Thumbnail } from "../../../types";
 import type { GenerateThumbnailPayload } from "../core/_models";
@@ -36,6 +37,11 @@ export default function DashboardGenerate() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [homepagePrompt, setHomepagePrompt] = useState(readPendingPrompt);
+
+  useEffect(() => {
+    clearPendingPrompt();
+  }, []);
 
   const [lastGeneratedThumbnail, setLastGeneratedThumbnail] =
     useState<Thumbnail | null>(null);
@@ -81,6 +87,7 @@ export default function DashboardGenerate() {
   };
 
   const handleSubmit = async (submission: PromptSubmission) => {
+    setHomepagePrompt("");
     const payload: GenerateThumbnailPayload = {
       title: buildThumbnailTitle(submission.prompt),
       prompt: submission.prompt,
@@ -180,6 +187,7 @@ export default function DashboardGenerate() {
             <PromptCard
               key="prompt-card"
               label="Your prompt"
+              defaultValue={homepagePrompt}
               disabled={isPending}
               submitLabel="Generate Thumbnail"
               onSubmit={handleSubmit}

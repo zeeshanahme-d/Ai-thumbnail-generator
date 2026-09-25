@@ -34,7 +34,7 @@ export default function CTASection() {
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
               <Link
-                to="/generate"
+                to="/dashboard/generate"
                 className="flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-text-on-primary transition-all hover:scale-105 hover:bg-primary-hover active:scale-95"
               >
                 Generate for Free

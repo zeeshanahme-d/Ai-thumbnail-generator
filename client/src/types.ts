@@ -43,6 +43,8 @@ export interface PromptCardProps {
   id?: string;
   label?: string;
   value?: string;
+  /** Starting text when the card manages its own value. */
+  defaultValue?: string;
   onChange?: (value: string) => void;
   onSubmit?: (submission: PromptSubmission) => void;
   placeholder?: string;
