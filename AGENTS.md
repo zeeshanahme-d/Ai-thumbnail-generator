@@ -21,7 +21,7 @@ There is no root `package.json` — do not add project scripts at the root.
 # client
 cd client && npm run dev      # Vite dev server (port 5173)
 cd client && npm run build    # vite build (does NOT type-check)
-cd client && npm run lint     # eslint 9, flat config
+cd client && npm run lint     # eslint 9: typescript-eslint + react-hooks on all .ts/.tsx
 
 # type-check the client (typescript is only a transitive dep, so call it directly)
 cd client && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
@@ -100,7 +100,9 @@ Auth pages render outside `MainLayout` (no navbar/footer).
   load and blocks rendering until it settles, so guards never act on stale state.
 - **`lib/axios.ts`** interceptor: on `401` + `error: "TOKEN_EXPIRED"` or
   `"TOKEN_MISSING"`, calls `/auth/refresh` once and replays the original request.
-  On refresh failure, clears the session and logs the user out.
+  On refresh failure, clears the session and logs the user out. On `401` +
+  `"TOKEN_REVOKED"` (password changed or reset elsewhere) it clears the session without
+  trying to refresh.
 - **`pages/auth/core/`** — `_models.ts` (types), `_requests.ts` (API calls),
   `_schemas.ts` (zod), `hooks/` (React Query hooks: `useLogin`, `useSignup`,
   `useMe`, `useRefreshToken`, `useVerifySession`, `useLogout`).
@@ -174,14 +176,25 @@ Check these before writing anything new:
   generate, gallery, community, profile, and recycle-bin pages.
 - **`ConfirmDialog`** (`components/modals/confirmation-dialog/`) — modal dialog for
   delete confirmations. Props: `open`, `onClose`, `onConfirm`, `title`, `description`,
-  `confirmLabel`, `variant` (danger | default), `loading`.
+  `confirmLabel`, `variant` (danger | default), `loading`, `confirmDisabled`, and
+  `children` for extra content such as a password input.
+- **`PageLoader.tsx`** — centered spinner. `fullScreen` for loads before any layout shows.
+  Used by `SessionProvider` and as the `Suspense` fallback for lazy pages.
 - **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Select.tsx`**,
   **`ThumbnailScroller.tsx`**, **`SectionTitle.tsx`**, **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**, **`DebounceSearch.tsx`**.
 
 `lib/imageValidation.ts` owns image rules (extensions, MIME, 5 MB max) and returns a
-user-facing message; reuse it for any upload.
+user-facing message; reuse it for any upload. `lib/passwordValidation.ts` owns the
+password rule and mirrors `server/src/validations/password.validation.ts`.
+
+- Pages other than the homepage are lazy-loaded in `routes.tsx`; each layout wraps its
+  `<Outlet />` in `Suspense`.
+- Paged lists (community, gallery, profile) use `useInfiniteThumbnails` from
+  `pages/dashboard/core/hooks/`. The like hook updates both plain and infinite caches.
+- Grids render `getThumbnailCardImageUrl` (resized Cloudinary URL); detail views and
+  downloads keep `getThumbnailImageUrl`.
 
 ## Server architecture
 
@@ -218,13 +231,31 @@ ApiResponse.error(res, 401, "Invalid email or password.", "Unauthorized");
 
 The 4th `error` argument doubles as a **machine-readable code** the client branches
 on: `TOKEN_EXPIRED`, `TOKEN_INVALID`, `TOKEN_MISSING`, `REFRESH_EXPIRED`,
-`REFRESH_INVALID`, `REFRESH_MISSING`, `INSUFFICIENT_CREDITS`, `GENERATION_FAILED`.
+`REFRESH_INVALID`, `REFRESH_MISSING`, `TOKEN_REVOKED`, `EMAIL_NOT_VERIFIED`,
+`DISPOSABLE_EMAIL`, `RATE_LIMITED`, `INSUFFICIENT_CREDITS`, `GENERATION_FAILED`.
+
+**`mongoose.set("sanitizeFilter", true)`** is on (`db/connection.ts`): any operator object
+in a query filter is wrapped in `$eq`, so request values can never act as operators. When
+you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it:
+`deletedAt: mongoose.trusted({ $ne: null })`. Without it the query breaks or throws.
 
 ### Auth endpoints (`/auth`, public unless noted)
 
 `POST /login`, `POST /signup`, `POST /refresh`, `POST /verify`, `POST /logout`,
 `GET /me` (behind `authenticationToken`), `POST /forgot-password`, `POST /verify-otp`,
-`POST /reset-password`.
+`POST /reset-password`, `POST /verify-email`, `POST /resend-verification`,
+`POST /change-password` (behind `authenticationToken`).
+
+- **Sessions are revocable instantly.** Every token carries `tv` = `user.tokenVersion`, and
+  `authenticationToken` looks the user up on each request. `revokeAllSessions()` (password
+  change and reset) bumps the version and deletes all refresh tokens. Tokens without `tv`
+  count as version 0.
+- **Rate limits** live in `middlewares/rate-limit.middleware.ts` (in-memory store, per IP,
+  per email, or per user) and are mounted per route before `validate`. Behind a proxy,
+  `TRUST_PROXY` must be set or every client shares one IP.
+- **Emailed codes** (reset and verification) go through `issueOtp` / `consumeOtp` in
+  `auth.controller.ts`: hashed, 10-minute expiry, and 5 attempts counted atomically.
+- Token cookies must be strings: cookie-parser turns `j:{...}` cookies into objects.
 
 - Access token 15 min, refresh token 30 days (`helper/token-helpers.ts`). Secrets are
   read **inside** the functions — `dotenv.config()` runs *after* the module graph is
@@ -246,16 +277,22 @@ on: `TOKEN_EXPIRED`, `TOKEN_INVALID`, `TOKEN_MISSING`, `REFRESH_EXPIRED`,
 - `GET /thumbnail/community` — community thumbnails (with like status for current user)
 - `GET /thumbnail/recycle-bin` — soft-deleted thumbnails
 - `PATCH /thumbnail/:id/publish` — toggle publish/unpublish
-- `POST /thumbnail/:id/like` — toggle like/unlike
+- `POST /thumbnail/:id/like` — toggle like/unlike (published, non-deleted thumbnails only)
 - `DELETE /thumbnail/:id` — soft delete (move to recycle bin)
 - `PATCH /thumbnail/:id/restore` — restore from recycle bin
 - `DELETE /thumbnail/:id/permanent` — permanently delete (also removes from Cloudinary)
 
 ### User endpoints
 
-- `GET /users` — list all users (protected by parent middleware, **no pagination — security concern**)
+- `GET /users/check-username/:username` — username availability (behind auth)
+- `GET /users/:username/profile` — public profile
 - `PATCH /users/profile` — update profile (fullName, username, bio, website)
+- `DELETE /users/account` — delete account; body must include the current `password`
 - `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary)
+
+`uploadSingleImage` checks the file's real bytes with `file-type` and deletes the temp
+file when the response ends, so controllers never remove `req.file` themselves.
+With `NODE_ENV=production` the error handler replaces 5xx messages with a generic one.
 
 ### AI Generation flow
 
@@ -272,21 +309,26 @@ on: `TOKEN_EXPIRED`, `TOKEN_INVALID`, `TOKEN_MISSING`, `REFRESH_EXPIRED`,
 
 ### Credits system
 
-- Free users get 20 total credits
+- New accounts start with 0 credits; verifying the email grants the 20-credit bonus
+  (`$max`, so older accounts that already have 20 are not topped up twice). Signup rejects
+  disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
-- `user.totalcredits` vs `user.creditsUsed` — checked before generation
+- `user.totalcredits` vs `user.creditsUsed` — `utils/credits.ts` reserves credits
+  atomically before calling Gemini and refunds them if generation fails
 - **Credits never reset** — no cron job or subscription webhook resets them
 
 Env: `PORT`, `SECRET`, `REFRESH_SECRET` (falls back to `SECRET`), `CLIENT_URL`,
 `CLIENT_ID`, `GEMINI_API_KEY`, `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `CLOUDINARY_NAME`, `SMTP_HOST`, `SMTP_USER`,
-`SMTP_PASSWORD`, `SMTP_TLS_PORT`.
+`SMTP_PASSWORD`, `SMTP_TLS_PORT`, `MONGO_DB_URL`, `TRUST_PROXY` (number of reverse proxies,
+unset when clients connect directly).
 Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`).
 
 ## Current state / gotchas
 
 ### Working features
-- Full email auth (signup, login, forgot/reset password with OTP email)
+- Full email auth (signup with email verification, login, forgot/reset/change password
+  with OTP email, rate limits on auth routes)
 - Thumbnail generation via Gemini AI with style/color/aspect-ratio presets
 - Dashboard: Generate, Gallery, Community, Recycle Bin (all wired to real API)
 - Like/unlike, publish/unpublish, soft delete/restore/permanent delete
@@ -299,14 +341,12 @@ Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`).
   payment integration (Stripe/LemonSqueezy). Credits never reset.
 - **Google OAuth** — login button renders but no `/auth/google` endpoint exists.
 - **Recreate** — placeholder page only; no upload-and-remix flow.
-- **Email verification** — `isVerified` field exists but never gets set; no verify-email endpoint.
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
 - **View counting** — `viewsCount` field exists but is never incremented.
 - **Public profiles** — `/profile` shows current user only (hardcoded data in places);
   no `/profile/:username` route for viewing others.
 
 ### Known bugs
-- `Profile.tsx` has hardcoded name "Ahtisham khan" instead of reading from session.
 - `hf.ts` error message says "GEMINI_API_KEY is missing" (copy-paste bug).
 - `likeDislik.modal.ts` — filename should be `.model.ts`; `unique: true` is set at
   schema level instead of as a compound index on `{ userId, thumbnailId }`.
@@ -314,6 +354,3 @@ Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`).
   the OR condition so `TOKEN_MISSING` triggers refresh without checking status code.
 - `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.
 - `.env.example` is incomplete (missing SMTP, REFRESH_SECRET, MONGO_URI vars).
-- `GET /users/` returns all users without pagination — potential security/perf issue.
-- `express-rate-limit` is installed but not applied to any route.
-- Community "Load More" increments page instead of accumulating — replaces results.
