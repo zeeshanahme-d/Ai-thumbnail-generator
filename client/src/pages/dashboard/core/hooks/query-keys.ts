@@ -7,8 +7,6 @@ export const thumbnailKeys = {
     [...thumbnailKeys.all, "mine", params] as const,
   community: (params?: PaginationParams) =>
     [...thumbnailKeys.all, "community", params] as const,
-  recycleBin: (params?: PaginationParams) =>
-    [...thumbnailKeys.all, "recycleBin", params] as const,
   infinite: (source: ThumbnailListSource, filters: ThumbnailFilters) =>
     [...thumbnailKeys.all, "infinite", source, filters] as const,
 };

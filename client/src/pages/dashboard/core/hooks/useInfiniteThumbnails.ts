@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { keepPreviousData, useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
-import { getCommunityThumbnails, getMyThumbnails } from "../_requests";
+import { getCommunityThumbnails, getMyThumbnails, getRecycleBinThumbnails } from "../_requests";
 import { thumbnailKeys } from "./query-keys";
 import { useSession } from "../../../../store/useSessionStore";
 import type { PaginatedThumbnailsResponse, ThumbnailListSource } from "../_models";
@@ -15,6 +15,7 @@ interface InfiniteThumbnailsOptions {
 const fetchers = {
   mine: getMyThumbnails,
   community: getCommunityThumbnails,
+  recycleBin: getRecycleBinThumbnails,
 };
 
 // Items can shift between pages when new thumbnails arrive, so repeats are dropped.

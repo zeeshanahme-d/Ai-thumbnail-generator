@@ -15,7 +15,7 @@ export interface PaginationParams extends ThumbnailFilters {
   page?: number;
 }
 
-export type ThumbnailListSource = "mine" | "community";
+export type ThumbnailListSource = "mine" | "community" | "recycleBin";
 
 export type GetThumbnailsParams = PaginationParams;
 

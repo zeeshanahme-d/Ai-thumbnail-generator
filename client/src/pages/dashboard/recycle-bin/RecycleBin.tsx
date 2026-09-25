@@ -2,17 +2,28 @@ import { useState } from "react";
 import { Trash2, Trash } from "lucide-react";
 import { motion } from "motion/react";
 import toast from "react-hot-toast";
-import useGetRecycleBinThumbnails from "../core/hooks/useGetRecycleBinThumbnails";
+import useInfiniteThumbnails from "../core/hooks/useInfiniteThumbnails";
 import useRestoreThumbnail from "../core/hooks/use-restore-thumbnail";
 import usePermanentDeleteThumbnail from "../core/hooks/use-permanent-delete-thumbnail";
+import Button from "../../../components/Button";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import { getApiErrorMessage } from "../../../lib/axios";
+import type { ThumbnailFilters } from "../../../types";
+
+const PAGE_SIZE = 12;
+const RECYCLE_BIN_FILTERS: ThumbnailFilters = { limit: PAGE_SIZE, sort: "newest" };
 
 export default function RecycleBin() {
-  const { data: recycleBinResponse, isPending: isLoading } = useGetRecycleBinThumbnails();
-  const deletedThumbnails = recycleBinResponse?.thumbnails || [];
+  const {
+    thumbnails: deletedThumbnails,
+    total,
+    isPending: isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteThumbnails("recycleBin", RECYCLE_BIN_FILTERS);
 
   const { mutate: restoreMutate, isPending: isRestoring } = useRestoreThumbnail();
   const { mutate: permanentDeleteMutate, isPending: isPermanentlyDeleting } = usePermanentDeleteThumbnail();
@@ -71,7 +82,7 @@ export default function RecycleBin() {
             Recycle Bin
           </h2>
           <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
-            {deletedThumbnails.length}
+            {total}
           </span>
         </div>
 
@@ -101,6 +112,26 @@ export default function RecycleBin() {
                 restoring={isRestoring}
               />
             ))}
+          </div>
+        )}
+
+        {isFetchingNextPage && (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <ThumbnailCardSkeleton count={3} showRecycleBinActions />
+          </div>
+        )}
+
+        {hasNextPage && (
+          <div className="mt-10 flex justify-center">
+            <Button
+              type="button"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              fullWidth={false}
+              variant="secondary"
+            >
+              {isFetchingNextPage ? "Loading..." : "Load More"}
+            </Button>
           </div>
         )}
       </div>
