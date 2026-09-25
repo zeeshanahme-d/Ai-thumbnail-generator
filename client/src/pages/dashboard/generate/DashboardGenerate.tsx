@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
@@ -22,6 +22,8 @@ import type { GenerateThumbnailPayload } from "../core/_models";
 import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
 import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
 import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
+import { useResendVerification } from "../../auth/core/hooks";
+import { useSession } from "../../../store/useSessionStore";
 
 export default function DashboardGenerate() {
   const { data: generations = [], isPending: isLoading } = useGetMyThumbnails({
@@ -39,6 +41,29 @@ export default function DashboardGenerate() {
     useState<Thumbnail | null>(null);
   const [lastSubmissionPayload, setLastSubmissionPayload] =
     useState<GenerateThumbnailPayload | null>(null);
+
+  const navigate = useNavigate();
+  const user = useSession((state) => state.user);
+  const { mutate: sendVerificationCode, isPending: isSendingCode } =
+    useResendVerification();
+  // New accounts start with no credits until the email is verified.
+  const needsVerification = Boolean(user && !user.isVerified && !user.totalcredits);
+
+  const handleVerifyEmail = () => {
+    if (!user?.email) return;
+    sendVerificationCode(
+      { email: user.email },
+      {
+        onSuccess: () => {
+          sessionStorage.setItem("tg_verify_email", user.email);
+          navigate("/verify-email");
+        },
+        onError: (err) => {
+          toast.error(getApiErrorMessage(err, "Couldn't send the code. Try again shortly."));
+        },
+      },
+    );
+  };
 
   const executeGeneration = (payload: GenerateThumbnailPayload) => {
     setError(null);
@@ -120,6 +145,23 @@ export default function DashboardGenerate() {
       </motion.div>
 
       <div className="mx-auto mt-10 max-w-5xl space-y-4">
+        {needsVerification && (
+          <Alert variant="warning">
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              Verify your email to get your free credits.
+              <Button
+                type="button"
+                variant="secondary"
+                size="xs"
+                fullWidth={false}
+                onClick={handleVerifyEmail}
+                disabled={isSendingCode}
+              >
+                {isSendingCode ? "Sending code..." : "Verify email"}
+              </Button>
+            </span>
+          </Alert>
+        )}
         {error && <Alert variant="error">{error}</Alert>}
         {success && !isPending && <Alert variant="success">{success}</Alert>}
 
