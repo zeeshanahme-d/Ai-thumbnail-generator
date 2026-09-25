@@ -27,10 +27,7 @@ async function handleUploadAvatar(req: Request, res: Response) {
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
   }
 
-  // Delete old avatar from Cloudinary if it exists
-  if (currentUser.avatar && currentUser.avatar.publicId) {
-    await deleteFileFromCloudinary(currentUser.avatar.publicId);
-  }
+  const previousPublicId = currentUser.avatar?.publicId;
 
   const result = await uploadFileOnCloudniary(req.file.path, "avatar");
 
@@ -59,7 +56,13 @@ async function handleUploadAvatar(req: Request, res: Response) {
   ).select("-password");
 
   if (!updatedUser) {
+    await deleteFileFromCloudinary(result.public_id);
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
+  }
+
+  // The old image is removed only once the new one is saved, so a failed upload keeps it.
+  if (previousPublicId) {
+    await deleteFileFromCloudinary(previousPublicId);
   }
 
   return ApiResponse.success(res, 200, "Profile picture uploaded successfully.",
