@@ -72,9 +72,18 @@ export enum AuthErrorCode {
   TokenMissing = "TOKEN_MISSING",
   TokenExpired = "TOKEN_EXPIRED",
   TokenInvalid = "TOKEN_INVALID",
+  TokenRevoked = "TOKEN_REVOKED",
   RefreshMissing = "REFRESH_MISSING",
   RefreshInvalid = "REFRESH_INVALID",
   RefreshExpired = "REFRESH_EXPIRED",
+  EmailNotVerified = "EMAIL_NOT_VERIFIED",
+  DisposableEmail = "DISPOSABLE_EMAIL",
+}
+
+// ------------------------------------------------------------------ requests
+
+export enum RequestErrorCode {
+  RateLimited = "RATE_LIMITED",
 }
 
 // ------------------------------------------------------------------ uploads

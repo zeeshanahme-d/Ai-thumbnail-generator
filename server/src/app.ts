@@ -13,6 +13,14 @@ import mongoose from "mongoose";
 
 const app = express();
 
+// Behind a reverse proxy (Render, Railway, Nginx), set TRUST_PROXY to the number of proxy
+// hops, usually 1, so req.ip and the rate limits see the real client IP. Leave it unset when
+// clients connect directly, or they could fake X-Forwarded-For to dodge the limits.
+const trustProxy = process.env.TRUST_PROXY;
+if (trustProxy) {
+  app.set("trust proxy", /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+}
+
 app.use(helmet());
 mongoose.set("sanitizeFilter", true);
 

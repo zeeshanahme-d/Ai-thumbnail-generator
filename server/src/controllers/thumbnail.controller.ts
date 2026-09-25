@@ -7,8 +7,9 @@ import { colorSchemeDescriptions, CREDIT_COST, stylePrompts, THUMBNAIL_SORT_OPTI
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { UploadErrorCode } from "../constants/enums.js";
-import uploadFileOnCloudniary, { removeLocalFile, deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { AuthErrorCode, UploadErrorCode } from "../constants/enums.js";
+import { refundCredits, reserveCredits } from "../utils/credits.js";
+import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { formatPaginatedResponse } from "../utils/pagination.js";
 import userModel from "../models/user.model.js";
 import mongoose from "mongoose";
@@ -30,36 +31,43 @@ const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> =>
  * Generate a new thumbnail using Gemini AI model.
  */
 const generateGminiThumbnail = async (req: Request, res: Response) => {
+  const userId = req.user!.userId as string;
   let thumbnailId: string | null = null;
-  let referenceImagePath: string | null = null;
   let outputFilePath: string | null = null;
+  let creditsReserved = false;
+  let succeeded = false;
 
   try {
-    const userId = req.user!.userId;
-
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return ApiResponse.error(res, 404, "User account not found.");
-    }
-
-    const currentCreditsUsed = user.creditsUsed ?? 0;
-    const totalCredits = user.totalcredits ?? 20;
-
-    if (currentCreditsUsed + CREDIT_COST.GENERATE_COST > totalCredits) {
-      return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${Math.max(0, totalCredits - currentCreditsUsed)} credits.`, "INSUFFICIENT_CREDITS");
-    }
-
     const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay } = req.validated!.body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       return ApiResponse.error(res, 400, "Please provide a thumbnail title.");
     }
 
+    // Take the credits before calling Gemini. The finally block refunds them if anything fails.
+    creditsReserved = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
+
+    if (!creditsReserved) {
+      const user = await userModel.findById(userId);
+      if (!user) {
+        return ApiResponse.error(res, 404, "User account not found.");
+      }
+
+      const totalCredits = user.totalcredits ?? 0;
+
+      // New accounts get their free credits once the email is verified.
+      if (!user.isVerified && totalCredits < CREDIT_COST.SIGNUP_BONUS) {
+        return ApiResponse.error(res, 403, `Verify your email to get your ${CREDIT_COST.SIGNUP_BONUS} free credits.`, AuthErrorCode.EmailNotVerified);
+      }
+
+      const available = Math.max(0, totalCredits - (user.creditsUsed ?? 0));
+      return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${available} credits.`, "INSUFFICIENT_CREDITS");
+    }
+
     const referenceImage = req.file;
     let referenceImagePart: { inlineData: { mimeType: string; data: string } } | null = null;
 
     if (referenceImage) {
-      referenceImagePath = referenceImage.path;
       const referenceImageBuffer = await fsPromises.readFile(referenceImage.path);
       referenceImagePart = {
         inlineData: {
@@ -259,18 +267,7 @@ QUALITY REQUIREMENTS
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
-    await userModel.findByIdAndUpdate(
-      userId,
-      {
-        $inc: {
-          creditsUsed: CREDIT_COST.GENERATE_COST,
-        },
-      },
-      {
-        new: true,
-      }
-    );
-
+    succeeded = true;
     return ApiResponse.success(res, 201, "Thumbnail generated successfully.", thumbnail);
 
   } catch (error) {
@@ -279,8 +276,10 @@ QUALITY REQUIREMENTS
     }
     throw error;
   } finally {
-    if (referenceImagePath) {
-      await removeLocalFile(referenceImagePath);
+    if (creditsReserved && !succeeded) {
+      await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((refundError) => {
+        console.error("Failed to refund generation credits:", refundError);
+      });
     }
     if (outputFilePath) {
       await fsPromises.unlink(outputFilePath).catch(() => { });
@@ -311,10 +310,10 @@ const getMyThumbnails = async (req: Request, res: Response) => {
     query.style = style;
   }
   if (search && typeof search === "string") {
-    query.title = {
+    query.title = mongoose.trusted({
       $regex: escapeRegex(search.trim()),
       $options: "i",
-    };
+    });
   }
 
   const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
@@ -362,10 +361,10 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
     query.style = style;
   }
   if (search && typeof search === "string") {
-    query.title = {
+    query.title = mongoose.trusted({
       $regex: escapeRegex(search.trim()),
       $options: "i",
-    };
+    });
   }
 
   const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
@@ -404,17 +403,17 @@ const getRecycleBinThumbnails = async (req: Request, res: Response) => {
 
   const query: Record<string, any> = {
     userId,
-    deletedAt: { $ne: null },
+    deletedAt: mongoose.trusted({ $ne: null }),
   };
 
   if (style && typeof style === "string") {
     query.style = style;
   }
   if (search && typeof search === "string") {
-    query.title = {
+    query.title = mongoose.trusted({
       $regex: escapeRegex(search.trim()),
       $options: "i",
-    };
+    });
   }
 
   const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
@@ -488,7 +487,7 @@ const restoreThumbnail = async (req: Request, res: Response) => {
     {
       _id: id,
       userId,
-      deletedAt: { $ne: null },
+      deletedAt: mongoose.trusted({ $ne: null }),
     },
     {
       $set: { deletedAt: null },
@@ -523,7 +522,7 @@ const permanentDeleteThumbnail = async (req: Request, res: Response) => {
   const thumbnail = await thumbnailModel.findOne({
     _id: id,
     userId,
-    deletedAt: { $ne: null },
+    deletedAt: mongoose.trusted({ $ne: null }),
   });
 
   if (!thumbnail) {
@@ -562,9 +561,13 @@ const likeDislikeThumbnail = async (req: Request, res: Response) => {
 
   const thumbnailId = new mongoose.Types.ObjectId(id as string);
 
-  const thumbnail = await thumbnailModel.findById(thumbnailId);
+  const isLikeable = await thumbnailModel.exists({
+    _id: thumbnailId,
+    published: true,
+    deletedAt: null,
+  });
 
-  if (!thumbnail) {
+  if (!isLikeable) {
     return ApiResponse.error(res, 404, "Thumbnail not found.");
   }
 
@@ -579,7 +582,7 @@ const likeDislikeThumbnail = async (req: Request, res: Response) => {
     await thumbnailModel.findOneAndUpdate(
       {
         _id: thumbnailId,
-        likesCount: { $gt: 0 },
+        likesCount: mongoose.trusted({ $gt: 0 }),
       },
       {
         $inc: {

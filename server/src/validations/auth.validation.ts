@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "./password.validation.js";
 
 const signupSchema = z.object({
   fullName: z
@@ -9,12 +10,7 @@ const signupSchema = z.object({
 
   email: z.email("Invalid email address").trim().toLowerCase(),
 
-  password: z
-    .string()
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
-      "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
-    ),
+  password: passwordSchema,
 });
 
 const updateProfileSchema = z.object({
@@ -72,23 +68,13 @@ const resetPasswordSchema = z.object({
     .string()
     .length(6, "OTP must be 6 digits")
     .regex(/^\d{6}$/, "OTP must be numeric"),
-  newPassword: z
-    .string()
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
-      "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
-    ),
+  newPassword: passwordSchema,
 });
 
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z
-      .string()
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/,
-        "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
-      ),
+    newPassword: passwordSchema,
     confirmPassword: z.string().min(1, "Confirm password is required"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -96,7 +82,17 @@ const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+const deleteAccountSchema = z.object({
+  password: z.string().min(1, "Password is required"),
+});
+
+// Verification codes use the same shapes as the reset flow.
+const verifyEmailSchema = verifyOtpSchema;
+const resendVerificationSchema = forgotPasswordSchema;
+
 export {
+  verifyEmailSchema,
+  resendVerificationSchema,
   signupSchema,
   loginSchema,
   updateProfileSchema,
@@ -104,5 +100,6 @@ export {
   resetPasswordSchema,
   verifyOtpSchema,
   changePasswordSchema,
+  deleteAccountSchema,
 };
 

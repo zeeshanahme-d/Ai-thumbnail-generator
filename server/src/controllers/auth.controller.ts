@@ -1,10 +1,12 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import userModel from "../models/user.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
 import {
   hashPassword,
   matchHashedPassword,
+  simulatePasswordCheck,
 } from "../helper/halper-functions.js";
 import {
   generateAccessToken,
@@ -17,15 +19,53 @@ import {
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode } from "../constants/enums.js";
 import { sendOtpEmail } from "../utils/email.js";
-import { generateOtp, generateUniqueUsername } from "../utils/helpers.js";
-import { OTP_EXPIRY_MS } from "../constants/constants.js";
+import { generateOtp, generateUniqueUsername, isDisposableEmail } from "../utils/helpers.js";
+import { CREDIT_COST, MAX_OTP_ATTEMPTS, OTP_EXPIRY_MS } from "../constants/constants.js";
 
 // ────────────────────────────────────────────── Helpers
 
-async function resolveUserFromRefreshToken(req: Request, res: Response) {
-  const token = req.cookies?.refreshToken || req.body?.refreshToken;
+type UserId = mongoose.Types.ObjectId | string;
 
-  if (!token) {
+interface SessionUser {
+  _id: UserId;
+  email: string;
+  tokenVersion?: number;
+}
+
+const authCookieOptions = (maxAge: number) => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict" as const,
+  maxAge,
+});
+
+function setAccessCookie(res: Response, user: SessionUser) {
+  const accessToken = generateAccessToken({
+    userId: user._id,
+    email: user.email,
+    tv: user.tokenVersion ?? 0,
+  });
+  res.cookie("accessToken", accessToken, authCookieOptions(ACCESS_TOKEN_MAX_AGE));
+}
+
+function clearAuthCookies(res: Response) {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+}
+
+// Ends every session of a user at once: access tokens fail the version check in
+// authenticationToken, and refresh tokens are deleted so they cannot mint new ones.
+async function revokeAllSessions(userId: UserId) {
+  await userModel.updateOne({ _id: userId }, { $inc: { tokenVersion: 1 } });
+  await refreshTokenModel.deleteMany({ userId });
+}
+
+async function resolveUserFromRefreshToken(req: Request, res: Response) {
+  const token = req.cookies?.refreshToken;
+
+  // Only a plain string can be a token. cookie-parser turns "j:{...}" cookies into
+  // objects, which would otherwise act as query operators in the lookup below.
+  if (typeof token !== "string" || !token) {
     ApiResponse.error(res, 401, "No refresh token provided.", AuthErrorCode.RefreshMissing);
     return null;
   }
@@ -38,7 +78,7 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
     return null;
   }
 
-  let payload: any;
+  let payload: ReturnType<typeof verifyRefreshToken>;
   try {
     payload = verifyRefreshToken(token);
   } catch {
@@ -49,14 +89,108 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
     return null;
   }
 
-  const user = await userModel.findById(payload.userId);
+  const user = await userModel.findById(payload.userId).select("+tokenVersion");
 
   if (!user) {
     ApiResponse.error(res, 401, "User no longer exists.", "Unauthorized");
     return null;
   }
 
+  if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
+    await refreshTokenModel.deleteOne({ token });
+    clearAuthCookies(res);
+    ApiResponse.error(res, 401, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
+    return null;
+  }
+
   return user;
+}
+
+// ────────────────────────────────────────────── One-time codes
+
+type OtpPurpose = "reset-password" | "verify-email";
+
+const OTP_FIELDS = {
+  "reset-password": {
+    hash: "resetPasswordOtp",
+    expiresAt: "resetPasswordOtpExpiresAt",
+    attempts: "resetPasswordOtpAttempts",
+  },
+  "verify-email": {
+    hash: "emailVerificationOtp",
+    expiresAt: "emailVerificationOtpExpiresAt",
+    attempts: "emailVerificationOtpAttempts",
+  },
+} as const;
+
+// Same text for every failure, so it never reveals whether the account exists.
+const OTP_ERROR = "Invalid or expired code. Request a new code if this one keeps failing.";
+
+async function clearOtp(userId: UserId, purpose: OtpPurpose) {
+  const fields = OTP_FIELDS[purpose];
+  await userModel.updateOne(
+    { _id: userId },
+    { $unset: { [fields.hash]: 1, [fields.expiresAt]: 1, [fields.attempts]: 1 } },
+  );
+}
+
+// Stores a new hashed code with a fresh expiry and attempt counter, then emails it.
+// If sending fails the code is removed so it can never be used.
+async function issueOtp(userId: UserId, email: string, purpose: OtpPurpose) {
+  const fields = OTP_FIELDS[purpose];
+  const otp = generateOtp();
+
+  await userModel.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        [fields.hash]: await hashPassword(otp),
+        [fields.expiresAt]: new Date(Date.now() + OTP_EXPIRY_MS),
+        [fields.attempts]: 0,
+      },
+    },
+  );
+
+  try {
+    await sendOtpEmail(email, otp, purpose);
+  } catch (error) {
+    await clearOtp(userId, purpose);
+    throw error;
+  }
+}
+
+// Replies never wait for the email, so every address gets the same answer in the same time.
+function sendOtpInBackground(userId: UserId, email: string, purpose: OtpPurpose) {
+  issueOtp(userId, email, purpose).catch((error) => {
+    console.error(`Failed to send ${purpose} email:`, error);
+  });
+}
+
+// Counts the attempt before comparing, in one atomic update, so parallel guesses
+// cannot get past MAX_OTP_ATTEMPTS. Returns the user only when the code matches.
+async function consumeOtp(email: string, otp: string, purpose: OtpPurpose, extraSelect = "") {
+  const fields = OTP_FIELDS[purpose];
+
+  const user = await userModel
+    .findOneAndUpdate(
+      {
+        email,
+        [fields.expiresAt]: mongoose.trusted({ $gt: new Date() }),
+        // $not also matches codes issued before the counter existed.
+        [fields.attempts]: mongoose.trusted({ $not: { $gte: MAX_OTP_ATTEMPTS } }),
+      },
+      { $inc: { [fields.attempts]: 1 } },
+      { returnDocument: "after" },
+    )
+    .select(`+${fields.hash} ${extraSelect}`.trim());
+
+  const storedHash = user?.get(fields.hash) as string | undefined;
+  if (!user || !storedHash) {
+    await simulatePasswordCheck(otp);
+    return null;
+  }
+
+  return (await matchHashedPassword(otp, storedHash)) ? user : null;
 }
 
 // ────────────────────────────────────────────── Login
@@ -64,9 +198,10 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
 async function handleLoginUser(req: Request, res: Response) {
   const { email, password } = req.validated?.body ?? req.body;
 
-  const user = await userModel.findOne({ email })?.select("+password");
+  const user = await userModel.findOne({ email }).select("+password +tokenVersion");
 
   if (!user) {
+    await simulatePasswordCheck(password);
     return ApiResponse.error(res, 401, "Invalid email or password.", "Unauthorized");
   }
 
@@ -81,11 +216,12 @@ async function handleLoginUser(req: Request, res: Response) {
     return ApiResponse.error(res, 401, "Invalid email or password.", "Unauthorized");
   }
 
-  const accessToken = generateAccessToken({
+  setAccessCookie(res, user);
+
+  const refreshToken = generateRefreshToken({
     userId: user._id,
-    email: user.email,
+    tv: user.tokenVersion ?? 0,
   });
-  const refreshToken = generateRefreshToken({ userId: user._id });
 
   // Persist the refresh token so it can be verified/revoked later.
   await refreshTokenModel.create({
@@ -94,19 +230,7 @@ async function handleLoginUser(req: Request, res: Response) {
     expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE),
   });
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: ACCESS_TOKEN_MAX_AGE,
-  });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: REFRESH_TOKEN_MAX_AGE,
-  });
+  res.cookie("refreshToken", refreshToken, authCookieOptions(REFRESH_TOKEN_MAX_AGE));
 
   const safeUser = await userModel.findById(user._id);
 
@@ -123,17 +247,7 @@ async function handleRefreshToken(req: Request, res: Response) {
   const user = await resolveUserFromRefreshToken(req, res);
   if (!user) return; // error response already sent
 
-  const accessToken = generateAccessToken({
-    userId: user._id,
-    email: user.email,
-  });
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: ACCESS_TOKEN_MAX_AGE,
-  });
+  setAccessCookie(res, user);
 
   return ApiResponse.success(res, 200, "Access token refreshed.", {
     user,
@@ -149,18 +263,21 @@ async function handleRefreshToken(req: Request, res: Response) {
 async function handleVerifyToken(req: Request, res: Response) {
   const accessToken = req.cookies?.accessToken;
 
-  if (accessToken) {
+  if (typeof accessToken === "string" && accessToken) {
     try {
-      const payload = verifyAccessToken(accessToken) as { userId?: string };
-      const user = await userModel.findById(payload.userId);
+      const payload = verifyAccessToken(accessToken);
+      const user = await userModel.findById(payload.userId).select("+tokenVersion");
 
       if (!user) {
         return ApiResponse.error(res, 401, "User no longer exists.", "Unauthorized");
       }
 
-      return ApiResponse.success(res, 200, "Access token is valid.", {
-        user,
-      });
+      if ((payload.tv ?? 0) === (user.tokenVersion ?? 0)) {
+        return ApiResponse.success(res, 200, "Access token is valid.", {
+          user,
+        });
+      }
+      // Revoked token: fall through. The refresh check below fails for the same reason.
     } catch (error) {
       if (!(error instanceof jwt.TokenExpiredError)) {
         return ApiResponse.error(res, 401, "Invalid access token.", AuthErrorCode.TokenInvalid);
@@ -168,21 +285,11 @@ async function handleVerifyToken(req: Request, res: Response) {
     }
   }
 
-  // Access token missing or expired — fall back to the refresh token.
+  // Access token missing, expired or revoked — fall back to the refresh token.
   const user = await resolveUserFromRefreshToken(req, res);
   if (!user) return; // error response already sent
 
-  const newAccessToken = generateAccessToken({
-    userId: user._id,
-    email: user.email,
-  });
-
-  res.cookie("accessToken", newAccessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: ACCESS_TOKEN_MAX_AGE,
-  });
+  setAccessCookie(res, user);
 
   return ApiResponse.success(res, 200, "Access token refreshed.", {
     user,
@@ -206,12 +313,11 @@ async function handleGetMe(req: Request, res: Response) {
 async function handleLogoutUser(req: Request, res: Response) {
   const token = req.cookies?.refreshToken;
 
-  if (token) {
+  if (typeof token === "string" && token) {
     await refreshTokenModel.deleteOne({ token });
   }
 
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  clearAuthCookies(res);
 
   return ApiResponse.success(res, 200, "Logged out successfully.");
 }
@@ -220,6 +326,15 @@ async function handleLogoutUser(req: Request, res: Response) {
 
 async function handleSignupUser(req: Request, res: Response) {
   const { fullName, email, password } = req.validated?.body ?? req.body;
+
+  if (isDisposableEmail(email)) {
+    return ApiResponse.error(
+      res,
+      400,
+      "Temporary email addresses can't be used. Sign up with an email you keep.",
+      AuthErrorCode.DisposableEmail,
+    );
+  }
 
   const existingUser = await userModel.findOne({ email });
 
@@ -230,16 +345,82 @@ async function handleSignupUser(req: Request, res: Response) {
   const hashedPassword = await hashPassword(password);
   const username = await generateUniqueUsername(fullName, userModel);
 
-  await userModel.create({
+  // totalcredits starts at 0; verifying the email grants the signup bonus.
+  const user = await userModel.create({
     fullName,
     username,
     email,
     password: hashedPassword,
   });
 
-  return ApiResponse.success(res, 201, "User registered successfully.");
+  try {
+    await issueOtp(user._id, email, "verify-email");
+  } catch (emailError) {
+    console.error("Failed to send verification email:", emailError);
+    return ApiResponse.success(
+      res,
+      201,
+      "Account created, but we couldn't send the verification email. Use Resend code on the next screen.",
+    );
+  }
+
+  return ApiResponse.success(
+    res,
+    201,
+    `Account created. Enter the 6-digit code we emailed you to get your ${CREDIT_COST.SIGNUP_BONUS} free credits.`,
+  );
 }
 
+// ────────────────────────────────────────────── Verify Email
+
+async function handleVerifyEmail(req: Request, res: Response) {
+  const { email, otp } = req.validated!.body;
+
+  const user = await consumeOtp(email, otp, "verify-email");
+
+  if (!user) {
+    return ApiResponse.error(res, 400, OTP_ERROR, "BadRequest");
+  }
+
+  const grantedCredits = Math.max(0, CREDIT_COST.SIGNUP_BONUS - (user.totalcredits ?? 0));
+
+  // The isVerified filter makes a repeated request a no-op, and $max tops up to the
+  // bonus without adding credits to accounts that already received them.
+  await userModel.updateOne(
+    { _id: user._id, isVerified: false },
+    {
+      $set: { isVerified: true },
+      $max: { totalcredits: CREDIT_COST.SIGNUP_BONUS },
+      $unset: {
+        emailVerificationOtp: 1,
+        emailVerificationOtpExpiresAt: 1,
+        emailVerificationOtpAttempts: 1,
+      },
+    },
+  );
+
+  return ApiResponse.success(
+    res,
+    200,
+    grantedCredits > 0
+      ? `Email verified. ${grantedCredits} free credits added.`
+      : "Email verified.",
+  );
+}
+
+async function handleResendVerification(req: Request, res: Response) {
+  const { email } = req.validated!.body;
+
+  const genericMessage = "If this account still needs verification, a new code has been sent.";
+
+  const user = await userModel.findOne({ email, isVerified: false });
+
+  if (user) {
+    sendOtpInBackground(user._id, email, "verify-email");
+  }
+
+  return ApiResponse.success(res, 200, genericMessage);
+}
 
 // ────────────────────────────────────────────── Forgot Password
 
@@ -250,80 +431,27 @@ async function handleForgotPassword(req: Request, res: Response) {
 
   const user = await userModel.findOne({ email });
 
-  if (!user) {
-    return ApiResponse.success(res, 200, genericMessage);
-  }
-
   // Google/provider accounts cannot reset a password they never set.
-  if (!user.password && user.provider !== "email") {
-    return ApiResponse.success(res, 200, genericMessage);
-  }
-
-  const otp = generateOtp();
-  const hashedOtp = await hashPassword(otp);
-
-  await userModel.updateOne(
-    { _id: user._id },
-    {
-      resetPasswordOtp: hashedOtp,
-      resetPasswordOtpExpiresAt: new Date(Date.now() + OTP_EXPIRY_MS),
-    },
-  );
-
-  try {
-    await sendOtpEmail(email, otp, "reset-password");
-  } catch (emailError) {
-    // If email sending fails, clear the OTP so it can't be used.
-    await userModel.updateOne(
-      { _id: user._id },
-      {
-        $unset: {
-          resetPasswordOtp: 1,
-          resetPasswordOtpExpiresAt: 1,
-        },
-      },
-    );
-    console.error("Failed to send reset email:", emailError);
-    return ApiResponse.error(res, 500, "Unable to send reset email. Please try again later.");
+  if (user && (user.password || user.provider === "email")) {
+    sendOtpInBackground(user._id, email, "reset-password");
   }
 
   return ApiResponse.success(res, 200, genericMessage);
 }
 
-// ────────────────────────────────────────────── Reset Password
+// ────────────────────────────────────────────── Verify OTP
 
 async function handleVerifyOtp(req: Request, res: Response) {
   const { email, otp } = req.validated!.body;
 
-  const genericError = "Invalid or expired OTP.";
+  const user = await consumeOtp(email, otp, "reset-password");
 
-  // Select the hidden OTP fields explicitly.
-  const user = await userModel.findOne({ email }).select("+resetPasswordOtp +resetPasswordOtpExpiresAt");
-
-  if (!user || !user.resetPasswordOtp || !user.resetPasswordOtpExpiresAt) {
-    return ApiResponse.error(res, 400, genericError, "BadRequest");
+  if (!user) {
+    return ApiResponse.error(res, 400, OTP_ERROR, "BadRequest");
   }
 
-  // Check expiry first — if expired, clear the OTP fields immediately.
-  if (user.resetPasswordOtpExpiresAt.getTime() < Date.now()) {
-    await userModel.updateOne(
-      { _id: user._id },
-      {
-        $unset: {
-          resetPasswordOtp: 1,
-          resetPasswordOtpExpiresAt: 1,
-        },
-      },
-    );
-    return ApiResponse.error(res, 400, genericError, "BadRequest");
-  }
-
-  // Compare the plaintext OTP against the stored bcrypt hash.
-  const isOtpValid = await matchHashedPassword(otp, user.resetPasswordOtp);
-
-  if (!isOtpValid) {
-    return ApiResponse.error(res, 400, genericError, "BadRequest");
-  }
+  // A correct code resets the counter, so the reset step that follows has its own tries.
+  await userModel.updateOne({ _id: user._id }, { $set: { resetPasswordOtpAttempts: 0 } });
 
   return ApiResponse.success(res, 200, "OTP verified successfully.");
 }
@@ -333,34 +461,10 @@ async function handleVerifyOtp(req: Request, res: Response) {
 async function handleResetPassword(req: Request, res: Response) {
   const { email, otp, newPassword } = req.validated!.body;
 
-  const genericError = "Invalid or expired reset code.";
+  const user = await consumeOtp(email, otp, "reset-password", "+password");
 
-  // Select the hidden OTP fields explicitly.
-  const user = await userModel.findOne({ email }).select("+resetPasswordOtp +resetPasswordOtpExpiresAt +password");
-
-  if (!user || !user.resetPasswordOtp || !user.resetPasswordOtpExpiresAt) {
-    return ApiResponse.error(res, 400, genericError, "BadRequest");
-  }
-
-  // Check expiry first — if expired, clear the OTP fields immediately.
-  if (user.resetPasswordOtpExpiresAt.getTime() < Date.now()) {
-    await userModel.updateOne(
-      { _id: user._id },
-      {
-        $unset: {
-          resetPasswordOtp: 1,
-          resetPasswordOtpExpiresAt: 1,
-        },
-      },
-    );
-    return ApiResponse.error(res, 400, genericError, "BadRequest");
-  }
-
-  // Compare the plaintext OTP against the stored bcrypt hash.
-  const isOtpValid = await matchHashedPassword(otp, user.resetPasswordOtp);
-
-  if (!isOtpValid) {
-    return ApiResponse.error(res, 400, genericError, "BadRequest");
+  if (!user) {
+    return ApiResponse.error(res, 400, OTP_ERROR, "BadRequest");
   }
 
   // Prevent reusing the same password.
@@ -379,22 +483,15 @@ async function handleResetPassword(req: Request, res: Response) {
     }
   }
 
-  // Hash the new password and clear the OTP in a single atomic update.
-  const hashedNewPassword = await hashPassword(newPassword);
-
   await userModel.updateOne(
     { _id: user._id },
-    {
-      password: hashedNewPassword,
-      $unset: {
-        resetPasswordOtp: 1,
-        resetPasswordOtpExpiresAt: 1,
-      },
-    },
+    { $set: { password: await hashPassword(newPassword) } },
   );
+  await clearOtp(user._id, "reset-password");
 
-  // Revoke ALL refresh tokens for this user — force re-login everywhere.
-  await refreshTokenModel.deleteMany({ userId: user._id });
+  // Force re-login everywhere, including sessions whose access token has not expired yet.
+  await revokeAllSessions(user._id);
+  clearAuthCookies(res);
 
   return ApiResponse.success(
     res,
@@ -402,6 +499,8 @@ async function handleResetPassword(req: Request, res: Response) {
     "Password reset successful. Please log in with your new password.",
   );
 }
+
+// ────────────────────────────────────────────── Change Password
 
 async function handleChangePassword(req: Request, res: Response) {
   const userId = req.user?.userId;
@@ -432,9 +531,18 @@ async function handleChangePassword(req: Request, res: Response) {
   }
 
   user.password = await hashPassword(newPassword);
-  const updatedUser = await user.save();
+  await user.save();
 
-  return ApiResponse.success(res, 200, "Password changed successfully.", { user: updatedUser });
+  // Sign out every session, this one included, so a stolen session cannot outlive the
+  // password change. The client warns about this before submitting.
+  await revokeAllSessions(user._id);
+  clearAuthCookies(res);
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Password changed. You've been signed out of every session. Log in with your new password.",
+  );
 }
 
 export {
@@ -448,7 +556,6 @@ export {
   handleResetPassword,
   handleVerifyOtp,
   handleChangePassword,
+  handleVerifyEmail,
+  handleResendVerification,
 };
-
-
-

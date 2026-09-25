@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import type { Model } from "mongoose";
+import { isDisposableEmailDomain } from "disposable-email-domains-js";
 
 export function generateOtp(length: number = 6): string {
     const min = 10 ** (length - 1);
@@ -29,3 +30,14 @@ export async function generateUniqueUsername(fullName: string, userModel: Model<
 export const escapeRegex = (value: string) => {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
+
+// True when the address uses a throwaway inbox provider. Parent domains are checked too,
+// because the list has mailinator.com but not every subdomain like x.mailinator.com.
+export function isDisposableEmail(email: string): boolean {
+    const domain = email.split("@").pop()?.trim().toLowerCase() ?? "";
+    const labels = domain.split(".");
+    for (let i = 0; i < labels.length - 1; i++) {
+        if (isDisposableEmailDomain(labels.slice(i).join("."))) return true;
+    }
+    return false;
+}

@@ -69,6 +69,13 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // Guesses made against the current code; the code stops working at MAX_OTP_ATTEMPTS.
+    resetPasswordOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
     emailVerificationOtp: {
       type: String,
       select: false,
@@ -76,6 +83,19 @@ const userSchema = new mongoose.Schema(
 
     emailVerificationOtpExpiresAt: {
       type: Date,
+      select: false,
+    },
+
+    emailVerificationOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
+    // Carried in every token. Incrementing it ends all sessions at once.
+    tokenVersion: {
+      type: Number,
+      default: 0,
       select: false,
     },
 
@@ -97,9 +117,11 @@ const userSchema = new mongoose.Schema(
       default: UserPlan.Free,
     },
 
+    // New accounts start at 0. Verifying the email grants CREDIT_COST.SIGNUP_BONUS,
+    // so throwaway signups cannot farm free credits.
     totalcredits: {
       type: Number,
-      default: 20,
+      default: 0,
     },
 
     creditsUsed: {
@@ -149,5 +171,24 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Secrets never leave the server, even when a query selected them.
+const PRIVATE_FIELDS = [
+  "password",
+  "resetPasswordOtp",
+  "resetPasswordOtpExpiresAt",
+  "resetPasswordOtpAttempts",
+  "emailVerificationOtp",
+  "emailVerificationOtpExpiresAt",
+  "emailVerificationOtpAttempts",
+  "tokenVersion",
+];
+
+userSchema.set("toJSON", {
+  transform: (_doc, ret: Record<string, unknown>) => {
+    for (const field of PRIVATE_FIELDS) delete ret[field];
+    return ret;
+  },
+});
 
 export default mongoose.model("User", userSchema);

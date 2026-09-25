@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import multer from "multer";
+import { fileTypeFromFile } from "file-type";
 import type { NextFunction, Request, Response } from "express";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { UploadErrorCode } from "../constants/enums.js";
@@ -14,6 +15,9 @@ import {
 } from "../constants/uploads.js";
 
 fs.mkdirSync(UPLOAD_TEMP_DIR, { recursive: true });
+
+const unsupportedImageMessage = (fileName: string) =>
+  `"${fileName}" is not a supported image. Use ${ACCEPTED_IMAGE_LABEL}.`;
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_TEMP_DIR),
@@ -29,11 +33,7 @@ const imageFileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
   const hasAllowedMimeType = ACCEPTED_IMAGE_MIME_TYPES.includes(file.mimetype);
 
   if (!hasAllowedExtension || !hasAllowedMimeType) {
-    return cb(
-      new Error(
-        `"${file.originalname}" is not a supported image. Use ${ACCEPTED_IMAGE_LABEL}.`,
-      ),
-    );
+    return cb(new Error(unsupportedImageMessage(file.originalname)));
   }
 
   cb(null, true);
@@ -45,45 +45,67 @@ const multerUpload = multer({
   limits: { fileSize: MAX_IMAGE_SIZE_BYTES, files: 1 },
 });
 
+function sendMulterError(res: Response, error: unknown, fieldName: string) {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return ApiResponse.error(
+        res,
+        400,
+        `Image is too large. Maximum size is ${MAX_IMAGE_SIZE_MB} MB.`,
+        UploadErrorCode.FileTooLarge,
+      );
+    }
+
+    // Sent under a different form field than the one we expect.
+    if (error.code === "LIMIT_UNEXPECTED_FILE") {
+      return ApiResponse.error(
+        res,
+        400,
+        `Unexpected file field "${error.field}". Send the image as "${fieldName}".`,
+        UploadErrorCode.InvalidFileType,
+      );
+    }
+
+    return ApiResponse.error(res, 400, error.message, UploadErrorCode.UploadFailed);
+  }
+
+  return ApiResponse.error(res, 400, (error as Error).message, UploadErrorCode.InvalidFileType);
+}
+
+// Deletes the temp file once the response ends, whether the request succeeded or failed early.
+function removeWhenResponseEnds(res: Response, filePath: string) {
+  res.once("close", () => {
+    fs.promises.rm(filePath, { force: true }).catch((error) => {
+      console.error("Failed to remove temp upload:", error);
+    });
+  });
+}
+
 export const uploadSingleImage =
   (fieldName: string) => (req: Request, res: Response, next: NextFunction) => {
-    multerUpload.single(fieldName)(req, res, (error: unknown) => {
-      if (!error) return next();
+    multerUpload.single(fieldName)(req, res, async (error: unknown) => {
+      if (error) return sendMulterError(res, error, fieldName);
+      if (!req.file) return next();
 
-      if (error instanceof multer.MulterError) {
-        if (error.code === "LIMIT_FILE_SIZE") {
+      removeWhenResponseEnds(res, req.file.path);
+
+      try {
+        // The name and browser-reported type can be faked, so check the file's actual bytes.
+        const detected = await fileTypeFromFile(req.file.path);
+        if (!detected || !ACCEPTED_IMAGE_MIME_TYPES.includes(detected.mime)) {
           return ApiResponse.error(
             res,
             400,
-            `Image is too large. Maximum size is ${MAX_IMAGE_SIZE_MB} MB.`,
-            UploadErrorCode.FileTooLarge,
-          );
-        }
-
-        // Sent under a different form field than the one we expect.
-        if (error.code === "LIMIT_UNEXPECTED_FILE") {
-          return ApiResponse.error(
-            res,
-            400,
-            `Unexpected file field "${error.field}". Send the image as "${fieldName}".`,
+            unsupportedImageMessage(req.file.originalname),
             UploadErrorCode.InvalidFileType,
           );
         }
 
-        return ApiResponse.error(
-          res,
-          400,
-          error.message,
-          UploadErrorCode.UploadFailed,
-        );
+        req.file.mimetype = detected.mime;
+        next();
+      } catch (checkError) {
+        next(checkError);
       }
-
-      return ApiResponse.error(
-        res,
-        400,
-        (error as Error).message,
-        UploadErrorCode.InvalidFileType,
-      );
     });
   };
 

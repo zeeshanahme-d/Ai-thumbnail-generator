@@ -13,6 +13,7 @@ import {
 } from "../controllers/thumbnail.controller.js";
 import { generateThumbnailSchema, publishThumbnailSchema, getThumbnailSchema } from "../validations/thumbnail.validation.js";
 import { uploadSingleImage } from "../middlewares/multer.middleware.js";
+import { generateLimiter } from "../middlewares/rate-limit.middleware.js";
 
 const router = express.Router();
 
@@ -20,7 +21,8 @@ router.get("/", validate(getThumbnailSchema, "query"), getMyThumbnails);
 router.get("/community", validate(getThumbnailSchema, "query"), getCommunityThumbnails);
 router.get("/recycle-bin", validate(getThumbnailSchema, "query"), getRecycleBinThumbnails);
 
-router.post("/", uploadSingleImage("referenceImage"), validate(generateThumbnailSchema), generateGminiThumbnail);
+// The limiter runs before multer, so rejected requests never write an upload to disk.
+router.post("/", generateLimiter, uploadSingleImage("referenceImage"), validate(generateThumbnailSchema), generateGminiThumbnail);
 
 router.patch("/:id/publish", validate(publishThumbnailSchema), publishThumbnailToCommunity);
 

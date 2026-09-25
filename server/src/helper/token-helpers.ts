@@ -4,6 +4,18 @@ import jwt from "jsonwebtoken";
 export const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
 export const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000; // 15 minutes in ms
 
+/** `tv` is the user's tokenVersion when the token was issued; a mismatch means it was revoked. */
+export interface AccessTokenPayload extends jwt.JwtPayload {
+  userId: string;
+  email: string;
+  tv?: number;
+}
+
+export interface RefreshTokenPayload extends jwt.JwtPayload {
+  userId: string;
+  tv?: number;
+}
+
 // Read secrets lazily: dotenv.config() runs after the module graph is imported.
 const getAccessSecret = (): string => process.env.SECRET as string;
 const getRefreshSecret = (): string => process.env.REFRESH_SECRET as string || process.env.SECRET as string;
@@ -17,11 +29,11 @@ function generateRefreshToken(payload: object) {
 }
 
 function verifyAccessToken(token: string) {
-  return jwt.verify(token, getAccessSecret());
+  return jwt.verify(token, getAccessSecret()) as AccessTokenPayload;
 }
 
 function verifyRefreshToken(token: string) {
-  return jwt.verify(token, getRefreshSecret());
+  return jwt.verify(token, getRefreshSecret()) as RefreshTokenPayload;
 }
 
 export {

@@ -68,6 +68,11 @@ export const errorHandler = (
     errorCode = "TOKEN_EXPIRED";
   }
 
+  // Unexpected failures can carry internal details; the full error is logged above.
+  if (statusCode >= 500 && process.env.NODE_ENV === "production") {
+    message = "Something went wrong. Please try again later.";
+  }
+
   return ApiResponse.error(res, statusCode, message, errorCode);
 };
 

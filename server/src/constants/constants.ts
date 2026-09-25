@@ -58,3 +58,12 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
 
 export const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
+// Wrong guesses allowed per emailed code before it stops working.
+export const MAX_OTP_ATTEMPTS = 5;
+
+export const BCRYPT_SALT_ROUNDS = 10;
+
+// bcrypt ignores everything past 72 bytes, so longer passwords are rejected.
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_BYTES = 72;
+

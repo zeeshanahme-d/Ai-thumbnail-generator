@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { ApiResponse } from "../utils/apiResponse.js";
 import userModel from "../models/user.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
 import likeDislikModel from "../models/likeDislik.modal.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { matchHashedPassword } from "../helper/halper-functions.js";
 
 async function handleUpdateUserProfile(req: Request, res: Response) {
   const { fullName, username, bio, website } = req.validated!.body;
@@ -56,7 +58,7 @@ async function handleCheckUsername(req: Request, res: Response) {
   // Check if taken — optionally exclude the requester's own username
   const query: Record<string, unknown> = { username };
   if (excludeUserId) {
-    query._id = { $ne: excludeUserId };
+    query._id = mongoose.trusted({ $ne: excludeUserId });
   }
 
   const existingUser = await userModel.exists(query);
@@ -87,9 +89,15 @@ async function handleDeleteAccount(req: Request, res: Response) {
     return ApiResponse.error(res, 401, "Unauthorized access.");
   }
 
-  const user = await userModel.findById(userId);
+  const { password } = req.validated!.body;
+
+  const user = await userModel.findById(userId).select("+password");
   if (!user) {
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
+  }
+
+  if (!user.password || !(await matchHashedPassword(password, user.password))) {
+    return ApiResponse.error(res, 400, "Password is incorrect.", "INVALID_PASSWORD");
   }
 
   // Delete avatar from Cloudinary if it exists
