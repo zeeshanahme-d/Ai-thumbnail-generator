@@ -273,3 +273,17 @@ export type AuthMode =
   | "forgotPassword"
   | "verifyOtp"
   | "resetPassword";
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode | ((props: { error: Error; reset: () => void }) => ReactNode);
+  onReset?: () => void;
+}
+
+

@@ -19,46 +19,50 @@ import MainLayout from '../pages/layouts/MainLayout';
 import MyGallery from '../pages/dashboard/gallery/MyGallery';
 import ThumbnailPreview from '../pages/thumbnail-preview/ThumbnailPreview';
 import NotFound from '../pages/not-found/NotFound';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 function AppRoutes() {
     return (
         <BrowserRouter>
-            <Routes>
-                {/* Auth screens — signed-in users are redirected away */}
-                <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
-                <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
-                <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
-                <Route path="/verify-otp" element={<GuestRoute><VerifyOtp /></GuestRoute>} />
-                <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
+            <ErrorBoundary>
+                <Routes>
+                    {/* Auth screens — signed-in users are redirected away */}
+                    <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                    <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+                    <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+                    <Route path="/verify-otp" element={<GuestRoute><VerifyOtp /></GuestRoute>} />
+                    <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
-                {/* Dashboard (sidebar) — requires login */}
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                    <Route index element={<Navigate to="/dashboard/generate" replace />} />
-                    <Route path="generate" element={<DashboardGenerate />} />
-                    <Route path="recreate" element={<Recreate />} />
-                    <Route path="community" element={<Community />} />
-                    <Route path="gallery" element={<MyGallery />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="recycle-bin" element={<RecycleBin />} />
-                </Route>
+                    {/* Dashboard (sidebar) — requires login */}
+                    <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                        <Route index element={<Navigate to="/dashboard/generate" replace />} />
+                        <Route path="generate" element={<DashboardGenerate />} />
+                        <Route path="recreate" element={<Recreate />} />
+                        <Route path="community" element={<Community />} />
+                        <Route path="gallery" element={<MyGallery />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="recycle-bin" element={<RecycleBin />} />
+                    </Route>
 
-                {/* Marketing site (navbar + footer) */}
-                <Route element={<MainLayout />}>
-                    {/* Public */}
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/community" element={<Community />} />
-                    <Route path="/preview" element={<YtPreview />} />
-                    <Route path="/profile/:username" element={<PublicProfile />} />
-                    <Route path="/profile" element={<PublicProfile />} />
-                    {/* Thumbnail preview — public, shareable */}
-                    <Route path="/thumbnail/:id" element={<ThumbnailPreview />} />
+                    {/* Marketing site (navbar + footer) */}
+                    <Route element={<MainLayout />}>
+                        {/* Public */}
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/community" element={<Community />} />
+                        <Route path="/preview" element={<YtPreview />} />
+                        <Route path="/profile/:username" element={<PublicProfile />} />
+                        <Route path="/profile" element={<PublicProfile />} />
+                        {/* Thumbnail preview — public, shareable */}
+                        <Route path="/thumbnail/:id" element={<ThumbnailPreview />} />
 
-                    {/* Catch-all 404 Route */}
-                    <Route path="*" element={<NotFound />} />
-                </Route>
-            </Routes>
+                        {/* Catch-all 404 Route */}
+                        <Route path="*" element={<NotFound />} />
+                    </Route>
+                </Routes>
+            </ErrorBoundary>
         </BrowserRouter>
     );
 }
 
 export default AppRoutes;
+
