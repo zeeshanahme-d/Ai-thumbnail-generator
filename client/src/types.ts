@@ -274,6 +274,13 @@ export type AuthMode =
   | "verifyOtp"
   | "resetPassword";
 
+/** Which flow the 6-digit code screen serves. */
+export type VerifyOtpMode = "reset-password" | "verify-email";
+
+export interface VerifyOtpProps {
+  mode?: VerifyOtpMode;
+}
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;

@@ -7,4 +7,6 @@ export { useLogout } from "./use-logout";
 export { useForgotPassword } from "./use-forgot-password";
 export { useVerifyOtp } from "./use-verify-otp";
 export { useResetPassword } from "./use-reset-password";
+export { useVerifyEmail } from "./use-verify-email";
+export { useResendVerification } from "./use-resend-verification";
 export { authKeys } from "./query-keys";

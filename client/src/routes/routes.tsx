@@ -32,6 +32,8 @@ function AppRoutes() {
                     <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
                     <Route path="/verify-otp" element={<GuestRoute><VerifyOtp /></GuestRoute>} />
                     <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
+                    {/* Email verification works signed in or out */}
+                    <Route path="/verify-email" element={<VerifyOtp mode="verify-email" />} />
 
                     {/* Dashboard (sidebar) — requires login */}
                     <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

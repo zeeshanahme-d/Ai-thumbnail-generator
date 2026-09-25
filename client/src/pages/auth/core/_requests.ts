@@ -5,8 +5,10 @@ import type {
     ForgotPasswordPayload,
     LoginPayload,
     MeResponse,
+    ResendVerificationPayload,
     ResetPasswordPayload,
     SignupPayload,
+    VerifyEmailPayload,
     VerifyOtpPayload,
 } from "./_models";
 
@@ -20,6 +22,8 @@ export const AUTH_URL = {
     forgotPassword: "/auth/forgot-password",
     verifyOtp: "/auth/verify-otp",
     resetPassword: "/auth/reset-password",
+    verifyEmail: "/auth/verify-email",
+    resendVerification: "/auth/resend-verification",
 };
 
 export async function login(payload: LoginPayload) {
@@ -54,6 +58,22 @@ export async function verifyOtp(payload: VerifyOtpPayload) {
 export async function resetPassword(payload: ResetPasswordPayload) {
     const { data } = await api.post<ApiSuccess<never>>(
         AUTH_URL.resetPassword,
+        payload,
+    );
+    return data;
+}
+
+export async function verifyEmail(payload: VerifyEmailPayload) {
+    const { data } = await api.post<ApiSuccess<never>>(
+        AUTH_URL.verifyEmail,
+        payload,
+    );
+    return data;
+}
+
+export async function resendVerification(payload: ResendVerificationPayload) {
+    const { data } = await api.post<ApiSuccess<never>>(
+        AUTH_URL.resendVerification,
         payload,
     );
     return data;

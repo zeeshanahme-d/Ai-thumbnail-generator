@@ -38,6 +38,15 @@ export interface VerifyOtpPayload {
     otp: string;
 }
 
+export interface VerifyEmailPayload {
+    email: string;
+    otp: string;
+}
+
+export interface ResendVerificationPayload {
+    email: string;
+}
+
 export interface ResetPasswordPayload {
     email: string;
     otp: string;

@@ -12,27 +12,68 @@ import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import BackButton from "./components/BackButton";
 import Alert from "../../components/Alert";
-import { useForgotPassword, useVerifyOtp } from "./core/hooks";
+import {
+  useForgotPassword,
+  useResendVerification,
+  useVerifyEmail,
+  useVerifyOtp,
+} from "./core/hooks";
 import { getApiErrorMessage } from "../../lib/axios";
+import { useSession } from "../../store/useSessionStore";
+import type { VerifyOtpMode, VerifyOtpProps } from "../../types";
 
 const LENGTH = 6;
 
-export default function VerifyOtp() {
+const MODES: Record<
+  VerifyOtpMode,
+  { storageKey: string; missingEmailPath: string; title: string; subtitle: (email: string) => string }
+> = {
+  "reset-password": {
+    storageKey: "tg_reset_email",
+    missingEmailPath: "/forgot-password",
+    title: "Verify OTP",
+    subtitle: (email) =>
+      email ? `Enter the 6-digit code sent to ${email}` : "Enter the 6-digit code we sent to your email",
+  },
+  "verify-email": {
+    storageKey: "tg_verify_email",
+    missingEmailPath: "/login",
+    title: "Verify your email",
+    subtitle: (email) => `Enter the 6-digit code sent to ${email} to unlock your free credits.`,
+  },
+};
+
+export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
+  const config = MODES[mode];
+  const isResetMode = mode === "reset-password";
   const navigate = useNavigate();
-  const [email] = useState(() => sessionStorage.getItem("tg_reset_email") || "");
+  const isAuthenticated = useSession((state) => state.isAuthenticated);
+  const sessionEmail = useSession((state) => state.user?.email);
+  const [email] = useState(
+    () => sessionStorage.getItem(config.storageKey) || (isResetMode ? "" : sessionEmail) || "",
+  );
   const [otp, setOtp] = useState<string[]>(new Array(LENGTH).fill(""));
   const [timer, setTimer] = useState(60);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const { mutateAsync: forgotPasswordMutate, isPending: isResending } = useForgotPassword();
-  const { mutateAsync: verifyOtpMutate, isPending: isVerifying, error: verifyApiError } = useVerifyOtp();
+  const { mutateAsync: forgotPasswordMutate, isPending: isResendingReset } = useForgotPassword();
+  const { mutateAsync: resendVerificationMutate, isPending: isResendingVerification } =
+    useResendVerification();
+  const { mutateAsync: verifyOtpMutate, isPending: isVerifyingReset, error: verifyResetError } =
+    useVerifyOtp();
+  const { mutateAsync: verifyEmailMutate, isPending: isVerifyingEmail, error: verifyEmailError } =
+    useVerifyEmail();
+
+  const isResending = isResetMode ? isResendingReset : isResendingVerification;
+  const isVerifying = isResetMode ? isVerifyingReset : isVerifyingEmail;
+  const verifyApiError = isResetMode ? verifyResetError : verifyEmailError;
 
   useEffect(() => {
     if (!email) {
-      navigate("/forgot-password", { replace: true });
+      navigate(config.missingEmailPath, { replace: true });
     }
-  }, [email, navigate]);
+  }, [email, navigate, config.missingEmailPath]);
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -71,7 +112,11 @@ export default function VerifyOtp() {
   const handleResendOtp = async () => {
     if (!email || timer > 0 || isResending) return;
     try {
-      await forgotPasswordMutate({ email });
+      if (isResetMode) {
+        await forgotPasswordMutate({ email });
+      } else {
+        await resendVerificationMutate({ email });
+      }
       toast.success("A new 6-digit code has been sent to your email.");
       setTimer(60);
     } catch (err) {
@@ -88,10 +133,18 @@ export default function VerifyOtp() {
     }
 
     try {
-      await verifyOtpMutate({ email, otp: otpCode });
-      sessionStorage.setItem("tg_reset_otp", otpCode);
-      toast.success("OTP verified successfully.");
-      navigate("/reset-password");
+      if (isResetMode) {
+        await verifyOtpMutate({ email, otp: otpCode });
+        sessionStorage.setItem("tg_reset_otp", otpCode);
+        toast.success("OTP verified successfully.");
+        navigate("/reset-password");
+        return;
+      }
+
+      const response = await verifyEmailMutate({ email, otp: otpCode });
+      sessionStorage.removeItem(config.storageKey);
+      toast.success(response.message || "Email verified.");
+      navigate(isAuthenticated ? "/dashboard/generate" : "/login", { replace: true });
     } catch {
       // Error rendered below via Alert
     }
@@ -99,8 +152,8 @@ export default function VerifyOtp() {
 
   return (
     <AuthLayout
-      title="Verify OTP"
-      subtitle={email ? `Enter the 6-digit code sent to ${email}` : "Enter the 6-digit code we sent to your email"}
+      title={config.title}
+      subtitle={config.subtitle(email)}
       topSlot={<BackButton />}
     >
       {(validationError || !!verifyApiError) && (

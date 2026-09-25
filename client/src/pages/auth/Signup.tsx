@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, User } from "lucide-react";
+import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import AuthTabs from "./components/AuthTabs";
@@ -21,9 +22,11 @@ export default function Signup() {
     validators: { onChange: signupSchema, onSubmit: signupSchema },
     onSubmit: async ({ value }) => {
       try {
-        await signup(value);
-        // The API only creates the account, so send them to sign in.
-        navigate("/login", { replace: true });
+        const response = await signup(value);
+        // Free credits unlock once the emailed code is entered.
+        sessionStorage.setItem("tg_verify_email", value.email.trim().toLowerCase());
+        toast.success(response.message || "Account created. Check your email for a 6-digit code.");
+        navigate("/verify-email", { replace: true });
       } catch {
         // Server error is rendered from the mutation's `error` state below.
       }
