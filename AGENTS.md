@@ -116,7 +116,10 @@ Auth pages render outside `MainLayout` (no navbar/footer).
 | Community | `/dashboard/community` | ✅ Same Community component as marketing `/community` |
 | Recreate | `/dashboard/recreate` | ❌ Placeholder stub — `DashboardPage` template only |
 | Settings | `/dashboard/settings` | 🔲 UI built (EditProfile, Billing, Invoices) — billing not wired |
-| Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog |
+| Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog, Load More |
+
+`/preview` is the YouTube preview: a thumbnail passed in router state (`YtPreviewState`)
+shown in home, search and mobile mockups, light or dark. Opened directly it shows a sample.
 
 ## Client conventions
 
@@ -187,11 +190,15 @@ Check these before writing anything new:
 
 `lib/imageValidation.ts` owns image rules (extensions, MIME, 5 MB max) and returns a
 user-facing message; reuse it for any upload. `lib/passwordValidation.ts` owns the
-password rule and mirrors `server/src/validations/password.validation.ts`.
+password rule and mirrors `server/src/validations/password.validation.ts`;
+`lib/userValidation.ts` owns the full-name and username rules (including reserved names)
+and mirrors `server/src/validations/user-fields.validation.ts`. `lib/credits.ts` holds the
+generation cost and remaining-credit helper; `useSyncSessionUser` refreshes the session
+user after the server changes credits or verification.
 
 - Pages other than the homepage are lazy-loaded in `routes.tsx`; each layout wraps its
   `<Outlet />` in `Suspense`.
-- Paged lists (community, gallery, profile) use `useInfiniteThumbnails` from
+- Paged lists (community, gallery, profile, recycle bin) use `useInfiniteThumbnails` from
   `pages/dashboard/core/hooks/`. The like hook updates both plain and infinite caches.
 - Grids render `getThumbnailCardImageUrl` (resized Cloudinary URL); detail views and
   downloads keep `getThumbnailImageUrl`.
@@ -232,7 +239,10 @@ ApiResponse.error(res, 401, "Invalid email or password.", "Unauthorized");
 The 4th `error` argument doubles as a **machine-readable code** the client branches
 on: `TOKEN_EXPIRED`, `TOKEN_INVALID`, `TOKEN_MISSING`, `REFRESH_EXPIRED`,
 `REFRESH_INVALID`, `REFRESH_MISSING`, `TOKEN_REVOKED`, `EMAIL_NOT_VERIFIED`,
-`DISPOSABLE_EMAIL`, `RATE_LIMITED`, `INSUFFICIENT_CREDITS`, `GENERATION_FAILED`.
+`DISPOSABLE_EMAIL`, `RATE_LIMITED`, `VALIDATION_FAILED`, `INSUFFICIENT_CREDITS`,
+`GENERATION_FAILED`, `CONTENT_BLOCKED`, `GENERATION_BUSY`, `GENERATION_TIMEOUT`.
+Validation errors carry the first message at the top level and per-field messages in
+`error.fields`.
 
 **`mongoose.set("sanitizeFilter", true)`** is on (`db/connection.ts`): any operator object
 in a query filter is wrapped in `$eq`, so request values can never act as operators. When
@@ -298,14 +308,15 @@ With `NODE_ENV=production` the error handler replaces 5xx messages with a generi
 
 1. Client sends `POST /thumbnail` with `title`, `prompt`, `style`, `aspect_ratio`,
    `color_scheme`, `text_overlay`, and optional `referenceImage` file
-2. Server checks credits (`CREDIT_COST.GENERATE_COST = 5`)
+2. Server reserves credits atomically (`CREDIT_COST.GENERATE_COST = 5`), refunded on failure
 3. Creates a thumbnail document with `isGenerating: true`
 4. Builds a detailed prompt from style presets (`constants/constants.ts`), color scheme
    descriptions, text overlay rules, reference image instructions
-5. Calls `genai().models.generateContent()` with `gemini-3.1-flash-lite-image` model
+5. Calls `generateImage()` (`utils/gemini-image.ts`) with `gemini-3.1-flash-lite-image`:
+   60 s timeout per attempt, 429/503 retried with 1 s and 2 s backoff, safety blocks and
+   other failures mapped through `GENERATION_FAILURES` in `constants/constants.ts`
 6. Saves resulting image to local temp file → uploads to Cloudinary → updates thumbnail
    document with `isGenerating: false` and the Cloudinary URL
-7. Deducts credits from user
 
 ### Credits system
 
@@ -339,12 +350,10 @@ Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`).
 ### Not implemented / placeholder
 - **Payment/subscription** — pricing page exists, user model has plan fields, but no
   payment integration (Stripe/LemonSqueezy). Credits never reset.
-- **Google OAuth** — login button renders but no `/auth/google` endpoint exists.
+- **Google OAuth** — no `/auth/google` endpoint; the Google button is hidden until it exists.
 - **Recreate** — placeholder page only; no upload-and-remix flow.
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
 - **View counting** — `viewsCount` field exists but is never incremented.
-- **Public profiles** — `/profile` shows current user only (hardcoded data in places);
-  no `/profile/:username` route for viewing others.
 
 ### Known bugs
 - `hf.ts` error message says "GEMINI_API_KEY is missing" (copy-paste bug).
