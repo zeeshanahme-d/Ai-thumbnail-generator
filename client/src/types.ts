@@ -37,7 +37,6 @@ export interface PromptSubmission {
   aspectRatio: string;
   colorScheme: string;
   referenceImage: File | null;
-  referenceUrl: string;
 }
 
 export interface PromptCardProps {

@@ -46,14 +46,12 @@ const PromptCard = ({
   );
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0].value);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
-  const [referenceUrl, setReferenceUrl] = useState("");
   const [openPanelId, setOpenPanelId] = useState<string | null>(null);
 
   // Controlled when `value` is passed, otherwise the component keeps its own state.
   const prompt = value ?? internalValue;
   const canSubmit = prompt.trim().length > 0 && !disabled;
-  const hasReference =
-    Boolean(referenceImage) || referenceUrl.trim().length > 0;
+  const hasReference = Boolean(referenceImage);
 
   const handleChange = (next: string) => {
     if (value === undefined) setInternalValue(next);
@@ -86,7 +84,6 @@ const PromptCard = ({
       aspectRatio,
       colorScheme,
       referenceImage,
-      referenceUrl: referenceUrl.trim(),
     });
   };
 
@@ -134,7 +131,7 @@ const PromptCard = ({
               <span className="flex items-center gap-1">
                 Reference:{" "}
                 <span className="font-medium inline-block text-text-secondary truncate max-w-[150px]">
-                  {referenceImage ? referenceImage.name : "Image URL"}
+                  {referenceImage?.name}
                 </span>
               </span>
             </>
@@ -259,9 +256,7 @@ const PromptCard = ({
           >
             <ReferenceImageUpload
               file={referenceImage}
-              imageUrl={referenceUrl}
               onFileChange={setReferenceImage}
-              onImageUrlChange={setReferenceUrl}
             />
           </PopoverPanel>
         </>
