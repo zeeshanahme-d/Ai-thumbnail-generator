@@ -7,6 +7,7 @@ import likeDislikModel from "../models/likeDislik.modal.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import { deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { matchHashedPassword } from "../helper/halper-functions.js";
+import { usernameSchema } from "../validations/user-fields.validation.js";
 
 async function handleUpdateUserProfile(req: Request, res: Response) {
   const { fullName, username, bio, website } = req.validated!.body;
@@ -19,7 +20,8 @@ async function handleUpdateUserProfile(req: Request, res: Response) {
   // Only set fields that were actually sent in the request body
   const updateFields: Record<string, unknown> = {};
   if (fullName !== undefined) updateFields.fullName = fullName;
-  if (username !== undefined) updateFields.username = username;
+  // An empty username keeps the current one.
+  if (username) updateFields.username = username;
   if (bio !== undefined) updateFields.bio = bio;
   if (website !== undefined) updateFields.website = website;
 
@@ -41,19 +43,14 @@ async function handleUpdateUserProfile(req: Request, res: Response) {
 }
 
 async function handleCheckUsername(req: Request, res: Response) {
-  const rawUsername = String(req.params.username || "").trim();
   const excludeUserId = req.query.excludeUserId as string | undefined;
 
-  // Validate format
-  if (!rawUsername || rawUsername.length < 3 || rawUsername.length > 30) {
-    return ApiResponse.error(res, 400, "Username must be between 3 and 30 characters.");
+  const parsed = usernameSchema.safeParse(req.params.username ?? "");
+  if (!parsed.success) {
+    return ApiResponse.error(res, 400, parsed.error.issues[0]?.message ?? "Invalid username.");
   }
 
-  if (!/^[a-z0-9_]+$/i.test(rawUsername)) {
-    return ApiResponse.error(res, 400, "Username can only contain lowercase letters, numbers, and underscores.");
-  }
-
-  const username = rawUsername.toLowerCase();
+  const username = parsed.data;
 
   // Check if taken — optionally exclude the requester's own username
   const query: Record<string, unknown> = { username };

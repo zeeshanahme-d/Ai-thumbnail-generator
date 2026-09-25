@@ -1,12 +1,9 @@
 import { z } from "zod";
 import { passwordSchema } from "./password.validation.js";
+import { fullNameSchema, usernameSchema } from "./user-fields.validation.js";
 
 const signupSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(4, "Full name must be at least 4 characters")
-    .max(50),
+  fullName: fullNameSchema,
 
   email: z.email("Invalid email address").trim().toLowerCase(),
 
@@ -14,23 +11,8 @@ const signupSchema = z.object({
 });
 
 const updateProfileSchema = z.object({
-  fullName: z
-    .string({ error: "Full name is required" })
-    .trim()
-    .min(2, "Full name must be at least 2 characters")
-    .max(50, "Full name must be at most 50 characters"),
-  username: z
-    .string({ error: "Username is required" })
-    .trim()
-    .toLowerCase()
-    .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be at most 30 characters")
-    .regex(
-      /^[a-z0-9_]+$/,
-      "Username can only contain lowercase letters, numbers, and underscores",
-    )
-    .optional()
-    .or(z.literal("")),
+  fullName: fullNameSchema,
+  username: usernameSchema.optional().or(z.literal("")),
   bio: z
     .string()
     .trim()

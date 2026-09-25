@@ -1,21 +1,10 @@
 import { z } from "zod";
 import { passwordSchema } from "../../../../lib/passwordValidation";
+import { fullNameSchema, usernameSchema } from "../../../../lib/userValidation";
 
 export const updateProfileSchema = z.object({
-    fullName: z
-        .string()
-        .trim()
-        // .min(2, "Full name must be at least 2 characters")
-        .max(50, "Full name must be at most 50 characters"),
-    username: z
-        .string()
-        .trim()
-        .toLowerCase()
-        .max(30, "Username must be at most 30 characters")
-        .refine(
-            (val) => val === "" || (val.length >= 3 && /^[a-z0-9_]+$/.test(val)),
-            "Username must be at least 3 characters and contain only lowercase letters, numbers, and underscores",
-        ),
+    fullName: fullNameSchema,
+    username: usernameSchema,
     bio: z
         .string()
         .trim()

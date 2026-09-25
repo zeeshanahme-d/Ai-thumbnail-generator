@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { passwordSchema } from "../../../lib/passwordValidation";
+import { fullNameSchema } from "../../../lib/userValidation";
 
 // Mirrors server/src/validations/auth.validation.ts so the client and API agree.
 export const loginSchema = z.object({
@@ -8,11 +9,7 @@ export const loginSchema = z.object({
 });
 
 export const signupSchema = z.object({
-    fullName: z
-        .string()
-        .trim()
-        .min(2, "Full name must be at least 2 characters")
-        .max(50, "Full name must be at most 50 characters"),
+    fullName: fullNameSchema,
     email: z.email("Enter a valid email address"),
     password: passwordSchema,
 });

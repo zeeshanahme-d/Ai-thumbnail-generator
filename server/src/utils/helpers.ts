@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import type { Model } from "mongoose";
 import { isDisposableEmailDomain } from "disposable-email-domains-js";
+import { RESERVED_USERNAMES, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/constants.js";
 
 export function generateOtp(length: number = 6): string {
     const min = 10 ** (length - 1);
@@ -9,18 +10,24 @@ export function generateOtp(length: number = 6): string {
 }
 
 export async function generateUniqueUsername(fullName: string, userModel: Model<any>): Promise<string> {
-    const base = fullName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-    const slug = base.length >= 3 ? base : `user_${base || crypto.randomInt(100, 999)}`;
+    // Leaves room for a "_1234" suffix within the username length limit.
+    const base = fullName
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, USERNAME_MAX_LENGTH - 5);
+    const slug = base.length >= USERNAME_MIN_LENGTH ? base : `user_${base || crypto.randomInt(100, 999)}`;
 
-    const taken = await userModel.exists({ username: slug });
-    if (!taken) return slug;
+    const isAvailable = async (candidate: string) =>
+        !RESERVED_USERNAMES.has(candidate) && !(await userModel.exists({ username: candidate }));
+
+    if (await isAvailable(slug)) return slug;
 
     // Collision loop — append random 2-4 digit suffix.
     for (let attempt = 0; attempt < 10; attempt++) {
-        const suffix = crypto.randomInt(10, 9999);
-        const candidate = `${slug}_${suffix}`;
-        const exists = await userModel.exists({ username: candidate });
-        if (!exists) return candidate;
+        const candidate = `${slug}_${crypto.randomInt(10, 9999)}`;
+        if (await isAvailable(candidate)) return candidate;
     }
 
     // Extremely unlikely fallback — fully random.

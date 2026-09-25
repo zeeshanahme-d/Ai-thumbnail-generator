@@ -67,3 +67,43 @@ export const BCRYPT_SALT_ROUNDS = 10;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_BYTES = 72;
 
+export const FULL_NAME_MIN_LENGTH = 2;
+export const FULL_NAME_MAX_LENGTH = 50;
+
+export const USERNAME_MIN_LENGTH = 3;
+export const USERNAME_MAX_LENGTH = 30;
+
+// Names that could pass for staff, the brand or an app route.
+export const RESERVED_USERNAMES = new Set([
+  "admin",
+  "administrator",
+  "root",
+  "system",
+  "support",
+  "help",
+  "staff",
+  "moderator",
+  "mod",
+  "official",
+  "team",
+  "security",
+  "billing",
+  "thumblify",
+  "api",
+  "settings",
+  "dashboard",
+  "login",
+  "signup",
+  "logout",
+  "account",
+  "profile",
+  "community",
+  "gallery",
+  "generate",
+  "preview",
+  "thumbnail",
+  "me",
+  "null",
+  "undefined",
+]);
+

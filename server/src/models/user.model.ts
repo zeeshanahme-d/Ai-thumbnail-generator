@@ -5,6 +5,7 @@ import {
   UserPlan,
 } from "../constants/enums.js";
 import mediaSchema from "../schemas/media.schema.js";
+import { FULL_NAME_MAX_LENGTH, FULL_NAME_MIN_LENGTH } from "../constants/constants.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -12,8 +13,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      minlength: 4,
-      maxlength: 50,
+      minlength: FULL_NAME_MIN_LENGTH,
+      maxlength: FULL_NAME_MAX_LENGTH,
     },
 
     username: {
