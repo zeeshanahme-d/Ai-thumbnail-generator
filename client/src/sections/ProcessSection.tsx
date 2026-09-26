@@ -1,40 +1,20 @@
 import { motion } from "motion/react";
 import Wrapper from "../components/Wrapper";
+import SectionTitle from "../components/SectionTitle";
 import { steps } from "../data/steps";
 import type { IStep } from "../types";
 
 export default function ProcessSection() {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-16 md:py-24 bg-background">
       <Wrapper>
-        {/* Header */}
-        <motion.h2
-          className="text-center text-[clamp(2.25rem,4vw,3.5rem)] font-semibold tracking-[-0.03em] text-text-primary"
-          initial={{ y: 40, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
-        >
-          Four Steps to <span className="text-primary">Perfection.</span>
-        </motion.h2>
-        <motion.p
-          className="mx-auto mt-4 max-w-xl text-center text-text-secondary"
-          initial={{ y: 40, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{
-            delay: 0.1,
-            type: "spring",
-            stiffness: 240,
-            damping: 70,
-            mass: 1,
-          }}
-        >
-          A streamlined workflow designed for maximum efficiency.
-        </motion.p>
+        <SectionTitle
+          text2={<>Four Steps to <span className="text-primary">Perfection.</span></>}
+          text3="A streamlined workflow designed for maximum efficiency."
+        />
 
         {/* Steps */}
-        <div className="relative mt-14">
+        <div className="relative mt-10 md:mt-14">
           {/* Connector line — sits behind the cards, visible only in the gaps */}
           <div className="pointer-events-none absolute left-0 right-0 top-1/2 hidden h-px -translate-y-1/2 bg-border lg:block" />
 

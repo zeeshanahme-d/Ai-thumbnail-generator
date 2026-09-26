@@ -18,7 +18,7 @@ export default function ThemeButton({ showLabel = false, className }: ThemeButto
       size={showLabel ? "xs" : "icon"}
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={className}
+      className={`${showLabel ? "min-h-9" : ""} ${className ?? ""}`}
     >
       {isDark ? <Sun size={14} /> : <Moon size={14} />}
       {showLabel && (isDark ? "Light Mode" : "Dark Mode")}

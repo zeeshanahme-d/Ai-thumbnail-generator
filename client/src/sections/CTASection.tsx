@@ -7,10 +7,10 @@ import CtrStatCard from "./components/CtrStatCard";
 
 export default function CTASection() {
   return (
-    <section className="py-24">
+    <section className="py-16 md:py-24">
       <Wrapper>
         <motion.div
-          className="relative overflow-hidden rounded-3xl border border-border bg-background-surface px-6 py-20 md:px-16"
+          className="relative overflow-hidden rounded-3xl border border-border bg-background-surface px-5 py-14 sm:px-10 md:px-16 md:py-20"
           initial={{ y: 60, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
           viewport={{ once: true }}
@@ -24,25 +24,25 @@ export default function CTASection() {
               <BarChart3 size={14} />
               BOOST YOUR CTR
             </span>
-            <h2 className="mt-6 text-[clamp(2.25rem,4vw,2.5rem)] font-medium leading-[1.1] tracking-[-0.03em] text-text-primary">
+            <h2 className="mt-6 text-balance text-[clamp(1.75rem,1.3rem+2vw,2.5rem)] font-medium leading-[1.1] tracking-[-0.03em] text-text-primary">
               Your Best Thumbnails Are Just{" "}
               <span className="text-primary">One Click Away.</span>
             </h2>
-            <p className="mt-5 text-text-secondary">
+            <p className="mt-4 text-pretty text-sm leading-relaxed text-text-secondary sm:text-base">
               Join 50,000+ creators generating professional thumbnails in
               seconds. No credit card required.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+            <div className="mt-8 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
               <Link
                 to="/dashboard/generate"
-                className="flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-text-on-primary transition-all hover:scale-105 hover:bg-primary-hover active:scale-95"
+                className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-8 text-sm font-medium text-text-on-primary transition-all hover:bg-primary-hover active:scale-[0.97]"
               >
                 Generate for Free
                 <ArrowRight size={16} />
               </Link>
               <Link
                 to="/community"
-                className="rounded-full border border-border bg-background-surface-2 px-8 py-3.5 text-sm font-medium text-text-primary transition hover:bg-background-card"
+                className="flex min-h-11 items-center justify-center rounded-full border border-border bg-background-surface-2 px-8 text-sm font-medium text-text-primary transition hover:bg-background-card active:scale-[0.97]"
               >
                 Browse Gallery
               </Link>

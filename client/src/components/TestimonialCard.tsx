@@ -3,13 +3,13 @@ import type { TestimonialCardProps } from "../types";
 
 export default function TestimonialCard({ testimonial, index }: TestimonialCardProps) {
     return (
-        <motion.div className="p-5 rounded-2xl mx-3 w-72 shrink-0 bg-background-card border border-border shadow-[0_2px_16px_-6px_rgba(0,0,0,0.12)]"
-            initial={{ y: 150, opacity: 0 }}
+        <motion.div className="p-5 rounded-2xl mx-2 sm:mx-3 w-64 sm:w-72 shrink-0 bg-background-card border border-border shadow-[0_2px_16px_-6px_rgba(0,0,0,0.12)]"
+            initial={{ y: 50, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: index * 0.15, type: "spring", stiffness: 320, damping: 70, mass: 1 }}
         >
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
                 <img className="size-11 rounded-full" src={testimonial.image} alt={testimonial.name} height={50} width={50} />
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1">

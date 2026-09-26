@@ -1,56 +1,21 @@
 import { motion } from "motion/react";
 import Wrapper from "../components/Wrapper";
+import SectionTitle from "../components/SectionTitle";
 import { capabilities } from "../data/capabilities";
 import type { ICapability } from "../types";
 
 export default function CapabilitiesSection() {
   return (
-    <section className="py-24">
+    <section className="py-16 md:py-24">
       <Wrapper>
-        {/* Header */}
-        <motion.span
-          className="mx-auto block w-max rounded-full border border-border bg-background-card px-4 py-1.5 text-xs font-medium text-text-secondary shadow-sm"
-          initial={{ y: 30, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 320, damping: 70, mass: 1 }}
-        >
-          Capabilities
-        </motion.span>
-        <motion.h2
-          className="mt-6 text-center text-[clamp(2.25rem,4vw,3.5rem)] font-semibold tracking-[-0.03em] text-text-primary"
-          initial={{ y: 40, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{
-            delay: 0.05,
-            type: "spring",
-            stiffness: 280,
-            damping: 70,
-            mass: 1,
-          }}
-        >
-          Built for <span className="text-primary">Performance.</span>
-        </motion.h2>
-        <motion.p
-          className="mx-auto mt-2 max-w-xl text-center text-text-secondary"
-          initial={{ y: 40, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{
-            delay: 0.1,
-            type: "spring",
-            stiffness: 240,
-            damping: 70,
-            mass: 1,
-          }}
-        >
-          Every feature is engineered to maximize your click-through rate.
-          High-end AI, lightning-fast generation, and zero compromises.
-        </motion.p>
+        <SectionTitle
+          text1="Capabilities"
+          text2={<>Built for <span className="text-primary">Performance.</span></>}
+          text3="Every feature is engineered to maximize your click-through rate. High-end AI, lightning-fast generation, and zero compromises."
+        />
 
         {/* Bento grid */}
-        <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-4 md:mt-14 md:grid-cols-3">
           {capabilities.map((cap, index) => (
             <CapabilityCard key={cap.title} capability={cap} index={index} />
           ))}
@@ -95,7 +60,7 @@ const CapabilityCard = ({
           <div className="inline-flex size-11 items-center justify-center rounded-xl bg-background-surface-2 text-text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-text-on-primary">
             <Icon size={20} />
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-text-primary">
+          <h3 className="mt-5 text-lg font-semibold text-text-primary md:text-xl">
             {title}
           </h3>
           <p className="mt-3 text-sm leading-relaxed text-text-secondary">
@@ -131,7 +96,7 @@ const CapabilityVisual = ({
 
   // upscale: HD | 4K ULTRA split with a divider that reveals on hover
   return (
-    <div className="flex h-32 w-64 overflow-hidden rounded-xl border border-border bg-background-surface">
+    <div className="flex h-32 w-full max-w-64 overflow-hidden rounded-xl border border-border bg-background-surface">
       <div className="flex flex-1 items-center justify-center">
         <span className="text-xl font-bold text-text-muted blur-[2px]">HD</span>
       </div>

@@ -1,59 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import "./styles//variables.css";
+@import "./styles//custom-scroll-bar.css";
 @import "tailwindcss";
-
-/* ─── Light theme (default) ─── */
-:root {
-  --bg-base: #fff;
-  --bg-surface: #f9fafb;
-  --bg-surface-2: #f3f4f6;
-  --bg-card: #fff;
-  --border: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #9ca3af;
-  --text-on-primary: #fff;
-  --primary: #e63946;
-  --primary-hover: #dc2626;
-  --primary-light: #ef4444;
-  --primary-glow: #e639461a;
-  --primary-glow-strong: #e6394633;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-  --shadow-sm: 0 1px 2px 0 #0000000d;
-  --shadow-md: 0 4px 6px -1px #0000000d, 0 2px 4px -2px #0000000d;
-  --shadow-lg: 0 10px 15px -3px #0000000d, 0 4px 6px -4px #0000000d;
-  --shadow-primary: 0 8px 24px #e6394640;
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --backdrop: rgb(0 0 0 / 0.15);
-}
-
-/* ─── Dark theme ─── */
-[data-theme="dark"] {
-  --bg-base: #000;
-  --bg-surface: #0a0a0a;
-  --bg-surface-2: #171717;
-  --bg-card: #0a0a0a;
-  --border: #262626;
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --text-on-primary: #fff;
-  --primary: #e63946;
-  --primary-hover: #dc2626;
-  --primary-light: #ef4444;
-  --primary-glow: #ff3b4b26;
-  --primary-glow-strong: #ff3b4b4d;
-  --shadow-sm: 0 1px 2px 0 #00000080;
-  --shadow-md: 0 4px 6px -1px #0006, 0 2px 4px -2px #0006;
-  --shadow-lg: 0 10px 15px -3px #00000080, 0 4px 6px -4px #00000080;
-  --shadow-primary: 0 8px 24px #ff3b4b33;
-  --backdrop: rgba(10, 10, 10, 0.6);
-}
 
 @theme {
   /* Fonts */
@@ -118,7 +66,13 @@
 }
 
 body {
-  @apply bg-background-surface text-text-primary text-sm antialiased font-poppins scroll-smooth;
+  @apply bg-background-surface text-text-primary text-sm antialiased font-poppins scroll-smooth overflow-x-clip;
+}
+
+/* Fades marquee edges with a mask, so the fade scales with the viewport and
+   works on any background without a theme-specific gradient color. */
+.marquee-fade {
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
 }
 
 body::selection {
@@ -170,6 +124,13 @@ body::selection {
   border: none;
   background: transparent;
   overflow-x: hidden;
+}
+
+@media (min-width: 40rem) {
+  .mobile-menu-popover {
+    left: 1.5rem;
+    right: 1.5rem;
+  }
 }
 
 .mobile-menu-popover:popover-open {

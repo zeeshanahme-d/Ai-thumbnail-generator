@@ -19,15 +19,15 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "inline-flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer text-box-trim disabled:bg-background-surface-2 disabled:cursor-not-allowed disabled:border disabled:border-border disabled:text-text-muted";
+    "inline-flex items-center justify-center gap-2 enabled:active:scale-[0.97] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:bg-background-surface-2 disabled:cursor-not-allowed disabled:border disabled:border-border disabled:text-text-muted";
 
   const sizeClasses = {
-    xs: "px-3 py-1 text-[11px] font-semibold",
-    sm: "px-5 py-2.5 text-sm font-medium",
-    md: "px-6 py-3.25 text-sm font-medium",
-    icon: "size-8 shrink-0",
-    iconLg: "size-9 px-2 rounded-full",
-    iconSm: "size-6 px-1.5",
+    xs: "min-h-7 px-3 py-1 text-xs font-medium",
+    sm: "min-h-10 px-5 py-2 text-sm font-medium",
+    md: "min-h-11 px-6 py-2.5 text-sm font-medium",
+    icon: "size-9 shrink-0",
+    iconLg: "size-10 shrink-0",
+    iconSm: "size-8 shrink-0",
   };
 
   const roundedClasses = {
@@ -38,11 +38,11 @@ const Button: React.FC<ButtonProps> = ({
   const variantClasses = {
     primary: "bg-primary hover:bg-primary-hover text-text-on-primary",
     secondary: "border border-border text-text-secondary hover:bg-background-surface-2 hover:text-text-primary",
-    outline: "bg-transparent border border-white/20 hover:bg-white/10",
+    outline: "bg-transparent border border-border text-text-primary hover:border-text-muted",
     ghost: "bg-primary/10 text-primary hover:bg-primary/20",
   };
 
-  const widthClass = fullWidth && size !== "icon" ? "w-full" : "";
+  const widthClass = fullWidth && !size.startsWith("icon") ? "w-full" : "";
 
   const combinedClasses = `
         ${baseClasses}
