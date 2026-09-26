@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateProfileRequest } from "../_requests";
 import type { UpdateProfilePayload } from "../_models";
 import { useSession } from "../../../../../store/useSessionStore";
-import { authKeys } from "../../../../auth/core/hooks/query-keys";
+import { authKeys } from "../../../../../core/auth/hooks/query-keys";
 
 const useUpdateProfile = () => {
     const queryClient = useQueryClient();

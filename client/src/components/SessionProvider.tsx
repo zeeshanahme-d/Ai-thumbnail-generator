@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useSession } from "../store/useSessionStore";
-import { useVerifySession } from "../pages/auth/core/hooks";
+import { useVerifySession } from "../core/auth/hooks";
 import PageLoader from "./PageLoader";
 
 // Restores the session on every page load by hitting /auth/verify, which

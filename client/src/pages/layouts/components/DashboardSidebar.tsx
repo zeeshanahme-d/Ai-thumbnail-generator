@@ -11,7 +11,7 @@ import Logo from "../../../assets/svgs/logo.svg?react";
 import { dashboardNav } from "../../../data/dashboardNav";
 import { useSession } from "../../../store/useSessionStore";
 import { getRemainingCredits } from "../../../lib/credits";
-import { useLogout } from "../../auth/core/hooks";
+import { useLogout } from "../../../core/auth/hooks";
 import Button from "../../../components/Button";
 import ThemeButton from "../../../components/ThemeButton";
 
@@ -84,9 +84,9 @@ export default function DashboardSidebar({
         )}
 
         {dashboardNav.map((section) => (
-          <div key={section.label}>
+          <div key={section.label} className="mb-5 last:mb-0">
             {!isCollapsed && (
-              <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-widest text-text-muted">
+              <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-text-muted">
                 {section.label}
               </p>
             )}

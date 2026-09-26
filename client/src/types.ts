@@ -84,6 +84,13 @@ export interface IThumbnailStyle {
   description: string;
 }
 
+/** A starter prompt for one video niche, offered while the prompt box is empty. */
+export interface IPromptTemplate {
+  label: string;
+  icon: LucideIcon;
+  prompt: string;
+}
+
 export interface IAspectRatio {
   value: string;
   label: string;
@@ -103,7 +110,7 @@ export interface IDashboardNavSection {
   items: IDashboardNavItem[];
 }
 
-export type CommunitySort = "trending" | "newest" | "most-liked" | "featured";
+export type CommunitySort = "trending" | "newest" | "most-liked";
 
 /** Query filters shared by the thumbnail list pages. */
 export interface ThumbnailFilters {
@@ -124,13 +131,20 @@ export interface CommunityFiltersProps {
   onStyleChange: (value: string) => void;
 }
 
+/** The page a thumbnail detail view was opened from, used for its breadcrumb. */
+export type PreviewSource =
+  | "community"          // /community or /dashboard/community
+  | "gallery"            // /dashboard/gallery
+  | "generate"           // /dashboard/generate
+  | "profile"            // /profile
+  | "recycle-bin";       // /dashboard/recycle-bin
+
 export interface ThumbnailCardProps {
   thumbnail: Thumbnail;
-  index: number;
   showDelete?: boolean;
   showLike?: boolean;
   showPublish?: boolean;
-  source?: "community" | "gallery" | "generate" | "profile" | "recycle-bin";
+  source?: PreviewSource;
   onDelete?: (id: string) => void;
   showRecycleBinActions?: boolean;
   onRestore?: (id: string) => void;
@@ -139,8 +153,8 @@ export interface ThumbnailCardProps {
 }
 
 export interface SectionTitleProps {
-  text1: string;
-  text2: string;
+  text1?: string;
+  text2: ReactNode;
   text3: string;
 }
 
@@ -316,6 +330,12 @@ export interface YtPreviewState {
   thumbnail: Thumbnail;
 }
 
+export interface ThumbnailPreviewState {
+  thumbnail: Thumbnail;
+  /** Where the user navigated from — used to build breadcrumbs */
+  source: PreviewSource;
+}
+
 export interface YtVideoProps {
   video: IYtPreviewVideo;
   theme: YtPreviewTheme;
@@ -335,6 +355,8 @@ export interface YtAvatarProps {
 export interface YtFeedProps {
   videos: IYtPreviewVideo[];
   theme: YtPreviewTheme;
+  /** Text in the search box of the search results layout. */
+  searchQuery?: string;
 }
 
 export interface YtHeaderProps {

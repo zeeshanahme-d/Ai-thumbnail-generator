@@ -2,7 +2,7 @@ import { useRef, useState, type ToggleEvent } from "react";
 import { ArrowRight, LogIn, LogOut, MenuIcon, User, XIcon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
-import { useLogout } from "../pages/auth/core/hooks";
+import { useLogout } from "../core/auth/hooks";
 import { navlinks } from "../data/navlinks";
 import Button from "./Button";
 

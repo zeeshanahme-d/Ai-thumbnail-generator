@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { PreviewSource } from "../_types";
+import type { PreviewSource } from "../../../types";
 import { getBreadcrumb } from "../utils/breadcrumb";
 
 interface PreviewBreadcrumbProps {

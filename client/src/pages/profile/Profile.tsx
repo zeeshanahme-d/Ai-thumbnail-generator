@@ -11,7 +11,7 @@ import UserNotFound from "./components/UserNotFound";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileHeaderSkeleton from "./components/ProfileHeaderSkeleton";
 //hooks
-import useInfiniteThumbnails from "../dashboard/core/hooks/useInfiniteThumbnails";
+import useInfiniteThumbnails from "../../core/thumbnails/hooks/useInfiniteThumbnails";
 import { useSession } from "../../store/useSessionStore";
 import { usePublicProfile } from "./core/hooks/usePublicProfile";
 import type { ThumbnailFilters } from "../../types";
@@ -99,7 +99,7 @@ export default function Profile() {
         <hr className="my-8 border-border" />
 
         {/* Section Title & Actions */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
             {isOwnProfile ? "My Creations" : "Published Creations"}{" "}
             <span className="text-sm font-normal text-text-muted">
@@ -132,11 +132,10 @@ export default function Profile() {
         ) : thumbnails.length > 0 ? (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {thumbnails.map((thumbnail, index) => (
+              {thumbnails.map((thumbnail) => (
                 <ThumbnailCard
                   key={thumbnail._id}
                   thumbnail={thumbnail}
-                  index={index}
                   source="profile"
                 />
               ))}

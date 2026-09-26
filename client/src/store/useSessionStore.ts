@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { queryClient } from "../lib/queryClient";
 import type { IUser } from "../types";
 
 const STORAGE_KEY = "tg_session";
@@ -12,6 +13,7 @@ interface SessionState {
   isAuthenticated: boolean;
   isRestoring: boolean;
   setSession: (user: IUser) => void;
+  updateUser: (changes: Partial<IUser>) => void;
   clearSession: () => void;
   finishRestoring: () => void;
 }
@@ -25,7 +27,7 @@ const readStoredSession = (): PersistedSession | null => {
   }
 };
 
-export const useSession = create<SessionState>((set) => {
+export const useSession = create<SessionState>((set, get) => {
   const stored = readStoredSession();
 
   return {
@@ -41,9 +43,17 @@ export const useSession = create<SessionState>((set) => {
       set({ user, isAuthenticated: true });
     },
 
+    // Merges fields the server returned, such as a new credit balance, into the signed-in user.
+    updateUser: (changes) => {
+      const { user, setSession } = get();
+      if (user) setSession({ ...user, ...changes });
+    },
+
+    // Also drops cached queries, so the next user never sees the previous user's data.
     clearSession: () => {
       localStorage.removeItem(STORAGE_KEY);
       set({ user: null, isAuthenticated: false });
+      queryClient.clear();
     },
 
     finishRestoring: () => set({ isRestoring: false }),

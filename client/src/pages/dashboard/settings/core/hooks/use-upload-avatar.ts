@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authKeys } from "../../../../auth/core/hooks/query-keys";
+import { authKeys } from "../../../../../core/auth/hooks/query-keys";
 import { useSession } from "../../../../../store/useSessionStore";
 import { uploadAvatarRequest } from "../_requests";
 

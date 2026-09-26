@@ -1,5 +1,5 @@
 import api from "../../../lib/axios";
-import type { ApiSuccess } from "../../auth/core/_models";
+import type { ApiSuccess } from "../../../core/auth/_models";
 import type { CheckUsernameResponse, PublicProfileResponse } from "./_models";
 
 export async function getPublicProfileRequest(username: string) {
