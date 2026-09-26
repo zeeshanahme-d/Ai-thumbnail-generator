@@ -111,5 +111,9 @@ const thumbnailSchema = new mongoose.Schema(
 // Community feed (newest published first) and a user's own gallery.
 thumbnailSchema.index({ published: 1, createdAt: -1 });
 thumbnailSchema.index({ userId: 1, deletedAt: 1, createdAt: -1 });
+// Recycle-bin items across all users, for the 30-day purge.
+thumbnailSchema.index({ deletedAt: 1 });
+// Generations still running, for the stuck-generation cleanup.
+thumbnailSchema.index({ createdAt: 1 }, { partialFilterExpression: { isGenerating: true } });
 
 export default mongoose.model("Thumbnail", thumbnailSchema);

@@ -37,6 +37,26 @@ export const CREDIT_COST = {
   RECREATE_COST: 10,
 };
 
+// Free accounts get CREDIT_COST.SIGNUP_BONUS back this long after the last refill.
+export const CREDIT_RESET_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
+
+// A generation still running after this long was cut off by a crash or restart.
+export const STUCK_GENERATION_MS = 10 * 60 * 1000;
+export const SCHEDULED_JOB_INTERVAL_MS = 10 * 60 * 1000;
+
+// Thumbnails in the recycle bin are deleted forever this long after they were moved there.
+export const RECYCLE_BIN_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+export const PROMPT_MAX_LENGTH = 500;
+
+export const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-lite-image";
+export const GEMINI_TEXT_MODEL = "gemini-3.1-flash-lite";
+
+export const PROMPT_IMPROVER_INSTRUCTION = `You improve prompts for an AI YouTube thumbnail generator.
+Rewrite the user's idea into one vivid image description: the main subject and its expression or action, the composition, the background, the lighting and the mood.
+Keep the user's topic and language. Do not add brand names, hashtags, quotes or explanations.
+Reply with the improved prompt only, under ${PROMPT_MAX_LENGTH - 100} characters.`;
+
 export const GEMINI_TIMEOUT_MS = 60 * 1000;
 export const GEMINI_MAX_ATTEMPTS = 3;
 export const GEMINI_RETRY_BASE_DELAY_MS = 1000;
@@ -67,12 +87,17 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
 
   trending: {
     likesCount: -1,
-    views: -1,
+    viewsCount: -1,
     createdAt: -1,
   },
 
   "most-liked": {
     likesCount: -1,
+    createdAt: -1,
+  },
+
+  "most-views": {
+    viewsCount: -1,
     createdAt: -1,
   },
 
@@ -82,6 +107,10 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
 };
 
 export const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
+// A refresh token used again within this window is a parallel refresh (two tabs, or page
+// load and an API call at once), not a stolen token, so the session is not revoked.
+export const REFRESH_REUSE_GRACE_MS = 30 * 1000;
 
 // Wrong guesses allowed per emailed code before it stops working.
 export const MAX_OTP_ATTEMPTS = 5;

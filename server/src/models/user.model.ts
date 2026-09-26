@@ -152,6 +152,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Next refill of the free credits. Set when the email is verified, then moved on by each refill.
     creditsResetAt: {
       type: Date,
       default: null,
@@ -172,6 +173,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// The scheduled job looks up accounts whose free credits are due for a refill.
+userSchema.index({ creditsResetAt: 1 });
 
 // Secrets never leave the server, even when a query selected them.
 const PRIVATE_FIELDS = [

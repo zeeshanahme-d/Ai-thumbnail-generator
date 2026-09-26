@@ -6,6 +6,7 @@ import refreshTokenModel from "../models/refreshToken.model.js";
 import likeDislikModel from "../models/likeDislik.modal.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
 import { matchHashedPassword } from "../helper/halper-functions.js";
 import { usernameSchema } from "../validations/user-fields.validation.js";
 
@@ -102,17 +103,16 @@ async function handleDeleteAccount(req: Request, res: Response) {
     await deleteFileFromCloudinary(user.avatar.publicId);
   }
 
-  // Find all thumbnails by user to delete assets from Cloudinary
-  const thumbnails = await thumbnailModel.find({ userId });
-  for (const thumb of thumbnails) {
-    if (thumb.thumbnail?.publicId) {
-      await deleteFileFromCloudinary(thumb.thumbnail.publicId);
-    }
-  }
-
-  // Delete related database records
-  await thumbnailModel.deleteMany({ userId });
+  // Take this user's likes off other thumbnails' counts. A user likes a thumbnail at most once.
+  const likedThumbnailIds = await likeDislikModel.distinct("thumbnailId", { userId });
+  await thumbnailModel.updateMany(
+    { _id: mongoose.trusted({ $in: likedThumbnailIds }), likesCount: mongoose.trusted({ $gt: 0 }) },
+    { $inc: { likesCount: -1 } },
+  );
   await likeDislikModel.deleteMany({ userId });
+
+  // The user's thumbnails go with their images and the likes other users gave them.
+  await deleteThumbnailsForever({ userId });
   await refreshTokenModel.deleteMany({ userId });
   await userModel.findByIdAndDelete(userId);
 
