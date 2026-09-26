@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MonitorPlay } from "lucide-react";
 import Wrapper from "../../components/Wrapper";
+import BackButton from "../../components/BackButton";
 import Alert from "../../components/Alert";
 import TabSwitcher from "../../components/TabSwitcher";
 import YtHomeFeed from "./components/YtHomeFeed";
@@ -50,16 +51,24 @@ export default function YtPreview() {
   const theme = YT_PREVIEW_THEMES[themeIndex].value;
   const Feed = FEEDS[YT_PREVIEW_LAYOUTS[layoutIndex].value];
   const featured = thumbnail ? toPreviewVideo(thumbnail, user) : YT_PREVIEW_SAMPLE;
-  const videos = [featured, ...YT_PREVIEW_NEIGHBORS];
+  // Placed among the other videos, not first, so it has to stand out the way it would in a real feed.
+  const middle = Math.floor(YT_PREVIEW_NEIGHBORS.length / 2);
+  const videos = [
+    ...YT_PREVIEW_NEIGHBORS.slice(0, middle),
+    featured,
+    ...YT_PREVIEW_NEIGHBORS.slice(middle),
+  ];
 
   return (
-    <main className="px-6 py-10">
+    <main className="py-8 lg:py-10">
       <Wrapper>
-        <div className="flex items-center gap-2 text-primary">
+        <BackButton />
+
+        <div className="mt-6 flex items-center gap-2 text-primary">
           <MonitorPlay size={18} />
           <span className="text-xs font-semibold uppercase tracking-wide">YouTube preview</span>
         </div>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
+        <h1 className="mt-4 text-balance text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
           See it the way <span className="text-primary">viewers</span> will
         </h1>
         <p className="mt-2 max-w-lg text-sm text-text-secondary">
@@ -83,7 +92,7 @@ export default function YtPreview() {
         </div>
 
         <div className={`mt-6 overflow-hidden rounded-2xl border border-border ${ytTheme[theme].page}`}>
-          <Feed videos={videos} theme={theme} />
+          <Feed videos={videos} theme={theme} searchQuery={featured.title} />
         </div>
       </Wrapper>
     </main>

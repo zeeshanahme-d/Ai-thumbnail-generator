@@ -40,6 +40,9 @@ function AppRoutes() {
                         {/* Email verification works signed in or out */}
                         <Route path="/verify-email" element={<VerifyOtp mode="verify-email" />} />
 
+                        {/* Full-screen YouTube mockup, without the site navbar */}
+                        <Route path="/youtube-style-preview" element={<YtPreview />} />
+
                         {/* Dashboard (sidebar) — requires login */}
                         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                             <Route index element={<Navigate to="/dashboard/generate" replace />} />
@@ -56,7 +59,6 @@ function AppRoutes() {
                             {/* Public */}
                             <Route path="/" element={<HomePage />} />
                             <Route path="/community" element={<Community />} />
-                            <Route path="/preview" element={<YtPreview />} />
                             <Route path="/profile/:username" element={<PublicProfile />} />
                             <Route path="/profile" element={<PublicProfile />} />
                             {/* Thumbnail preview — public, shareable */}
