@@ -1,5 +1,4 @@
-import { v2 as cloudinary, UploadApiOptions } from "cloudinary";
-import fs from "fs/promises";
+import { v2 as cloudinary, UploadApiOptions, UploadApiResponse } from "cloudinary";
 
 const configureCloudinary = () => {
   cloudinary.config({
@@ -9,38 +8,33 @@ const configureCloudinary = () => {
   });
 };
 
-export const removeLocalFile = async (localPath: string) => {
-  try {
-    await fs.unlink(localPath);
-  } catch (error) {
-    console.error("Failed to remove temp upload:", error);
-  }
-};
-
-const uploadFileOnCloudniary = async (
-  localPath: string,
+// Streams an in-memory image to Cloudinary. Resolves to null when the upload fails.
+const uploadFileOnCloudniary = (
+  buffer: Buffer,
   folder = "thumbnails",
-) => {
-  if (!localPath) return null;
-
+  fileName?: string,
+): Promise<UploadApiResponse | null> => {
   configureCloudinary();
 
   const options: UploadApiOptions = {
     folder,
-    use_filename: true,
+    filename_override: fileName,
+    use_filename: Boolean(fileName),
     unique_filename: true,
     overwrite: false,
     resource_type: "image",
   };
 
-  try {
-    return await cloudinary.uploader.upload(localPath, options);
-  } catch (error) {
+  // upload_stream throws synchronously for setup errors such as missing keys, which the
+  // executor turns into a rejection, so every failure reaches the same catch.
+  return new Promise<UploadApiResponse>((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(options, (error, result) => (result ? resolve(result) : reject(error)))
+      .end(buffer);
+  }).catch((error) => {
     console.error("Cloudinary upload failed:", error);
     return null;
-  } finally {
-    await removeLocalFile(localPath);
-  }
+  });
 };
 
 export const deleteFileFromCloudinary = async (publicId: string) => {

@@ -29,7 +29,7 @@ async function handleUploadAvatar(req: Request, res: Response) {
 
   const previousPublicId = currentUser.avatar?.publicId;
 
-  const result = await uploadFileOnCloudniary(req.file.path, "avatar");
+  const result = await uploadFileOnCloudniary(req.file.buffer, "avatar", req.file.originalname);
 
   if (!result) {
     return ApiResponse.error(res, 502, "Image upload failed. Please try again.", UploadErrorCode.UploadFailed,);

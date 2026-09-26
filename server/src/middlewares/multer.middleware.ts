@@ -1,7 +1,6 @@
-import fs from "fs";
 import path from "path";
 import multer from "multer";
-import { fileTypeFromFile } from "file-type";
+import { fileTypeFromBuffer } from "file-type";
 import type { NextFunction, Request, Response } from "express";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { UploadErrorCode } from "../constants/enums.js";
@@ -11,21 +10,10 @@ import {
   ACCEPTED_IMAGE_MIME_TYPES,
   MAX_IMAGE_SIZE_BYTES,
   MAX_IMAGE_SIZE_MB,
-  UPLOAD_TEMP_DIR,
 } from "../constants/uploads.js";
-
-fs.mkdirSync(UPLOAD_TEMP_DIR, { recursive: true });
 
 const unsupportedImageMessage = (fileName: string) =>
   `"${fileName}" is not a supported image. Use ${ACCEPTED_IMAGE_LABEL}.`;
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_TEMP_DIR),
-  filename: (_req, file, cb) => {
-    const safeName = path.basename(file.originalname).replace(/\s+/g, "-");
-    cb(null, `${file.fieldname}-${Date.now()}-${safeName}`);
-  },
-});
 
 const imageFileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
   const extension = path.extname(file.originalname).slice(1).toLowerCase();
@@ -39,8 +27,9 @@ const imageFileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
   cb(null, true);
 };
 
+// Kept in memory (one file, at most MAX_IMAGE_SIZE_BYTES) and streamed to Cloudinary from there.
 const multerUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter: imageFileFilter,
   limits: { fileSize: MAX_IMAGE_SIZE_BYTES, files: 1 },
 });
@@ -72,26 +61,15 @@ function sendMulterError(res: Response, error: unknown, fieldName: string) {
   return ApiResponse.error(res, 400, (error as Error).message, UploadErrorCode.InvalidFileType);
 }
 
-// Deletes the temp file once the response ends, whether the request succeeded or failed early.
-function removeWhenResponseEnds(res: Response, filePath: string) {
-  res.once("close", () => {
-    fs.promises.rm(filePath, { force: true }).catch((error) => {
-      console.error("Failed to remove temp upload:", error);
-    });
-  });
-}
-
 export const uploadSingleImage =
   (fieldName: string) => (req: Request, res: Response, next: NextFunction) => {
     multerUpload.single(fieldName)(req, res, async (error: unknown) => {
       if (error) return sendMulterError(res, error, fieldName);
       if (!req.file) return next();
 
-      removeWhenResponseEnds(res, req.file.path);
-
       try {
         // The name and browser-reported type can be faked, so check the file's actual bytes.
-        const detected = await fileTypeFromFile(req.file.path);
+        const detected = await fileTypeFromBuffer(req.file.buffer);
         if (!detected || !ACCEPTED_IMAGE_MIME_TYPES.includes(detected.mime)) {
           return ApiResponse.error(
             res,
