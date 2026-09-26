@@ -9,16 +9,19 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// Queue requests that 401 while a refresh is already in flight.
+let refreshInFlight: Promise<void> | null = null;
 
-const refreshAccessToken = async () => {
-    const { data } = await axios.post(
-        `${BASE_URL}/auth/refresh`,
-        {},
-        { withCredentials: true },
-    );
-    const { user } = data.data;
-    useSession.getState().setSession(user);
+// Requests that 401 together share one refresh call instead of each starting their own.
+const refreshAccessToken = () => {
+    refreshInFlight ??= axios
+        .post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+        .then(({ data }) => {
+            useSession.getState().setSession(data.data.user);
+        })
+        .finally(() => {
+            refreshInFlight = null;
+        });
+    return refreshInFlight;
 };
 
 api.interceptors.response.use(
