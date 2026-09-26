@@ -10,14 +10,14 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
-import BackButton from "./components/BackButton";
+import BackButton from "../../components/BackButton";
 import Alert from "../../components/Alert";
 import {
   useForgotPassword,
   useResendVerification,
   useVerifyEmail,
   useVerifyOtp,
-} from "./core/hooks";
+} from "../../core/auth/hooks";
 import { getApiErrorMessage } from "../../lib/axios";
 import { useSession } from "../../store/useSessionStore";
 import type { VerifyOtpMode, VerifyOtpProps } from "../../types";
@@ -83,8 +83,20 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
     return () => clearInterval(interval);
   }, [timer]);
 
+  // Fills the boxes from the first one, for a pasted or autofilled code.
+  const fillCode = (digits: string) => {
+    const chars = digits.split("");
+    const next = [...otp];
+    chars.forEach((char, i) => (next[i] = char));
+    setOtp(next);
+    setValidationError(null);
+    inputRefs.current[Math.min(chars.length - 1, LENGTH - 1)]?.focus();
+  };
+
   const handleChange = (index: number, value: string) => {
-    if (value && Number.isNaN(Number(value))) return;
+    if (!/^\d*$/.test(value)) return;
+    // The first box accepts the whole code, which is how one-time-code autofill delivers it.
+    if (value.length === LENGTH) return fillCode(value);
     const next = [...otp];
     next[index] = value.slice(-1);
     setOtp(next);
@@ -100,13 +112,9 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const chars = e.clipboardData.getData("text").trim().slice(0, LENGTH).split("");
-    if (!chars.every((char) => !Number.isNaN(Number(char)))) return;
-    const next = [...otp];
-    chars.forEach((char, i) => (next[i] = char));
-    setOtp(next);
-    setValidationError(null);
-    inputRefs.current[Math.min(chars.length - 1, LENGTH - 1)]?.focus();
+    const digits = e.clipboardData.getData("text").replace(/\s/g, "").slice(0, LENGTH);
+    if (!/^\d+$/.test(digits)) return;
+    fillCode(digits);
   };
 
   const handleResendOtp = async () => {
@@ -172,7 +180,9 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
               }}
               type="text"
               inputMode="numeric"
-              maxLength={1}
+              autoComplete={index === 0 ? "one-time-code" : "off"}
+              maxLength={index === 0 ? LENGTH : 1}
+              aria-label={`Digit ${index + 1} of ${LENGTH}`}
               required
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}

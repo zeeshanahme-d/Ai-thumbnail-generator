@@ -8,7 +8,7 @@ import AuthTabs from "./components/AuthTabs";
 import FieldError from "./components/FieldError";
 import Input from "../../components/Input";
 import Alert from "../../components/Alert";
-import { useSignup } from "./core/hooks";
+import { useSignup } from "../../core/auth/hooks";
 import { signupSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
 
@@ -59,7 +59,8 @@ export default function Signup() {
                 icon={User}
                 type="text"
                 name={field.name}
-                placeholder="Full name"
+                label="Full name"
+                autoComplete="name"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -76,7 +77,8 @@ export default function Signup() {
                 icon={Mail}
                 type="email"
                 name={field.name}
-                placeholder="Email address"
+                label="Email address"
+                autoComplete="email"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -93,7 +95,8 @@ export default function Signup() {
                 icon={Lock}
                 type="password"
                 name={field.name}
-                placeholder="Password"
+                label="Password"
+                autoComplete="new-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}

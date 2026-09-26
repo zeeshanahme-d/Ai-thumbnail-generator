@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
-import BackButton from "./components/BackButton";
+import BackButton from "../../components/BackButton";
 import Input from "../../components/Input";
 import Alert from "../../components/Alert";
 import FieldError from "./components/FieldError";
-import { useForgotPassword } from "./core/hooks";
+import { useForgotPassword } from "../../core/auth/hooks";
 import { forgotPasswordSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
 
@@ -59,7 +59,8 @@ export default function ForgotPassword() {
                 icon={Mail}
                 type="email"
                 name={field.name}
-                placeholder="Email address"
+                label="Email address"
+                autoComplete="email"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}

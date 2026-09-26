@@ -10,7 +10,7 @@ import Alert from "../../components/Alert";
 //hooks & utils
 import { useForm } from "@tanstack/react-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useLogin } from "./core/hooks";
+import { useLogin } from "../../core/auth/hooks";
 import { loginSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
 
@@ -62,7 +62,8 @@ export default function Login() {
                 icon={Mail}
                 type="email"
                 name={field.name}
-                placeholder="Email address"
+                label="Email address"
+                autoComplete="email"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -79,7 +80,8 @@ export default function Login() {
                 icon={Lock}
                 type="password"
                 name={field.name}
-                placeholder="Password"
+                label="Password"
+                autoComplete="current-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}

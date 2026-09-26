@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
-import BackButton from "./components/BackButton";
+import BackButton from "../../components/BackButton";
 import Input from "../../components/Input";
 import Alert from "../../components/Alert";
 import FieldError from "./components/FieldError";
-import { useResetPassword } from "./core/hooks";
+import { useResetPassword } from "../../core/auth/hooks";
 import { resetPasswordSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
 
@@ -74,7 +74,8 @@ export default function ResetPassword() {
                 icon={Lock}
                 type="password"
                 name={field.name}
-                placeholder="New password"
+                label="New password"
+                autoComplete="new-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
@@ -91,7 +92,8 @@ export default function ResetPassword() {
                 icon={Lock}
                 type="password"
                 name={field.name}
-                placeholder="Confirm password"
+                label="Confirm password"
+                autoComplete="new-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
