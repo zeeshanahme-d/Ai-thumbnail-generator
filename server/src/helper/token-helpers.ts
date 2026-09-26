@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 
 // Access token lives 15 minutes, refresh token 30 days.
@@ -24,8 +25,14 @@ function generateAccessToken(payload: object) {
   return jwt.sign(payload, getAccessSecret(), { expiresIn: "15m" });
 }
 
+// The random jwtid keeps two tokens issued in the same second from being identical.
 function generateRefreshToken(payload: object) {
-  return jwt.sign(payload, getRefreshSecret(), { expiresIn: "30d" });
+  return jwt.sign(payload, getRefreshSecret(), { expiresIn: "30d", jwtid: randomUUID() });
+}
+
+// Refresh tokens are stored hashed, so a database leak does not expose usable tokens.
+function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 function verifyAccessToken(token: string) {
@@ -39,6 +46,7 @@ function verifyRefreshToken(token: string) {
 export {
   generateAccessToken,
   generateRefreshToken,
+  hashToken,
   verifyAccessToken,
   verifyRefreshToken,
 };

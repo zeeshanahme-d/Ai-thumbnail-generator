@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import userModel from "../models/user.model.js";
@@ -11,6 +12,7 @@ import {
 import {
   generateAccessToken,
   generateRefreshToken,
+  hashToken,
   verifyAccessToken,
   verifyRefreshToken,
   REFRESH_TOKEN_MAX_AGE,
@@ -20,7 +22,8 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode } from "../constants/enums.js";
 import { sendOtpEmail } from "../utils/email.js";
 import { generateOtp, generateUniqueUsername, isDisposableEmail } from "../utils/helpers.js";
-import { CREDIT_COST, MAX_OTP_ATTEMPTS, OTP_EXPIRY_MS } from "../constants/constants.js";
+import { getRemainingCredits, resetDueCredits } from "../utils/credits.js";
+import { CREDIT_COST, MAX_OTP_ATTEMPTS, OTP_EXPIRY_MS, REFRESH_REUSE_GRACE_MS } from "../constants/constants.js";
 
 // ────────────────────────────────────────────── Helpers
 
@@ -48,6 +51,23 @@ function setAccessCookie(res: Response, user: SessionUser) {
   res.cookie("accessToken", accessToken, authCookieOptions(ACCESS_TOKEN_MAX_AGE));
 }
 
+// A login starts a new family; each refresh passes its family on to the replacement token.
+async function issueRefreshToken(res: Response, user: SessionUser, family: string = randomUUID()) {
+  const refreshToken = generateRefreshToken({
+    userId: user._id,
+    tv: user.tokenVersion ?? 0,
+  });
+
+  await refreshTokenModel.create({
+    tokenHash: hashToken(refreshToken),
+    family,
+    userId: user._id,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE),
+  });
+
+  res.cookie("refreshToken", refreshToken, authCookieOptions(REFRESH_TOKEN_MAX_AGE));
+}
+
 function clearAuthCookies(res: Response) {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
@@ -71,10 +91,19 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
   }
 
   // Must still exist in the DB (i.e. not logged out / revoked).
-  const storedToken = await refreshTokenModel.findOne({ token });
+  const storedToken = await refreshTokenModel.findOne({ tokenHash: hashToken(token) });
 
   if (!storedToken) {
     ApiResponse.error(res, 401, "Invalid refresh token. Please log in again.", AuthErrorCode.RefreshInvalid);
+    return null;
+  }
+
+  // A token that was already exchanged is being replayed, so one copy is in the wrong hands.
+  // Revoke every token from that login; the real user signs in again.
+  if (storedToken.usedAt && Date.now() - storedToken.usedAt.getTime() > REFRESH_REUSE_GRACE_MS) {
+    await refreshTokenModel.deleteMany({ family: storedToken.family });
+    clearAuthCookies(res);
+    ApiResponse.error(res, 401, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
     return null;
   }
 
@@ -83,7 +112,7 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
     payload = verifyRefreshToken(token);
   } catch {
     // Refresh token expired or tampered — drop it and require a new login.
-    await refreshTokenModel.deleteOne({ token });
+    await refreshTokenModel.deleteOne({ _id: storedToken._id });
     res.clearCookie("refreshToken");
     ApiResponse.error(res, 401, "Refresh token expired. Please log in again.", AuthErrorCode.RefreshExpired);
     return null;
@@ -97,10 +126,17 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
   }
 
   if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
-    await refreshTokenModel.deleteOne({ token });
+    await refreshTokenModel.deleteOne({ _id: storedToken._id });
     clearAuthCookies(res);
     ApiResponse.error(res, 401, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
     return null;
+  }
+
+  // Rotate: only the request that marks the token used issues its replacement. A parallel
+  // request inside the grace window gets an access token and keeps the cookie the winner sets.
+  const claimed = await refreshTokenModel.updateOne({ _id: storedToken._id, usedAt: null }, { usedAt: new Date() });
+  if (claimed.modifiedCount === 1) {
+    await issueRefreshToken(res, user, storedToken.family);
   }
 
   return user;
@@ -217,20 +253,7 @@ async function handleLoginUser(req: Request, res: Response) {
   }
 
   setAccessCookie(res, user);
-
-  const refreshToken = generateRefreshToken({
-    userId: user._id,
-    tv: user.tokenVersion ?? 0,
-  });
-
-  // Persist the refresh token so it can be verified/revoked later.
-  await refreshTokenModel.create({
-    token: refreshToken,
-    userId: user._id,
-    expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE),
-  });
-
-  res.cookie("refreshToken", refreshToken, authCookieOptions(REFRESH_TOKEN_MAX_AGE));
+  await issueRefreshToken(res, user);
 
   const safeUser = await userModel.findById(user._id);
 
@@ -313,8 +336,12 @@ async function handleGetMe(req: Request, res: Response) {
 async function handleLogoutUser(req: Request, res: Response) {
   const token = req.cookies?.refreshToken;
 
+  // Ending the whole family also removes the used tokens this session rotated through.
   if (typeof token === "string" && token) {
-    await refreshTokenModel.deleteOne({ token });
+    const storedToken = await refreshTokenModel.findOne({ tokenHash: hashToken(token) });
+    if (storedToken) {
+      await refreshTokenModel.deleteMany({ family: storedToken.family });
+    }
   }
 
   clearAuthCookies(res);
@@ -382,11 +409,11 @@ async function handleVerifyEmail(req: Request, res: Response) {
     return ApiResponse.error(res, 400, OTP_ERROR, "BadRequest");
   }
 
-  const grantedCredits = Math.max(0, CREDIT_COST.SIGNUP_BONUS - (user.totalcredits ?? 0));
+  const creditsBefore = getRemainingCredits(user);
 
   // The isVerified filter makes a repeated request a no-op, and $max tops up to the
   // bonus without adding credits to accounts that already received them.
-  await userModel.updateOne(
+  const { modifiedCount } = await userModel.updateOne(
     { _id: user._id, isVerified: false },
     {
       $set: { isVerified: true },
@@ -398,6 +425,15 @@ async function handleVerifyEmail(req: Request, res: Response) {
       },
     },
   );
+
+  // Starts the 30-day refill cycle. New accounts have no reset date yet, and accounts
+  // created before verification existed may already be past theirs, so both refill now.
+  if (modifiedCount) {
+    await resetDueCredits(String(user._id));
+  }
+
+  const updated = await userModel.findById(user._id).select("totalcredits creditsUsed").lean();
+  const grantedCredits = getRemainingCredits(updated) - creditsBefore;
 
   return ApiResponse.success(
     res,
