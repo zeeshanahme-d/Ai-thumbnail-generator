@@ -65,3 +65,6 @@ export const passwordCheckLimiter = createLimiter({ windowMinutes: 15, limit: 5,
 
 /** Generations per signed-in user. Mounted before multer so rejected requests never write a file. */
 export const generateLimiter = createLimiter({ windowMinutes: 1, limit: 5, by: "user" });
+
+/** Free prompt improvements per signed-in user, since they cost no credits. */
+export const improvePromptLimiter = createLimiter({ windowMinutes: 10, limit: 10, by: "user" });

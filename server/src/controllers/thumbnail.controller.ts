@@ -1,15 +1,24 @@
 import { Request, Response } from "express";
-import path from "path";
-import fsPromises from "fs/promises";
 import { GenerateContentConfig, HarmBlockThreshold, HarmCategory, } from "@google/genai";
-import { generateImage } from "../utils/gemini-image.js";
-import { colorSchemeDescriptions, CREDIT_COST, GENERATION_FAILURES, stylePrompts, THUMBNAIL_SORT_OPTIONS, } from "../constants/constants.js";
+import { generateImage, generateText } from "../utils/gemini.js";
+import {
+  colorSchemeDescriptions,
+  CREDIT_COST,
+  GEMINI_IMAGE_MODEL,
+  GEMINI_TEXT_MODEL,
+  GENERATION_FAILURES,
+  PROMPT_IMPROVER_INSTRUCTION,
+  PROMPT_MAX_LENGTH,
+  stylePrompts,
+  THUMBNAIL_SORT_OPTIONS,
+} from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { AuthErrorCode, UploadErrorCode } from "../constants/enums.js";
-import { refundCredits, reserveCredits } from "../utils/credits.js";
-import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { AuthErrorCode, GenerationErrorCode, UploadErrorCode } from "../constants/enums.js";
+import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
+import uploadFileOnCloudniary from "../utils/cloudniary.js";
+import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
 import { formatPaginatedResponse } from "../utils/pagination.js";
 import userModel from "../models/user.model.js";
 import mongoose from "mongoose";
@@ -33,7 +42,6 @@ const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> =>
 const generateGminiThumbnail = async (req: Request, res: Response) => {
   const userId = req.user!.userId as string;
   let thumbnailId: string | null = null;
-  let outputFilePath: string | null = null;
   let creditsReserved = false;
   let succeeded = false;
 
@@ -44,23 +52,26 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       return ApiResponse.error(res, 400, "Please provide a thumbnail title.");
     }
 
-    // Take the credits before calling Gemini. The finally block refunds them if anything fails.
-    creditsReserved = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
+    // A refill that fell due since the last scheduled run applies before the balance is checked.
+    await resetDueCredits(userId);
 
-    if (!creditsReserved) {
+    // Take the credits before calling Gemini. The finally block refunds them if anything fails.
+    const credits = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
+    creditsReserved = credits !== null;
+
+    if (!credits) {
       const user = await userModel.findById(userId);
       if (!user) {
         return ApiResponse.error(res, 404, "User account not found.");
       }
 
-      const totalCredits = user.totalcredits ?? 0;
-
-      // New accounts get their free credits once the email is verified.
-      if (!user.isVerified && totalCredits < CREDIT_COST.SIGNUP_BONUS) {
+      // Free credits and their monthly refill need a verified email, including for
+      // accounts created before verification existed.
+      if (!user.isVerified) {
         return ApiResponse.error(res, 403, `Verify your email to get your ${CREDIT_COST.SIGNUP_BONUS} free credits.`, AuthErrorCode.EmailNotVerified);
       }
 
-      const available = Math.max(0, totalCredits - (user.creditsUsed ?? 0));
+      const available = getRemainingCredits(user);
       return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${available} credits.`, "INSUFFICIENT_CREDITS");
     }
 
@@ -68,11 +79,10 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     let referenceImagePart: { inlineData: { mimeType: string; data: string } } | null = null;
 
     if (referenceImage) {
-      const referenceImageBuffer = await fsPromises.readFile(referenceImage.path);
       referenceImagePart = {
         inlineData: {
           mimeType: referenceImage.mimetype,
-          data: referenceImageBuffer.toString("base64"),
+          data: referenceImage.buffer.toString("base64"),
         },
       };
     }
@@ -90,7 +100,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     });
     thumbnailId = thumbnail._id.toString();
 
-    const model = "gemini-3.1-flash-lite-image";
+    const model = GEMINI_IMAGE_MODEL;
     const generateConfig: GenerateContentConfig = {
       maxOutputTokens: 32768,
       temperature: 1,
@@ -227,27 +237,12 @@ QUALITY REQUIREMENTS
     });
 
     if (!result.ok) {
-      if (thumbnailId) {
-        await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
-        thumbnailId = null;
-      }
       const failure = GENERATION_FAILURES[result.code];
       return ApiResponse.error(res, failure.status, failure.message, result.code);
     }
 
-    const imageBuffer = Buffer.from(result.imageBase64, "base64");
-    const fileName = `thumbnail-output-${Date.now()}-${crypto.randomUUID()}.png`;
-    const uploadDir = path.join("public/temp/uploads");
-    await fsPromises.mkdir(uploadDir, { recursive: true });
-    outputFilePath = path.join(uploadDir, fileName);
-    await fsPromises.writeFile(outputFilePath, imageBuffer);
-
-    const finalResult = await uploadFileOnCloudniary(outputFilePath);
+    const finalResult = await uploadFileOnCloudniary(Buffer.from(result.imageBase64, "base64"));
     if (!finalResult) {
-      if (thumbnailId) {
-        await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
-        thumbnailId = null;
-      }
       return ApiResponse.error(res, 502, "Failed to upload generated image. Please try again.", UploadErrorCode.UploadFailed,);
     }
 
@@ -263,21 +258,21 @@ QUALITY REQUIREMENTS
     await thumbnail.save();
 
     succeeded = true;
-    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", thumbnail);
+    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", { thumbnail, credits });
 
-  } catch (error) {
-    if (thumbnailId) {
-      await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
-    }
-    throw error;
   } finally {
     if (creditsReserved && !succeeded) {
-      await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((refundError) => {
-        console.error("Failed to refund generation credits:", refundError);
-      });
-    }
-    if (outputFilePath) {
-      await fsPromises.unlink(outputFilePath).catch(() => { });
+      // Only the side that deletes the record refunds it. If this delete fails, the
+      // stuck-generation job removes the record later and refunds then.
+      const removed = thumbnailId
+        ? await thumbnailModel.deleteOne({ _id: thumbnailId }).then((r) => r.deletedCount === 1, () => false)
+        : true;
+
+      if (removed) {
+        await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((refundError) => {
+          console.error("Failed to refund generation credits:", refundError);
+        });
+      }
     }
   }
 };
@@ -433,6 +428,7 @@ const getRecycleBinThumbnails = async (req: Request, res: Response) => {
 /**
  * DELETE /thumbnails/:id
  * Soft delete a thumbnail by setting deletedAt to current timestamp.
+ * It is also unpublished, so restoring it never puts it back in the community feed on its own.
  */
 const softDeleteThumbnail = async (req: Request, res: Response) => {
   const userId = req.user!.userId;
@@ -449,7 +445,7 @@ const softDeleteThumbnail = async (req: Request, res: Response) => {
       deletedAt: null,
     },
     {
-      $set: { deletedAt: new Date() },
+      $set: { deletedAt: new Date(), published: false, publishedAt: null },
     },
     { new: true }
   );
@@ -514,13 +510,13 @@ const permanentDeleteThumbnail = async (req: Request, res: Response) => {
     return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
 
-  const thumbnail = await thumbnailModel.findOne({
+  const deletedCount = await deleteThumbnailsForever({
     _id: id,
     userId,
     deletedAt: mongoose.trusted({ $ne: null }),
   });
 
-  if (!thumbnail) {
+  if (!deletedCount) {
     return ApiResponse.error(
       res,
       404,
@@ -528,17 +524,63 @@ const permanentDeleteThumbnail = async (req: Request, res: Response) => {
     );
   }
 
-  if (thumbnail.thumbnail?.publicId) {
-    await deleteFileFromCloudinary(thumbnail.thumbnail.publicId);
-  }
-
-  await thumbnailModel.findByIdAndDelete(id);
-
   return ApiResponse.success(
     res,
     200,
     "Thumbnail permanently deleted.",
   );
+};
+
+/**
+ * DELETE /thumbnails/recycle-bin
+ * Permanently delete everything in the user's recycle bin.
+ */
+const emptyRecycleBin = async (req: Request, res: Response) => {
+  const deletedCount = await deleteThumbnailsForever({
+    userId: req.user!.userId,
+    deletedAt: mongoose.trusted({ $ne: null }),
+  });
+
+  return ApiResponse.success(res, 200, "Recycle bin emptied.", { deletedCount });
+};
+
+/**
+ * PATCH /thumbnails/recycle-bin/restore
+ * Restore everything in the user's recycle bin. Restored thumbnails stay unpublished.
+ */
+const restoreAllThumbnails = async (req: Request, res: Response) => {
+  const { modifiedCount } = await thumbnailModel.updateMany(
+    { userId: req.user!.userId, deletedAt: mongoose.trusted({ $ne: null }) },
+    { $set: { deletedAt: null } },
+  );
+
+  return ApiResponse.success(res, 200, "Thumbnails restored.", { restoredCount: modifiedCount });
+};
+
+/**
+ * POST /thumbnails/improve-prompt
+ * Rewrite the user's idea into a more detailed image prompt. Free, but rate limited.
+ */
+const improvePrompt = async (req: Request, res: Response) => {
+  const { prompt } = req.validated!.body;
+
+  const result = await generateText({
+    model: GEMINI_TEXT_MODEL,
+    contents: prompt,
+    config: { systemInstruction: PROMPT_IMPROVER_INSTRUCTION, temperature: 0.8 },
+  });
+
+  if (!result.ok) {
+    const failure = GENERATION_FAILURES[result.code];
+    const message = result.code === GenerationErrorCode.Blocked
+      ? failure.message
+      : "Couldn't improve your prompt right now. Please try again in a moment.";
+    return ApiResponse.error(res, failure.status, message, result.code);
+  }
+
+  return ApiResponse.success(res, 200, "Prompt improved.", {
+    prompt: result.text.slice(0, PROMPT_MAX_LENGTH),
+  });
 };
 
 /**
@@ -660,6 +702,9 @@ export {
   softDeleteThumbnail,
   restoreThumbnail,
   permanentDeleteThumbnail,
+  emptyRecycleBin,
+  restoreAllThumbnails,
+  improvePrompt,
   likeDislikeThumbnail,
   publishThumbnailToCommunity,
 };
