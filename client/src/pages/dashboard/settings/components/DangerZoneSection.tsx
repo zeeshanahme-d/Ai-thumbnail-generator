@@ -48,12 +48,12 @@ export default function DangerZoneSection() {
     };
 
     return (
-        <section className="mb-10">
+        <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-red-500">
                 DANGER ZONE
             </h2>
 
-            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 backdrop-blur-xs">
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5 sm:p-6">
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>

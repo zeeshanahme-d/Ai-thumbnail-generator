@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
 //Components
 import Alert from "../../../components/Alert";
@@ -19,12 +18,12 @@ import { clearPendingPrompt, readPendingPrompt } from "../../../lib/pendingPromp
 import { GENERATION_CREDIT_COST, getRemainingCredits } from "../../../lib/credits";
 //Types
 import type { PromptSubmission, Thumbnail } from "../../../types";
-import type { GenerateThumbnailPayload } from "../core/_models";
+import type { GenerateThumbnailPayload } from "../../../core/thumbnails/_models";
 //Hooks
-import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
-import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
-import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
-import { useResendVerification } from "../../auth/core/hooks";
+import useGenerateThumbnail from "../../../core/thumbnails/hooks/use-generate-thumbnail";
+import { useDeleteThumbnail } from "../../../core/thumbnails/hooks/use-delete-thumbnail";
+import useGetMyThumbnails from "../../../core/thumbnails/hooks/useGetMyThumbnails";
+import { useResendVerification } from "../../../core/auth/hooks";
 import { useSession } from "../../../store/useSessionStore";
 
 export default function DashboardGenerate() {
@@ -39,7 +38,6 @@ export default function DashboardGenerate() {
   const [success, setSuccess] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [homepagePrompt, setHomepagePrompt] = useState(readPendingPrompt);
-
   useEffect(() => {
     clearPendingPrompt();
   }, []);
@@ -54,7 +52,8 @@ export default function DashboardGenerate() {
   const { mutate: sendVerificationCode, isPending: isSendingCode } =
     useResendVerification();
   // New accounts start with no credits until the email is verified.
-  const needsVerification = Boolean(user && !user.isVerified && !user.totalcredits);
+  // Free credits and their monthly refill need a verified email, also for older accounts.
+  const needsVerification = Boolean(user && !user.isVerified);
   const remainingCredits = getRemainingCredits(user);
   const hasEnoughCredits = remainingCredits >= GENERATION_CREDIT_COST;
 
@@ -79,9 +78,9 @@ export default function DashboardGenerate() {
     setSuccess(null);
 
     generateThumbnailMutate(payload, {
-      onSuccess: (newThumbnail) => {
+      onSuccess: ({ thumbnail }) => {
         setSuccess("Your thumbnail was generated successfully.");
-        setLastGeneratedThumbnail(newThumbnail);
+        setLastGeneratedThumbnail(thumbnail);
       },
       onError: (err) => {
         setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
@@ -135,30 +134,25 @@ export default function DashboardGenerate() {
   };
 
   return (
-    <div className="px-6 py-10">
-      <motion.div
-        className="mx-auto max-w-3xl text-center"
-        initial={{ y: 24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 70, mass: 1 }}
-      >
+    <div className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+      <div className="mx-auto max-w-3xl text-center">
         <span className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-text-on-primary">
           <Sparkles size={12} />
           Powered by top-tier AI.
         </span>
-        <h1 className="mt-5 text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.03em] text-text-primary">
+        <h1 className="mt-4 text-balance text-[clamp(1.75rem,1.3rem+2vw,2.75rem)] font-semibold leading-tight tracking-[-0.03em] text-text-primary">
           AI <span className="text-primary">Thumbnail</span> Generator
         </h1>
         <p className="mt-2 text-sm text-text-secondary">
           Describe your vision, pick a style, and let the AI do the rest.
         </p>
-      </motion.div>
+      </div>
 
-      <div className="mx-auto mt-10 max-w-5xl space-y-4">
+      <div className="mx-auto mt-8 max-w-4xl space-y-4 md:mt-10">
         {needsVerification && (
           <Alert variant="warning">
             <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              Verify your email to get your free credits.
+              Verify your email to get your free credits, refilled every 30 days.
               <Button
                 type="button"
                 variant="secondary"
@@ -180,28 +174,24 @@ export default function DashboardGenerate() {
         {error && <Alert variant="error">{error}</Alert>}
         {success && !isPending && <Alert variant="success">{success}</Alert>}
 
-        <AnimatePresence mode="wait">
-          {isPending ? (
-            <GenerationSkeleton key="skeleton" />
-          ) : lastGeneratedThumbnail ? (
-            <GenerationResultCard
-              key="result"
-              thumbnail={lastGeneratedThumbnail}
-              onRegenerate={handleRegenerate}
-              onNewPrompt={handleNewPrompt}
-              isRegenerating={isPending}
-            />
-          ) : (
-            <PromptCard
-              key="prompt-card"
-              label="Your prompt"
-              defaultValue={homepagePrompt}
-              disabled={isPending || !hasEnoughCredits}
-              submitLabel="Generate Thumbnail"
-              onSubmit={handleSubmit}
-            />
-          )}
-        </AnimatePresence>
+        {isPending ? (
+          <GenerationSkeleton />
+        ) : lastGeneratedThumbnail ? (
+          <GenerationResultCard
+            thumbnail={lastGeneratedThumbnail}
+            onRegenerate={handleRegenerate}
+            onNewPrompt={handleNewPrompt}
+            isRegenerating={isPending}
+          />
+        ) : (
+          <PromptCard
+            label="Your prompt"
+            defaultValue={homepagePrompt}
+            disabled={isPending || !hasEnoughCredits}
+            submitLabel="Generate Thumbnail"
+            onSubmit={handleSubmit}
+          />
+        )}
 
         <p className="text-right text-xs text-text-muted">
           <span className="font-semibold text-text-primary">{remainingCredits}</span> credits left
@@ -209,10 +199,10 @@ export default function DashboardGenerate() {
         </p>
       </div>
 
-      <hr className="mx-auto my-12 max-w-6xl border-border" />
+      <hr className="mx-auto my-10 border-border md:my-12" />
 
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between">
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-text-primary">
               Recently Generated Thumbnails
@@ -229,20 +219,19 @@ export default function DashboardGenerate() {
         </div>
 
         {isLoading ? (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            <ThumbnailCardSkeleton count={6} />
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+            <ThumbnailCardSkeleton count={8} />
           </div>
         ) : generations.length === 0 ? (
           <p className="mt-6 text-sm text-text-muted">
             No thumbnails yet. Generate your first one above.
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {generations?.map((thumbnail, index) => (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+            {generations?.map((thumbnail) => (
               <ThumbnailCard
                 key={thumbnail._id}
                 thumbnail={thumbnail}
-                index={index}
                 showDelete
                 source="generate"
                 onDelete={(id) => setDeleteTarget(id)}

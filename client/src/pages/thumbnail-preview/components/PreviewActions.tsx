@@ -1,5 +1,6 @@
 import { Download, MonitorPlay, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Button from "../../../components/Button";
 import { handleDownloadFile } from "../../../lib/herlper-fuctions";
 import type { Thumbnail, YtPreviewState } from "../../../types";
@@ -14,26 +15,31 @@ export default function PreviewActions({ thumbnail }: PreviewActionsProps) {
   const imageUrl = getThumbnailImageUrl(thumbnail);
 
   const handleDownload = () => {
-    handleDownloadFile(
-      imageUrl,
-      thumbnail.thumbnail?.originalName || thumbnail.title || "thumbnail"
-    );
+    handleDownloadFile(imageUrl, thumbnail.title);
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({
-        title: thumbnail.title,
-        text: `Check out this AI-generated thumbnail: ${thumbnail.title}`,
-        url: window.location.href,
-      });
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: thumbnail.title,
+          text: `Check out this AI-generated thumbnail: ${thumbnail.title}`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard.");
+      }
+    } catch (error) {
+      // Closing the share sheet rejects with AbortError, which is not a failure.
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error("Couldn't share this thumbnail.");
     }
   };
 
   return (
-    <div className="flex items-center gap-3">
+    // One swipeable row on phones, bleeding to the screen edges; sits in place from sm up.
+    <div className="-mx-4 flex items-center gap-3 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:px-0 [&>button]:shrink-0 [&>button]:whitespace-nowrap">
       <Button
         type="button"
         variant="secondary"
@@ -65,7 +71,7 @@ export default function PreviewActions({ thumbnail }: PreviewActionsProps) {
         variant="secondary"
         size="sm"
         fullWidth={false}
-        onClick={() => navigate("/preview", { state: { thumbnail } satisfies YtPreviewState })}
+        onClick={() => navigate("/youtube-style-preview", { state: { thumbnail } satisfies YtPreviewState })}
         className="gap-2"
       >
         <MonitorPlay size={15} />

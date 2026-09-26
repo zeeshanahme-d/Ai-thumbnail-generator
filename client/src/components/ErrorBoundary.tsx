@@ -1,6 +1,5 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -49,59 +48,24 @@ function DefaultErrorFallback({ error, reset }: FallbackProps) {
 
       <Wrapper className="flex max-w-xl flex-col items-center text-center">
         {/* Error Badge */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-red-500 backdrop-blur"
-        >
+        <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-red-500 backdrop-blur">
           <AlertTriangle size={14} className="text-red-500" />
           Application Error
-        </motion.div>
+        </div>
 
         {/* Heading */}
-        <motion.h1
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{
-            type: "spring",
-            stiffness: 240,
-            damping: 24,
-            delay: 0.1,
-          }}
-          className="mt-6 text-3xl font-extrabold tracking-tight text-text-primary sm:text-5xl"
-        >
+        <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-text-primary sm:text-5xl">
           Something went wrong
-        </motion.h1>
+        </h1>
 
         {/* Message */}
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{
-            type: "spring",
-            stiffness: 240,
-            damping: 24,
-            delay: 0.15,
-          }}
-          className="mt-3 max-w-md text-sm text-text-secondary"
-        >
+        <p className="mt-3 max-w-md text-sm text-text-secondary">
           An unexpected error occurred while rendering this page. Your data is safe,
           and you can reload the page or navigate back to safety.
-        </motion.p>
+        </p>
 
         {/* Action Buttons */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{
-            type: "spring",
-            stiffness: 240,
-            damping: 24,
-            delay: 0.2,
-          }}
-          className="mt-8 flex flex-wrap items-center justify-center gap-3"
-        >
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button
             variant="primary"
             size="md"
@@ -149,15 +113,10 @@ function DefaultErrorFallback({ error, reset }: FallbackProps) {
               </Button>
             </Link>
           )}
-        </motion.div>
+        </div>
 
         {/* Collapsible Error Details */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8 w-full text-left"
-        >
+        <div className="mt-8 w-full text-left">
           <button
             type="button"
             onClick={() => setShowDetails((prev) => !prev)}
@@ -200,7 +159,7 @@ function DefaultErrorFallback({ error, reset }: FallbackProps) {
               )}
             </div>
           )}
-        </motion.div>
+        </div>
       </Wrapper>
     </main>
   );

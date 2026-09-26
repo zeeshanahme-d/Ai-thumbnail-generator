@@ -57,11 +57,11 @@ export default function ChangePasswordSection() {
     };
 
     return (
-        <section className="mb-10">
+        <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
                 SECURITY & PASSWORD
             </h2>
-            <div className="rounded-2xl border border-border bg-background-card p-6">
+            <div className="rounded-2xl border border-border bg-background-card p-5 sm:p-6">
                 <div className="mb-6">
                     <h3 className="text-base font-semibold text-text-primary">Change Password</h3>
                     <p className="mt-1 text-sm text-text-secondary">

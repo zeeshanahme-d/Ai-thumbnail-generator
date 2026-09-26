@@ -83,11 +83,11 @@ export default function EditProfileSection() {
 
 
     return (
-        <section className="mb-10">
+        <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
                 EDIT PROFILE
             </h2>
-            <div className="rounded-2xl border border-border bg-background-card p-6">
+            <div className="rounded-2xl border border-border bg-background-card p-5 sm:p-6">
 
                 {/* Avatar */}
                 <div className="mb-8 flex flex-col items-center justify-center">
@@ -135,7 +135,7 @@ export default function EditProfileSection() {
                         <form.Field name="fullName">
                             {(field) => (
                                 <div className="space-y-1.5">
-                                    <label htmlFor="fullName" className="pl-1 text-xs text-text-secondary">Full Name</label>
+                                    <label htmlFor="fullName" className="pl-1 text-xs font-medium text-text-secondary">Full Name</label>
                                     <Input
                                         icon={User}
                                         type="text"
@@ -155,7 +155,7 @@ export default function EditProfileSection() {
                         <form.Field name="username">
                             {(field) => (
                                 <div>
-                                    <label htmlFor="username" className="pl-1 text-xs text-text-secondary">Username</label>
+                                    <label htmlFor="username" className="pl-1 text-xs font-medium text-text-secondary">Username</label>
                                     <Input
                                         icon={AtSign}
                                         type="text"
@@ -194,7 +194,7 @@ export default function EditProfileSection() {
 
                         {/* Email Address (read-only) */}
                         <div>
-                            <label htmlFor="email" className="pl-1 text-xs text-text-secondary">Email Address</label>
+                            <label htmlFor="email" className="pl-1 text-xs font-medium text-text-secondary">Email Address</label>
                             <Input
                                 icon={Mail}
                                 type="email"
@@ -210,7 +210,7 @@ export default function EditProfileSection() {
                         <form.Field name="website">
                             {(field) => (
                                 <div>
-                                    <label htmlFor="website" className="pl-1 text-xs text-text-secondary">Website</label>
+                                    <label htmlFor="website" className="pl-1 text-xs font-medium text-text-secondary">Website</label>
                                     <Input
                                         icon={Globe}
                                         type="url"
@@ -232,7 +232,7 @@ export default function EditProfileSection() {
                         {(field) => (
                             <div>
                                 <div className="flex items-center justify-between px-1">
-                                    <label htmlFor="bio" className="text-xs text-text-secondary">Bio</label>
+                                    <label htmlFor="bio" className="text-xs font-medium text-text-secondary">Bio</label>
                                     <span className="text-xs text-text-muted">{field.state.value.length}/200</span>
                                 </div>
                                 <div className="rounded-lg border border-border bg-background-surface transition-colors focus-within:border-primary">

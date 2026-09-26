@@ -7,7 +7,7 @@ import type { CommunitySort, ThumbnailFilters } from "../../types";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
-import useInfiniteThumbnails from "../dashboard/core/hooks/useInfiniteThumbnails";
+import useInfiniteThumbnails from "../../core/thumbnails/hooks/useInfiniteThumbnails";
 import Wrapper from "../../components/Wrapper";
 
 const PAGE_SIZE = 12;
@@ -36,7 +36,7 @@ export default function Community() {
   };
 
   return (
-    <main className="px-6 py-10">
+    <main className="py-8 lg:py-10">
       <Wrapper>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -46,7 +46,7 @@ export default function Community() {
                 {total} Thumbnails
               </span>
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
+            <h1 className="mt-4 text-balance text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               AI Thumbnail <span className="text-primary">Community</span>{" "}
               Gallery
             </h1>
@@ -83,11 +83,10 @@ export default function Community() {
         ) : thumbnails.length > 0 ? (
           <>
             <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
-              {thumbnails.map((thumbnail, index) => (
+              {thumbnails.map((thumbnail) => (
                 <ThumbnailCard
                   key={thumbnail._id}
                   thumbnail={thumbnail}
-                  index={index}
                   showLike
                   source="community"
                 />
@@ -95,7 +94,7 @@ export default function Community() {
             </div>
 
             {isFetchingNextPage && (
-              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
                 <ThumbnailCardSkeleton count={3} />
               </div>
             )}

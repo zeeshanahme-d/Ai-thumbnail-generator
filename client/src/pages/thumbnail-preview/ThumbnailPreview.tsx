@@ -1,11 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { motion } from "motion/react";
 import dayjs from "dayjs";
 import { STYLE_DOTS } from "../../data/community";
 import { getThumbnailImageUrl, getThumbnailAuthorName } from "../../lib/thumbnail";
-import useGetCommunityThumbnails from "../dashboard/core/hooks/useGetCommunityThumbnails";
-import useLikeThumbnail from "../dashboard/core/hooks/useLikeThumbnail";
+import useGetCommunityThumbnails from "../../core/thumbnails/hooks/useGetCommunityThumbnails";
+import useLikeThumbnail from "../../core/thumbnails/hooks/useLikeThumbnail";
 import { useSession } from "../../store/useSessionStore";
 
 import PreviewBreadcrumb from "./components/PreviewBreadcrumb";
@@ -17,7 +16,7 @@ import PreviewPromptCard from "./components/PreviewPromptCard";
 import PreviewActions from "./components/PreviewActions";
 import PreviewMoreThumbnails from "./components/PreviewMoreThumbnails";
 
-import type { ThumbnailPreviewState } from "./_types";
+import type { ThumbnailPreviewState } from "../../types";
 import toast from "react-hot-toast";
 
 export default function ThumbnailPreview() {
@@ -67,21 +66,18 @@ export default function ThumbnailPreview() {
   return (
     <div className="min-h-screen bg-background-surface">
       {/* Breadcrumb bar */}
-      <div className="border-b border-border bg-background-card px-6 py-3 md:px-10">
-        <PreviewBreadcrumb source={source} title={thumbnail.title} />
+      <div className="border-b border-border bg-background-card">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <PreviewBreadcrumb source={source} title={thumbnail.title} />
+        </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:px-10">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* ─── Left column ─── */}
           <div className="flex-1 min-w-0">
             {/* Thumbnail image */}
-            <motion.div
-              className="overflow-hidden rounded-2xl border border-border bg-background-card shadow-lg"
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 280, damping: 70 }}
-            >
+            <div className="overflow-hidden rounded-2xl border border-border bg-background-card shadow-lg">
               <div className="relative aspect-video w-full overflow-hidden bg-background-surface-2">
                 {thumbnail.isGenerating || !imageUrl ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-text-muted">
@@ -113,74 +109,44 @@ export default function ThumbnailPreview() {
                   </span>
                 )}
               </div>
-            </motion.div>
+            </div>
 
             {/* Stats row */}
-            <motion.div
-              className="mt-5"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.08, type: "spring", stiffness: 280, damping: 70 }}
-            >
+            <div className="mt-5">
               <PreviewStats
                 thumbnail={thumbnail}
                 isLiked={thumbnail.isLiked}
               />
-            </motion.div>
+            </div>
 
             {/* Title */}
-            <motion.h1
-              className="mt-4 text-2xl font-semibold leading-snug tracking-tight text-text-primary sm:text-3xl"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.12, type: "spring", stiffness: 280, damping: 70 }}
-            >
+            <h1 className="mt-4 text-2xl font-semibold leading-snug tracking-tight text-text-primary sm:text-3xl">
               {thumbnail.title}
-            </motion.h1>
+            </h1>
 
             {/* Prompt card */}
-            <motion.div
-              className="mt-6"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.16, type: "spring", stiffness: 280, damping: 70 }}
-            >
+            <div className="mt-6">
               <PreviewPromptCard thumbnail={thumbnail} />
-            </motion.div>
+            </div>
 
             {/* Actions */}
-            <motion.div
-              className="mt-6"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 280, damping: 70 }}
-            >
+            <div className="mt-6">
               <PreviewActions thumbnail={thumbnail} />
-            </motion.div>
+            </div>
 
             {/* More thumbnails */}
             {communityThumbnails.length > 0 && (
-              <motion.div
-                className="mt-10"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.26, type: "spring", stiffness: 280, damping: 70 }}
-              >
+              <div className="mt-10">
                 <PreviewMoreThumbnails
                   thumbnails={communityThumbnails}
                   style={thumbnail.style ?? ""}
                   source={source}
                 />
-              </motion.div>
+              </div>
             )}
 
             {/* About this thumbnail */}
-            <motion.div
-              className="mt-10 rounded-2xl border border-border bg-background-card p-5"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 280, damping: 70 }}
-            >
+            <div className="mt-10 rounded-2xl border border-border bg-background-card p-5">
               <h2 className="text-sm font-semibold text-text-primary">
                 About This AI-Generated Thumbnail
               </h2>
@@ -206,50 +172,38 @@ export default function ThumbnailPreview() {
                 and video covers using AI in seconds. Choose from 10+ style presets including cinematic,
                 anime, neon, photorealistic, and more.
               </p>
-            </motion.div>
+            </div>
           </div>
 
           {/* ─── Right sidebar ─── */}
           <aside className="w-full lg:w-72 xl:w-80 flex flex-col gap-4 shrink-0">
             {/* Generate CTA */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 280, damping: 70 }}
+            <div
             >
               <PreviewGenerateCTA style={thumbnail.style} />
-            </motion.div>
+            </div>
 
             {/* Creator card */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.18, type: "spring", stiffness: 280, damping: 70 }}
+            <div
             >
               <PreviewCreatorCard userId={thumbnail.userId} />
-            </motion.div>
+            </div>
 
             {/* Style card */}
             {thumbnail.style && (
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.24, type: "spring", stiffness: 280, damping: 70 }}
+              <div
               >
                 <PreviewStyleCard style={thumbnail.style} />
-              </motion.div>
+              </div>
             )}
 
             {/* Like button (sidebar). Only published thumbnails can be liked. */}
             {isAuthenticated && thumbnail.published && (
-              <motion.button
+              <button
                 type="button"
                 onClick={handleLike}
                 disabled={isLiking}
                 className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-background-card py-3 text-sm font-medium text-text-primary transition hover:bg-background-surface-2 disabled:opacity-60"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 280, damping: 70 }}
                 aria-label="Like thumbnail"
               >
                 {isLiking ? (
@@ -264,7 +218,7 @@ export default function ThumbnailPreview() {
                   </span>
                 )}
                 {thumbnail.isLiked ? "Liked" : "Like this thumbnail"}
-              </motion.button>
+              </button>
             )}
           </aside>
         </div>

@@ -1,10 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { motion } from "motion/react";
 import { STYLE_DOTS } from "../../../data/community";
 import { getThumbnailCardImageUrl, getThumbnailAuthorName } from "../../../lib/thumbnail";
-import type { Thumbnail } from "../../../types";
-import type { PreviewSource } from "../_types";
+import type { PreviewSource, Thumbnail } from "../../../types";
 
 interface PreviewMoreThumbnailsProps {
   thumbnails: Thumbnail[];
@@ -47,25 +45,17 @@ export default function PreviewMoreThumbnails({
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {thumbnails.slice(0, 4).map((thumbnail, index) => {
+        {thumbnails.slice(0, 4).map((thumbnail) => {
           const imageUrl = getThumbnailCardImageUrl(thumbnail);
           const authorName = getThumbnailAuthorName(thumbnail);
           const thumbDot = STYLE_DOTS[thumbnail.style ?? ""] || "bg-gray-400";
 
           return (
-            <motion.button
+            <button
               key={thumbnail._id}
               type="button"
               onClick={() => handleClick(thumbnail)}
               className="group text-left overflow-hidden rounded-xl border border-border bg-background-card transition-all hover:-translate-y-0.5 hover:shadow-md"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{
-                delay: index * 0.07,
-                type: "spring",
-                stiffness: 300,
-                damping: 70,
-              }}
             >
               <div className="relative aspect-video overflow-hidden bg-background-surface-2">
                 {imageUrl ? (
@@ -96,7 +86,7 @@ export default function PreviewMoreThumbnails({
                   {authorName}
                 </p>
               </div>
-            </motion.button>
+            </button>
           );
         })}
       </div>

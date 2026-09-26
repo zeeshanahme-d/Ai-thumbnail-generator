@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "motion/react";
 import {
   Download,
   Maximize2,
@@ -17,7 +16,7 @@ import Button from "../../../../components/Button";
 import GenerationPreviewModal from "./GenerationPreviewModal";
 import { handleDownloadFile } from "../../../../lib/herlper-fuctions";
 import { getThumbnailImageUrl } from "../../../../lib/thumbnail";
-import usePublishThumbnail from "../../../dashboard/core/hooks/usePublishThumbnail";
+import usePublishThumbnail from "../../../../core/thumbnails/hooks/usePublishThumbnail";
 import type { Thumbnail, YtPreviewState } from "../../../../types";
 
 interface GenerationResultCardProps {
@@ -59,11 +58,7 @@ export default function GenerationResultCard({
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="overflow-hidden rounded-2xl border border-primary/40 bg-background-card p-5 shadow-2xl sm:p-6"
-      >
+      <div className="overflow-hidden rounded-2xl border border-primary/40 bg-background-card p-5 shadow-2xl sm:p-6">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
           <div className="flex items-center gap-2">
@@ -135,12 +130,7 @@ export default function GenerationResultCard({
               variant="primary"
               size="sm"
               fullWidth={false}
-              onClick={() =>
-                handleDownloadFile(
-                  imageUrl,
-                  thumbnail.thumbnail?.originalName || "thumbnail.png"
-                )
-              }
+              onClick={() => handleDownloadFile(imageUrl, thumbnail.title)}
               className="gap-2"
             >
               <Download size={15} />
@@ -180,7 +170,7 @@ export default function GenerationResultCard({
               variant="secondary"
               size="sm"
               fullWidth={false}
-              onClick={() => navigate("/preview", { state: { thumbnail } satisfies YtPreviewState })}
+              onClick={() => navigate("/youtube-style-preview", { state: { thumbnail } satisfies YtPreviewState })}
               className="gap-2"
             >
               <MonitorPlay size={15} />
@@ -211,7 +201,7 @@ export default function GenerationResultCard({
             </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Fullscreen Modal */}
       <GenerationPreviewModal

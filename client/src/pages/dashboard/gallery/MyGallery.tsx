@@ -7,8 +7,8 @@ import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import CommunityFilters from "../../community/components/CommunityFilters";
 import Button from "../../../components/Button";
-import useInfiniteThumbnails from "../core/hooks/useInfiniteThumbnails";
-import useDeleteThumbnail from "../core/hooks/use-delete-thumbnail";
+import useInfiniteThumbnails from "../../../core/thumbnails/hooks/useInfiniteThumbnails";
+import useDeleteThumbnail from "../../../core/thumbnails/hooks/use-delete-thumbnail";
 import { getApiErrorMessage } from "../../../lib/axios";
 import { ALL_STYLES } from "../../../data/community";
 import type { CommunitySort, ThumbnailFilters } from "../../../types";
@@ -57,7 +57,7 @@ export default function MyGallery() {
   };
 
   return (
-    <main className="px-6 py-10">
+    <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <div>
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -68,7 +68,7 @@ export default function MyGallery() {
                 {total} Thumbnails
               </span>
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
+            <h1 className="mt-4 text-balance text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               My <span className="text-primary">Gallery</span>
             </h1>
             <p className="mt-2 max-w-lg text-sm text-text-secondary">
@@ -108,11 +108,10 @@ export default function MyGallery() {
         ) : thumbnails.length > 0 ? (
           <>
             <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
-              {thumbnails.map((thumbnail, index) => (
+              {thumbnails.map((thumbnail) => (
                 <ThumbnailCard
                   key={thumbnail._id}
                   thumbnail={thumbnail}
-                  index={index}
                   showDelete
                   showPublish
                   source="gallery"
@@ -122,7 +121,7 @@ export default function MyGallery() {
             </div>
 
             {isFetchingNextPage && (
-              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
                 <ThumbnailCardSkeleton count={4} />
               </div>
             )}

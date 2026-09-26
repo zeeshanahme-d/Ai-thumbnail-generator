@@ -57,7 +57,9 @@ export default function CommunityFilters({
               onClick={() => onSortChange(tab.value)}
               fullWidth={false}
               variant="secondary"
-              className={`flex items-center gap-2 py-1.5! ${sort === tab.value
+              size="sm"
+              aria-pressed={sort === tab.value}
+              className={`${sort === tab.value
                 ? "border-primary! bg-primary! text-text-on-primary!"
                 : "border-border! text-text-secondary! hover:text-text-primary!"
                 }`}
@@ -68,7 +70,8 @@ export default function CommunityFilters({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      {/* One swipeable row on phones, wrapping chips from sm up */}
+      <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
         {STYLE_FILTERS.map((style) => {
           const isActive = activeStyle === style;
           const dot = STYLE_DOTS[style];
@@ -78,10 +81,12 @@ export default function CommunityFilters({
               type="button"
               fullWidth={false}
               variant="secondary"
+              size="sm"
+              aria-pressed={isActive}
               onClick={() => onStyleChange(style)}
-              className={`flex items-center gap-2 py-1.5! ${isActive
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border text-text-secondary hover:text-text-primary"
+              className={`shrink-0 px-4! ${isActive
+                ? "border-primary! bg-primary/5! text-primary!"
+                : "text-text-secondary hover:text-text-primary"
                 }`}
             >
               {dot && <span className={`size-2 rounded-full ${dot}`} />}

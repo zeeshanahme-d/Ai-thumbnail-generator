@@ -1,16 +1,9 @@
-import { motion } from "motion/react";
 import { Sparkles, Loader2 } from "lucide-react";
 import Skeleton from "../../../../components/Skeleton";
 
 export default function GenerationSkeleton() {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.3 }}
-      className="relative overflow-hidden rounded-2xl border border-primary/30 bg-background-card p-6 shadow-xl"
-    >
+    <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-background-card p-6 shadow-xl">
       {/* Ambient glowing effect */}
       <div
         aria-hidden="true"
@@ -48,15 +41,10 @@ export default function GenerationSkeleton() {
             <span className="text-primary font-medium">Please wait...</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-background-surface-2">
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-              className="h-full w-1/2 rounded-full bg-linear-to-r from-primary/30 via-primary to-primary/30"
-            />
+            <div className="h-full w-full animate-pulse rounded-full bg-linear-to-r from-primary/30 via-primary to-primary/30" />
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import Button from "../../../../components/Button";
+import { getRemainingCredits } from "../../../../lib/credits";
 import { useSession } from "../../../../store/useSessionStore";
 
 export default function BillingSection() {
@@ -15,29 +16,29 @@ export default function BillingSection() {
         ? user.subscriptionStatus.charAt(0).toUpperCase() + user.subscriptionStatus.slice(1)
         : "Active";
 
-    const totalCredits = user?.totalcredits ?? 20;
+    const totalCredits = user?.totalcredits ?? 0;
     const creditsUsed = user?.creditsUsed ?? 0;
-    const remainingCredits = Math.max(0, totalCredits - creditsUsed);
+    const remainingCredits = getRemainingCredits(user);
     const usagePercentage = totalCredits > 0 ? Math.min(100, Math.max(0, (creditsUsed / totalCredits) * 100)) : 0;
 
-    const resetDate = user?.creditsResetAt || user?.subscriptionRenewsAt;
-    const formattedResetDate = resetDate
-        ? new Date(resetDate).toLocaleDateString("en-US", {
+    // Unverified accounts have no refill date yet, so the line stays hidden for them.
+    const formattedResetDate = user?.creditsResetAt
+        ? new Date(user.creditsResetAt).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric",
         })
-        : "Aug 1, 2026";
+        : null;
 
     return (
-        <section className="mb-10">
+        <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
                 CURRENT MEMBERSHIP
             </h2>
-            <div className="rounded-2xl border border-border bg-background-card p-6">
-                <div className="flex items-start justify-between">
+            <div className="rounded-2xl border border-border bg-background-card p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                             <h3 className="text-xl font-bold text-text-primary">{planName}</h3>
                             <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">
                                 <span className="size-1.5 rounded-full bg-emerald-500"></span>
@@ -56,7 +57,13 @@ export default function BillingSection() {
                             )}
                         </p>
                     </div>
-                    <Button variant="primary" size="sm" className="w-fit!">
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-fit! shrink-0"
+                        disabled
+                        title="Paid plans are coming soon."
+                    >
                         {isSubscribed ? "Manage Plan" : "Upgrade +"}
                     </Button>
                 </div>
@@ -64,7 +71,7 @@ export default function BillingSection() {
                 <div className="my-6 h-px w-full bg-border" />
 
                 <div>
-                    <div className="mb-3 flex items-center justify-between text-sm">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
                         <div className="flex items-center gap-2 font-medium text-text-secondary">
                             <Sparkles size={16} className="text-primary" />
                             Thumbnail Generations Limit
@@ -81,9 +88,9 @@ export default function BillingSection() {
                         />
                     </div>
 
-                    <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-text-muted">
                         <span>{usagePercentage.toFixed(1)}% consumed this billing cycle ({remainingCredits} remaining)</span>
-                        <span>Resets on {formattedResetDate}</span>
+                        {formattedResetDate && <span>Resets on {formattedResetDate}</span>}
                     </div>
                 </div>
             </div>

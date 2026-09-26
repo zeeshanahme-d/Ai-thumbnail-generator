@@ -16,7 +16,7 @@ export default function DashboardPage({
     children,
 }: DashboardPageProps) {
     return (
-        <div className="px-6 py-10 md:px-10">
+        <div className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
             <div className="mx-auto max-w-6xl">
                 <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
