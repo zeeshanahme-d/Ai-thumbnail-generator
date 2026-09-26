@@ -1,4 +1,43 @@
-import type { IAspectRatio, IThumbnailStyle } from "../types";
+import { ChefHat, Cpu, Dumbbell, Gamepad2, GraduationCap, TrendingUp, Video } from "lucide-react";
+import type { IAspectRatio, IPromptTemplate, IThumbnailStyle } from "../types";
+
+export const PROMPT_TEMPLATES: IPromptTemplate[] = [
+  {
+    label: "Gaming",
+    icon: Gamepad2,
+    prompt: "A gamer with a shocked face in front of a glowing screen, an epic boss battle with fire and lightning exploding behind them, neon rim lighting",
+  },
+  {
+    label: "Tech",
+    icon: Cpu,
+    prompt: "A sleek new smartphone floating above a dark desk, a creator pointing at it with an excited face, glowing blue accents and sharp studio lighting",
+  },
+  {
+    label: "Vlog",
+    icon: Video,
+    prompt: "A smiling creator holding a camera at golden hour in a busy city street, warm cinematic light and a blurred background full of life",
+  },
+  {
+    label: "Education",
+    icon: GraduationCap,
+    prompt: "A teacher next to a giant glowing lightbulb and simple diagrams on a chalkboard, a curious expression, clean bright composition",
+  },
+  {
+    label: "Finance",
+    icon: TrendingUp,
+    prompt: "A confident person in front of a rising green stock chart with stacks of cash and gold coins, dramatic contrast lighting",
+  },
+  {
+    label: "Fitness",
+    icon: Dumbbell,
+    prompt: "A muscular athlete mid-lift with a determined face in a dark gym, sweat glistening under a dramatic spotlight",
+  },
+  {
+    label: "Cooking",
+    icon: ChefHat,
+    prompt: "A chef tasting a steaming dish with a surprised delighted face, colorful fresh ingredients flying around, warm kitchen lighting",
+  },
+];
 
 export const THUMBNAIL_STYLES: IThumbnailStyle[] = [
   {
