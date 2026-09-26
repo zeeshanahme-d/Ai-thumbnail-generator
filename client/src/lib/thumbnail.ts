@@ -1,4 +1,8 @@
+import dayjs from "dayjs";
 import type { Thumbnail } from "../types";
+
+// Mirrors RECYCLE_BIN_RETENTION_MS in server/src/constants/constants.ts.
+export const RECYCLE_BIN_RETENTION_DAYS = 30;
 
 // One shared empty list, so hooks return the same reference while data loads.
 export const NO_THUMBNAILS: Thumbnail[] = [];
@@ -30,6 +34,26 @@ export function getThumbnailAuthorName(thumbnail: Thumbnail): string {
   return (
     thumbnail.userId.fullName ?? thumbnail.userId.name ?? "Anonymous"
   );
+}
+
+// Compact age for thumbnail cards: 45s, 12min, 3h, 2d, 1w, 5mo, 1y.
+export function getShortTimeAgo(date: string, now: dayjs.ConfigType = undefined): string {
+  if (!date) return "";
+  const current = dayjs(now);
+  const created = dayjs(date);
+
+  const seconds = Math.max(0, current.diff(created, "second"));
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+
+  const days = current.diff(created, "day");
+  if (days < 7) return `${days}d`;
+
+  const months = current.diff(created, "month");
+  if (months < 1) return `${Math.floor(days / 7)}w`;
+  if (months < 12) return `${months}mo`;
+  return `${current.diff(created, "year")}y`;
 }
 
 export function buildThumbnailTitle(prompt: string): string {
