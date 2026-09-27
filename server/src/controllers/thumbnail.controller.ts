@@ -14,6 +14,7 @@ import {
 } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
+import thumbnailViewModel from "../models/thumbnailView.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode, GenerationErrorCode, UploadErrorCode } from "../constants/enums.js";
 import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
@@ -23,6 +24,8 @@ import { formatPaginatedResponse } from "../utils/pagination.js";
 import userModel from "../models/user.model.js";
 import mongoose from "mongoose";
 import { escapeRegex } from "../utils/helpers.js";
+import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/share-page.js";
+import { getViewerKey } from "../utils/viewer.js";
 
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
@@ -384,6 +387,99 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
 };
 
 /**
+ * GET /thumbnails/:id
+ * One thumbnail for its detail page: published ones for anyone, and any of their own for the owner.
+ */
+const getThumbnailById = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const visibleTo = [{ published: true, deletedAt: null }, ...(userId ? [{ userId }] : [])];
+
+  const thumbnail = await thumbnailModel
+    .findOne({ _id: req.params.id, $or: visibleTo })
+    .populate("userId", "fullName username avatar")
+    .lean();
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  const isLiked = userId ? Boolean(await likeDislikeModel.exists({ userId, thumbnailId: thumbnail._id })) : false;
+
+  return ApiResponse.success(res, 200, "Thumbnail fetched.", { ...thumbnail, isLiked });
+};
+
+/**
+ * POST /thumbnails/:id/view
+ * Count a view of a published thumbnail once per viewer, signed in or guest. The owner's own
+ * views are not counted.
+ */
+const recordThumbnailView = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
+  }
+
+  const thumbnail = await thumbnailModel
+    .findOne({ _id: id, published: true, deletedAt: null })
+    .select("userId")
+    .lean();
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  if (thumbnail.userId.toString() === req.user?.userId) {
+    return ApiResponse.success(res, 200, "Views of your own thumbnail are not counted.", { counted: false });
+  }
+
+  // The unique index lets only the viewer's first view insert, even when requests arrive together.
+  const { upsertedCount } = await thumbnailViewModel.updateOne(
+    { thumbnailId: thumbnail._id, viewerKey: getViewerKey(req, res) },
+    {},
+    { upsert: true },
+  );
+
+  const counted = upsertedCount === 1;
+  if (counted) {
+    await thumbnailModel.updateOne({ _id: thumbnail._id }, { $inc: { viewsCount: 1 } });
+  }
+
+  return ApiResponse.success(res, 200, counted ? "View recorded." : "View already counted.", { counted });
+};
+
+/**
+ * GET /thumbnails/:id/share
+ * The link people share: an HTML page with the thumbnail's Open Graph tags for link previews,
+ * which sends visitors on to the app. Unpublished thumbnails go straight to the app.
+ */
+const getThumbnailSharePage = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
+  }
+
+  const pageUrl = getThumbnailPageUrl(String(id));
+  const thumbnail = await thumbnailModel
+    .findOne({ _id: id, published: true, deletedAt: null })
+    .populate<{ userId: { fullName?: string } | null }>("userId", "fullName")
+    .lean();
+
+  if (!thumbnail?.thumbnail?.url) {
+    return res.redirect(pageUrl);
+  }
+
+  const author = thumbnail.userId?.fullName ?? "a Thumblify creator";
+  return res.type("html").send(buildSharePage({
+    title: thumbnail.title,
+    description: `${thumbnail.style} thumbnail by ${author}, made with Thumblify's AI thumbnail generator.`,
+    imageUrl: getShareImageUrl(thumbnail.thumbnail.url),
+    pageUrl,
+  }));
+};
+
+/**
  * GET /thumbnails/recycle-bin
  * Fetch soft-deleted thumbnails owned by the currently authenticated user.
  */
@@ -700,6 +796,9 @@ export {
   generateGminiThumbnail,
   getMyThumbnails,
   getCommunityThumbnails,
+  getThumbnailById,
+  recordThumbnailView,
+  getThumbnailSharePage,
   getRecycleBinThumbnails,
   softDeleteThumbnail,
   restoreThumbnail,

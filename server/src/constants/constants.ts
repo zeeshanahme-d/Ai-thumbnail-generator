@@ -111,6 +111,12 @@ export const TRENDING_LIKE_WEIGHT = 5;
 export const TRENDING_AGE_OFFSET_HOURS = 2;
 export const TRENDING_GRAVITY = 1.5;
 
+// Guests are told apart by a random visitor cookie, so each one adds a view only once.
+export const VISITOR_COOKIE_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
+
+// Cloudinary rendition for link previews: a JPEG every crawler accepts, small enough for WhatsApp.
+export const SHARE_IMAGE_TRANSFORMATION = "f_jpg,q_auto,w_1200";
+
 export const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
 // A refresh token used again within this window is a parallel refresh (two tabs, or page

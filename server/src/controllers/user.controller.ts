@@ -5,8 +5,10 @@ import userModel from "../models/user.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
 import likeDislikModel from "../models/likeDislik.modal.js";
 import thumbnailModel from "../models/thumbnail.model.js";
+import thumbnailViewModel from "../models/thumbnailView.model.js";
 import { deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
+import { userViewerKey } from "../utils/viewer.js";
 import { matchHashedPassword } from "../helper/halper-functions.js";
 import { usernameSchema } from "../validations/user-fields.validation.js";
 
@@ -110,6 +112,10 @@ async function handleDeleteAccount(req: Request, res: Response) {
     { $inc: { likesCount: -1 } },
   );
   await likeDislikModel.deleteMany({ userId });
+
+  // Their views stay in the counts; only the records that stopped them counting twice go.
+  // ponytail: no index on viewerKey alone, so this scans the view records; add one if deletions get slow.
+  await thumbnailViewModel.deleteMany({ viewerKey: userViewerKey(String(userId)) });
 
   // The user's thumbnails go with their images and the likes other users gave them.
   await deleteThumbnailsForever({ userId });

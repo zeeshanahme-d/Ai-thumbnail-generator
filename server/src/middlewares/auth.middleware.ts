@@ -42,4 +42,9 @@ const authenticationToken = async (req: Request, res: Response, next: NextFuncti
   next();
 };
 
+// For public routes that show more to signed-in users. Guests pass through; anyone with a
+// session cookie is checked as usual, so an expired token still gets the 401 the client refreshes on.
+export const optionalAuthentication = (req: Request, res: Response, next: NextFunction) =>
+  req.cookies?.accessToken || req.cookies?.refreshToken ? authenticationToken(req, res, next) : next();
+
 export default authenticationToken;

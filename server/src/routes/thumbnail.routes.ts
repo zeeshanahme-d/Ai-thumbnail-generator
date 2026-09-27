@@ -3,7 +3,6 @@ import validate from "../middlewares/validate.js";
 import {
   generateGminiThumbnail,
   getMyThumbnails,
-  getCommunityThumbnails,
   getRecycleBinThumbnails,
   softDeleteThumbnail,
   restoreThumbnail,
@@ -26,7 +25,6 @@ import { generateLimiter, improvePromptLimiter } from "../middlewares/rate-limit
 const router = express.Router();
 
 router.get("/", validate(getThumbnailSchema, "query"), getMyThumbnails);
-router.get("/community", validate(getThumbnailSchema, "query"), getCommunityThumbnails);
 router.get("/recycle-bin", validate(getThumbnailSchema, "query"), getRecycleBinThumbnails);
 // Registered before the /:id routes, which would otherwise take "recycle-bin" as an id.
 router.delete("/recycle-bin", emptyRecycleBin);
