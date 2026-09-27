@@ -4,35 +4,30 @@ import { thumbnailKeys } from "./query-keys";
 import type { PaginatedThumbnailsResponse } from "../_models";
 import type { Thumbnail } from "../../../types";
 
-type ThumbnailListData = PaginatedThumbnailsResponse | InfiniteData<PaginatedThumbnailsResponse>;
+type ThumbnailCacheData = PaginatedThumbnailsResponse | InfiniteData<PaginatedThumbnailsResponse> | Thumbnail;
+
+const toggleLike = (t: Thumbnail): Thumbnail => ({
+  ...t,
+  isLiked: !t.isLiked,
+  likesCount: Math.max(0, (t.likesCount || 0) + (t.isLiked ? -1 : 1)),
+});
 
 const toggleLikeInPage = (
   page: PaginatedThumbnailsResponse,
   targetId: string
-): PaginatedThumbnailsResponse => {
-  return {
-    ...page,
-    thumbnails: page.thumbnails.map((t: Thumbnail) => {
-      if (t._id === targetId) {
-        const isCurrentlyLiked = !!t.isLiked;
-        return {
-          ...t,
-          isLiked: !isCurrentlyLiked,
-          likesCount: Math.max(0, (t.likesCount || 0) + (isCurrentlyLiked ? -1 : 1)),
-        };
-      }
-      return t;
-    }),
-  };
-};
+): PaginatedThumbnailsResponse => ({
+  ...page,
+  thumbnails: page.thumbnails.map((t) => (t._id === targetId ? toggleLike(t) : t)),
+});
 
-// List caches hold either one page or every loaded page of an infinite list.
-const updateThumbnailInCache = (data: ThumbnailListData | undefined, targetId: string) => {
+// List caches hold one page or every loaded page of an infinite list; detail caches hold one thumbnail.
+const updateThumbnailInCache = (data: ThumbnailCacheData | undefined, targetId: string) => {
   if (!data) return data;
   if ("pages" in data) {
     return { ...data, pages: data.pages.map((page) => toggleLikeInPage(page, targetId)) };
   }
-  return data.thumbnails ? toggleLikeInPage(data, targetId) : data;
+  if ("thumbnails" in data) return toggleLikeInPage(data, targetId);
+  return data._id === targetId ? toggleLike(data) : data;
 };
 
 const useLikeThumbnail = () => {
@@ -43,11 +38,11 @@ const useLikeThumbnail = () => {
     onMutate: async (targetId: string) => {
       await queryClient.cancelQueries({ queryKey: thumbnailKeys.all });
 
-      const previousQueries = queryClient.getQueriesData<ThumbnailListData>({
+      const previousQueries = queryClient.getQueriesData<ThumbnailCacheData>({
         queryKey: thumbnailKeys.all,
       });
 
-      queryClient.setQueriesData<ThumbnailListData>(
+      queryClient.setQueriesData<ThumbnailCacheData>(
         { queryKey: thumbnailKeys.all },
         (oldData) => updateThumbnailInCache(oldData, targetId)
       );

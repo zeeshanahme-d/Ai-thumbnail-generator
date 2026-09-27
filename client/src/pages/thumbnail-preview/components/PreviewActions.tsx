@@ -5,6 +5,7 @@ import Button from "../../../components/Button";
 import { handleDownloadFile } from "../../../lib/herlper-fuctions";
 import type { Thumbnail, YtPreviewState } from "../../../types";
 import { getThumbnailImageUrl } from "../../../lib/thumbnail";
+import { getThumbnailShareUrl } from "../../../core/thumbnails/_requests";
 
 interface PreviewActionsProps {
   thumbnail: Thumbnail;
@@ -19,15 +20,16 @@ export default function PreviewActions({ thumbnail }: PreviewActionsProps) {
   };
 
   const handleShare = async () => {
+    const shareUrl = getThumbnailShareUrl(thumbnail._id);
     try {
       if (navigator.share) {
         await navigator.share({
           title: thumbnail.title,
           text: `Check out this AI-generated thumbnail: ${thumbnail.title}`,
-          url: window.location.href,
+          url: shareUrl,
         });
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(shareUrl);
         toast.success("Link copied to clipboard.");
       }
     } catch (error) {

@@ -18,6 +18,8 @@ export const THUMBNAIL_URL = {
   byId: (id: string) => `/thumbnail/${id}`,
   publish: (id: string) => `/thumbnail/${id}/publish`,
   like: (id: string) => `/thumbnail/${id}/like`,
+  view: (id: string) => `/thumbnail/${id}/view`,
+  share: (id: string) => `/thumbnail/${id}/share`,
   restore: (id: string) => `/thumbnail/${id}/restore`,
   permanent: (id: string) => `/thumbnail/${id}/permanent`,
 };
@@ -37,6 +39,18 @@ export async function getCommunityThumbnails(params?: PaginationParams) {
   );
   return data.data as PaginatedThumbnailsResponse;
 }
+
+export async function getThumbnail(id: string) {
+  const { data } = await api.get<ApiSuccessEnvelope<Thumbnail>>(THUMBNAIL_URL.byId(id));
+  return data.data as Thumbnail;
+}
+
+export async function recordThumbnailView(id: string) {
+  await api.post(THUMBNAIL_URL.view(id));
+}
+
+// The server page behind this link carries the Open Graph tags that link previews read.
+export const getThumbnailShareUrl = (id: string) => `${api.defaults.baseURL}${THUMBNAIL_URL.share(id)}`;
 
 export async function getRecycleBinThumbnails(params?: PaginationParams) {
   const { data } = await api.get<ApiSuccessEnvelope<PaginatedThumbnailsResponse>>(

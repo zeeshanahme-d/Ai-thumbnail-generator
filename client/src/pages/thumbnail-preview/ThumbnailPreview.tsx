@@ -1,11 +1,15 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import dayjs from "dayjs";
 import { STYLE_DOTS } from "../../data/community";
 import { getThumbnailImageUrl, getThumbnailAuthorName } from "../../lib/thumbnail";
 import useGetCommunityThumbnails from "../../core/thumbnails/hooks/useGetCommunityThumbnails";
 import useLikeThumbnail from "../../core/thumbnails/hooks/useLikeThumbnail";
+import useThumbnail from "../../core/thumbnails/hooks/use-thumbnail";
+import { recordThumbnailView } from "../../core/thumbnails/_requests";
 import { useSession } from "../../store/useSessionStore";
+import PageLoader from "../../components/PageLoader";
 
 import PreviewBreadcrumb from "./components/PreviewBreadcrumb";
 import PreviewStats from "./components/PreviewStats";
@@ -23,17 +27,30 @@ export default function ThumbnailPreview() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const { id = "" } = useParams();
   const state = location.state as ThumbnailPreviewState | null;
   const isAuthenticated = useSession((s) => s.isAuthenticated);
 
+  // Shared links arrive without router state, so the thumbnail is always fetched by id.
+  const { data: thumbnail, isPending } = useThumbnail(
+    id,
+    state?.thumbnail?._id === id ? state.thumbnail : undefined,
+  );
   const { data: communityThumbnails } = useGetCommunityThumbnails(
-    { style: state?.thumbnail?.style, limit: 5, page: 1 },
-    { enabled: Boolean(state?.thumbnail) },
+    { style: thumbnail?.style, limit: 5, page: 1 },
+    { enabled: Boolean(thumbnail) },
   );
   const { mutate: likeMutate, isPending: isLiking } = useLikeThumbnail();
 
-  // Guard: if no state was passed, navigate back
-  if (!state?.thumbnail) {
+  useEffect(() => {
+    recordThumbnailView(id).catch(() => {});
+  }, [id]);
+
+  if (isPending) {
+    return <PageLoader />;
+  }
+
+  if (!thumbnail) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background-surface">
         <div className="text-center">
@@ -50,7 +67,7 @@ export default function ThumbnailPreview() {
     );
   }
 
-  const { thumbnail, source } = state;
+  const source = state?.source ?? "community";
   const imageUrl = getThumbnailImageUrl(thumbnail);
   const authorName = getThumbnailAuthorName(thumbnail);
   const dot = (thumbnail.style && STYLE_DOTS[thumbnail.style]) || "bg-gray-400";

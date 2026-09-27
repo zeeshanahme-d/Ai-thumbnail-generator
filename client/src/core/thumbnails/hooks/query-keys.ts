@@ -9,4 +9,5 @@ export const thumbnailKeys = {
     [...thumbnailKeys.all, "community", params] as const,
   infinite: (source: ThumbnailListSource, filters: ThumbnailFilters) =>
     [...thumbnailKeys.all, "infinite", source, filters] as const,
+  detail: (id: string) => [...thumbnailKeys.all, "detail", id] as const,
 };
