@@ -86,8 +86,7 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
   },
 
   trending: {
-    likesCount: -1,
-    viewsCount: -1,
+    trendingScore: -1,
     createdAt: -1,
   },
 
@@ -105,6 +104,12 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
     createdAt: 1,
   },
 };
+
+// Trending score = (likes × LIKE_WEIGHT + views) / (hours since publishing + AGE_OFFSET) ^ GRAVITY,
+// as on Hacker News. A like needs an account, so it counts for more than a view.
+export const TRENDING_LIKE_WEIGHT = 5;
+export const TRENDING_AGE_OFFSET_HOURS = 2;
+export const TRENDING_GRAVITY = 1.5;
 
 export const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 

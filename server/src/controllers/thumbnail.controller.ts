@@ -350,6 +350,8 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
   if (style && typeof style === "string") {
     query.style = style;
   }
+  // Substring match so the search box works while typing; a text index only matches whole words.
+  // ponytail: scans every published title; move to Atlas Search autocomplete if the community grows large.
   if (search && typeof search === "string") {
     query.title = mongoose.trusted({
       $regex: escapeRegex(search.trim()),
