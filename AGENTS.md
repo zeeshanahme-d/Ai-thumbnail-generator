@@ -56,11 +56,13 @@ client/src/
 │  ├─ image-generate-components/  # PromptCard, StylePicker, AspectRatioPicker, etc.
 │  └─ modals/        # ConfirmDialog
 ├─ sections/         # large composed marketing sections (HeroSection, PricingSection, …)
+├─ core/             # shared API layer: _models.ts, _requests.ts, hooks/ (React Query)
+│  ├─ auth/          # session, login/signup, OTP and verification hooks
+│  └─ thumbnails/    # list, generate, like, publish, delete and restore hooks
 ├─ pages/
-│  ├─ auth/          # login/signup/forgot/otp/reset + core/ (API layer + hooks)
+│  ├─ auth/          # login/signup/forgot/otp/reset + core/_schemas.ts (form schemas)
 │  ├─ dashboard/     # generate / gallery / recreate / recycle-bin / settings
-│  │  ├─ components/ # DashboardPage (shared placeholder template)
-│  │  └─ core/       # _models.ts, _requests.ts, hooks/ (React Query hooks)
+│  │  └─ components/ # DashboardPage (shared placeholder template)
 │  ├─ community/     # public community gallery
 │  ├─ profile/       # user profile page
 │  ├─ thumbnail-preview/  # individual thumbnail detail page
@@ -68,7 +70,7 @@ client/src/
 │  └─ layouts/       # DashboardLayout, MainLayout, DashboardHeader, DashboardSidebar
 ├─ routes/           # routes.tsx, GuestRoute, ProtectedRoute
 ├─ store/            # Zustand stores (useSessionStore, useTheme)
-├─ lib/              # axios instance, imageValidation, thumbnail helpers
+├─ lib/              # axios instance, queryClient, imageValidation, thumbnail helpers
 └─ data/             # static/mock arrays typed against types.ts
 ```
 
@@ -86,26 +88,29 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
 - **Dashboard** (`ProtectedRoute` → `DashboardLayout` sidebar) — `/dashboard/*`
   (`generate`, `recreate`, `community`, `gallery`, `settings`, `recycle-bin`).
   `/dashboard` redirects to `/dashboard/generate`.
-- **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`, `/preview`,
+- **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
   `/profile`, `/thumbnail/:id` are public.
 
-Auth pages render outside `MainLayout` (no navbar/footer).
+Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
 
 ### Auth / session flow
 
 - **`store/useSessionStore.ts`** (`useSession`) is the single source of truth:
   `user`, `isAuthenticated`, `isRestoring`. It persists user data to one localStorage
   key (`tg_session`). Tokens are stored in **httpOnly cookies**, not in the store.
+  `clearSession()` also clears the React Query cache (`lib/queryClient.ts`), so the next
+  user never sees the previous user's data.
 - **`components/SessionProvider.tsx`** calls `POST /auth/verify` once on every page
-  load and blocks rendering until it settles, so guards never act on stale state.
+  load and blocks rendering until it settles, so guards never act on stale state. Only a
+  `401` clears the session; a network or server error keeps the stored one.
 - **`lib/axios.ts`** interceptor: on `401` + `error: "TOKEN_EXPIRED"` or
-  `"TOKEN_MISSING"`, calls `/auth/refresh` once and replays the original request.
-  On refresh failure, clears the session and logs the user out. On `401` +
-  `"TOKEN_REVOKED"` (password changed or reset elsewhere) it clears the session without
-  trying to refresh.
-- **`pages/auth/core/`** — `_models.ts` (types), `_requests.ts` (API calls),
-  `_schemas.ts` (zod), `hooks/` (React Query hooks: `useLogin`, `useSignup`,
-  `useMe`, `useRefreshToken`, `useVerifySession`, `useLogout`).
+  `"TOKEN_MISSING"`, calls `/auth/refresh` and replays the original request. Requests
+  that fail together share one in-flight refresh. On refresh failure, clears the session
+  and logs the user out. On `401` + `"TOKEN_REVOKED"` (password changed or reset
+  elsewhere) it clears the session without trying to refresh.
+- **`core/auth/`** — `_models.ts` (types), `_requests.ts` (API calls), `hooks/` (React
+  Query hooks: `useLogin`, `useSignup`, `useMe`, `useRefreshToken`, `useVerifySession`,
+  `useLogout`). The auth forms' zod schemas stay in `pages/auth/core/_schemas.ts`.
 
 ### Dashboard pages
 
@@ -115,11 +120,13 @@ Auth pages render outside `MainLayout` (no navbar/footer).
 | Gallery | `/dashboard/gallery` | ✅ Filters, sort, pagination, delete, publish |
 | Community | `/dashboard/community` | ✅ Same Community component as marketing `/community` |
 | Recreate | `/dashboard/recreate` | ❌ Placeholder stub — `DashboardPage` template only |
-| Settings | `/dashboard/settings` | 🔲 UI built (EditProfile, Billing, Invoices) — billing not wired |
-| Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog, Load More |
+| Settings | `/dashboard/settings` | 🔲 EditProfile wired; Billing shows the real balance and refill date, Upgrade disabled until payments exist; Invoices is a UI shell |
+| Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog, Restore all, Empty bin, Load More; items purged after 30 days |
 
-`/preview` is the YouTube preview: a thumbnail passed in router state (`YtPreviewState`)
-shown in home, search and mobile mockups, light or dark. Opened directly it shows a sample.
+`/youtube-style-preview` is the YouTube preview: a thumbnail passed in router state
+(`YtPreviewState`) placed in the middle of sample videos in home, search and mobile mockups,
+light or dark. Opened directly it shows a sample. It has a `BackButton` (shared in
+`components/`) instead of the navbar.
 
 ## Client conventions
 
@@ -148,7 +155,10 @@ shown in home, search and mobile mockups, light or dark. Opened directly it show
 
    Tailwind v4 syntax: gradients are `bg-linear-to-b` (not `bg-gradient-to-b`), and
    the important suffix is `text-base!`.
-6. **Animation** — `motion` with the recurring entrance pattern:
+6. **Animation** — `motion` is used **only on the homepage sections** (`sections/` and
+   the components only they render). Every other page, the navbar, the footer and shared
+   components like `ThumbnailCard` have no motion animation; don't add any there. Loading
+   states use Tailwind's `animate-spin` / `animate-pulse`. On the homepage the entrance pattern is
    `initial={{ y: 50, opacity: 0 }}` → `whileInView={{ y: 0, opacity: 1 }}`,
    `viewport={{ once: true }}`, spring (`stiffness: 240–320, damping: 70, mass: 1`),
    staggered by `delay: index * 0.1`. Do **not** put `transform` in a CSS
@@ -170,6 +180,8 @@ Check these before writing anything new:
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
   uncontrolled; includes style/aspect-ratio/color-scheme/reference-image pickers.
+  While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
+  signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
   Used by both `HeroSection` and the dashboard generate page.
 - **`PopoverPanel.tsx`** — native-popover shell (title + Done). Wrap any picker in it.
 - **`StylePicker` / `AspectRatioPicker` / `ColorSchemePicker` / `ReferenceImageUpload`**
@@ -193,21 +205,23 @@ user-facing message; reuse it for any upload. `lib/passwordValidation.ts` owns t
 password rule and mirrors `server/src/validations/password.validation.ts`;
 `lib/userValidation.ts` owns the full-name and username rules (including reserved names)
 and mirrors `server/src/validations/user-fields.validation.ts`. `lib/credits.ts` holds the
-generation cost and remaining-credit helper; `useSyncSessionUser` refreshes the session
-user after the server changes credits or verification.
+generation cost and remaining-credit helper. `POST /thumbnail` returns the new balance,
+which `useGenerateThumbnail` merges into the session with `updateUser`;
+`useSyncSessionUser` refreshes the session user after email verification.
 
 - Pages other than the homepage are lazy-loaded in `routes.tsx`; each layout wraps its
   `<Outlet />` in `Suspense`.
 - Paged lists (community, gallery, profile, recycle bin) use `useInfiniteThumbnails` from
-  `pages/dashboard/core/hooks/`. The like hook updates both plain and infinite caches.
+  `core/thumbnails/hooks/`. The like hook updates both plain and infinite caches.
 - Grids render `getThumbnailCardImageUrl` (resized Cloudinary URL); detail views and
-  downloads keep `getThumbnailImageUrl`.
+  downloads keep `getThumbnailImageUrl`. `handleDownloadFile` fetches the image as a blob,
+  because browsers ignore the `download` attribute for Cloudinary's domain.
 
 ## Server architecture
 
 ```
 server/
-├─ server.ts                 # dotenv + connect mongo + app.listen(process.env.PORT)
+├─ server.ts                 # dotenv + connect mongo + startScheduledJobs() + app.listen(PORT)
 └─ src/
    ├─ app.ts                 # express app; cors({ origin: CLIENT_URL, credentials: true })
    ├─ config/                # genai.ts (Gemini), cloudinary.ts, hf.ts (HuggingFace — unused)
@@ -215,11 +229,12 @@ server/
    ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files
    ├─ controllers/           # auth, user, thumbnail, upload-files
    ├─ middlewares/            # auth (JWT), multer (image upload), validate (zod)
-   ├─ models/                # user, refreshToken, thumbnail, likeDislike
+   ├─ models/                # user, refreshToken, thumbnail, likeDislike, thumbnailView
    ├─ schemas/               # media.schema.ts (reusable Mongoose subdocument)
    ├─ validations/           # zod schemas for auth + thumbnail endpoints
    ├─ helper/                # halper-functions.ts (bcrypt), token-helpers.ts (JWT)
-   ├─ utils/                 # apiResponse.ts, cloudniary.ts, email.ts, pagination.ts, helpers.ts
+   ├─ utils/                 # apiResponse, cloudniary, credits, delete-thumbnails, email, gemini,
+   │                         # pagination, scheduled-jobs, helpers
    ├─ db/                    # connection.ts (Mongoose connect)
    └─ types/express.d.ts     # augments Request.user, Request.validated
 ```
@@ -270,53 +285,81 @@ you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it
 - Access token 15 min, refresh token 30 days (`helper/token-helpers.ts`). Secrets are
   read **inside** the functions — `dotenv.config()` runs *after* the module graph is
   imported, so top-level `process.env` reads are `undefined`.
-- Refresh tokens are persisted in `refreshToken.model.ts` with a TTL index and can be
-  revoked (logout deletes them).
+- Refresh tokens are stored as SHA-256 hashes (`hashToken`) in `refreshToken.model.ts` with
+  a TTL index. Every refresh (and `/verify` fallback) rotates the token within its login
+  `family`; a used token replayed after `REFRESH_REUSE_GRACE_MS` (30 s) revokes the whole
+  family. Parallel refreshes inside the window get an access token only. Logout deletes the family.
 - `/verify` is deliberately **not** behind `authenticationToken`: it must inspect an
   already-expired access token and fall back to the refresh cookie.
 - Tokens are set as **httpOnly cookies** (not returned in the body to the client).
 
 ### Thumbnail endpoints (`/thumbnail`)
 
-**Public** (via `thumbnail-public.routes.ts`, no auth):
-- `GET /thumbnail/community` — paginated community thumbnails
+**Public** (via `thumbnail-public.routes.ts`, mounted first). `optionalAuthentication` lets guests
+through but checks anyone with a session cookie, so signed-in users get `isLiked`:
+- `GET /thumbnail/community` — paginated community thumbnails. Search is a case-insensitive
+  substring regex (a text index only matches whole words, which breaks search-as-you-type);
+  `trending` sorts by `trendingScore`
+- `GET /thumbnail/:id` — detail: published ones for anyone, any of their own for the owner.
+  Non-id paths (`/recycle-bin`) skip to the protected router via `next("router")`
+- `POST /thumbnail/:id/view` — counts a view on a published thumbnail once per viewer, like
+  likes: a `thumbnailView` record with a unique `{ thumbnailId, viewerKey }` index is upserted
+  and `viewsCount` only goes up when it was inserted. `viewerKey` (`utils/viewer.ts`) is
+  `user:<id>`, or `guest:<uuid>` from an httpOnly `visitorId` cookie set on a guest's first view.
+  The owner's own views don't count; `viewLimiter` caps calls per IP. React StrictMode calls it
+  twice in dev, which the dedupe absorbs. View records are deleted with the thumbnail
+  (`deleteThumbnailsForever`) and with the viewer's account; the counts stay
+- `GET /thumbnail/:id/share` — the shared link: HTML with Open Graph tags that redirects to
+  `CLIENT_URL/thumbnail/:id` (`utils/share-page.ts`)
 
 **Protected** (via `thumbnail.routes.ts`, behind `authenticationToken`):
 - `POST /thumbnail` — generate thumbnail (multipart form with optional `referenceImage`)
+- `POST /thumbnail/improve-prompt` — rewrite `{ prompt }` with `GEMINI_TEXT_MODEL`; free,
+  10 per 10 minutes per user (`improvePromptLimiter`)
+- `DELETE /thumbnail/recycle-bin` — empty the bin; `PATCH /thumbnail/recycle-bin/restore` —
+  restore all. Both are registered before the `/:id` routes, which would match them.
 - `GET /thumbnail` — user's own thumbnails (paginated, filterable)
-- `GET /thumbnail/community` — community thumbnails (with like status for current user)
 - `GET /thumbnail/recycle-bin` — soft-deleted thumbnails
 - `PATCH /thumbnail/:id/publish` — toggle publish/unpublish
 - `POST /thumbnail/:id/like` — toggle like/unlike (published, non-deleted thumbnails only)
-- `DELETE /thumbnail/:id` — soft delete (move to recycle bin)
-- `PATCH /thumbnail/:id/restore` — restore from recycle bin
-- `DELETE /thumbnail/:id/permanent` — permanently delete (also removes from Cloudinary)
+- `DELETE /thumbnail/:id` — soft delete (move to recycle bin and unpublish)
+- `PATCH /thumbnail/:id/restore` — restore from recycle bin (stays unpublished)
+- `DELETE /thumbnail/:id/permanent` — permanently delete (also removes the Cloudinary
+  image and its like records)
 
 ### User endpoints
 
 - `GET /users/check-username/:username` — username availability (behind auth)
 - `GET /users/:username/profile` — public profile
 - `PATCH /users/profile` — update profile (fullName, username, bio, website)
-- `DELETE /users/account` — delete account; body must include the current `password`
+- `DELETE /users/account` — delete account; body must include the current `password`.
+  The user's likes are taken off other thumbnails' counts, and likes on their thumbnails
+  are deleted.
 - `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary)
 
-`uploadSingleImage` checks the file's real bytes with `file-type` and deletes the temp
-file when the response ends, so controllers never remove `req.file` themselves.
+`uploadSingleImage` keeps the file in memory (`req.file.buffer`, never on disk) and checks
+its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
 With `NODE_ENV=production` the error handler replaces 5xx messages with a generic one.
 
 ### AI Generation flow
 
 1. Client sends `POST /thumbnail` with `title`, `prompt`, `style`, `aspect_ratio`,
-   `color_scheme`, `text_overlay`, and optional `referenceImage` file
-2. Server reserves credits atomically (`CREDIT_COST.GENERATE_COST = 5`), refunded on failure
+   `color_scheme`, `text_overlay` (parsed with `z.stringbool()`, so `"false"` is false),
+   and optional `referenceImage` file
+2. Server applies a due monthly refill, then reserves credits atomically
+   (`CREDIT_COST.GENERATE_COST = 5`)
 3. Creates a thumbnail document with `isGenerating: true`
 4. Builds a detailed prompt from style presets (`constants/constants.ts`), color scheme
    descriptions, text overlay rules, reference image instructions
-5. Calls `generateImage()` (`utils/gemini-image.ts`) with `gemini-3.1-flash-lite-image`:
+5. Calls `generateImage()` (`utils/gemini.ts`, which also has `generateText()`) with
+   `GEMINI_IMAGE_MODEL`:
    60 s timeout per attempt, 429/503 retried with 1 s and 2 s backoff, safety blocks and
    other failures mapped through `GENERATION_FAILURES` in `constants/constants.ts`
-6. Saves resulting image to local temp file → uploads to Cloudinary → updates thumbnail
-   document with `isGenerating: false` and the Cloudinary URL
+6. Streams the image buffer to Cloudinary → updates the thumbnail document with
+   `isGenerating: false` and the Cloudinary URL → responds `{ thumbnail, credits }`
+7. On failure the `finally` block deletes the record and refunds. Only the side that
+   deletes the record refunds, so a crash is cleaned up by the scheduled job instead:
+   records still generating after `STUCK_GENERATION_MS` (10 min) are deleted and refunded.
 
 ### Credits system
 
@@ -325,15 +368,22 @@ With `NODE_ENV=production` the error handler replaces 5xx messages with a generi
   disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
 - `user.totalcredits` vs `user.creditsUsed` — `utils/credits.ts` reserves credits
-  atomically before calling Gemini and refunds them if generation fails
-- **Credits never reset** — no cron job or subscription webhook resets them
+  atomically before calling Gemini and refunds them if generation fails (never below 0)
+- **Monthly refill** — only **verified** free accounts refill. When `creditsResetAt` passes
+  (or is missing), the account goes back to 20 credits with 0 used and the date moves 30 days
+  on (`CREDIT_RESET_INTERVAL_MS`). `resetDueCredits()` runs from `utils/scheduled-jobs.ts`
+  every 10 minutes, for the one user before each generation, and on email verification. So
+  verifying starts the cycle, and older accounts whose date passed while unverified refill
+  at once. Unverified users are told to verify (dashboard alert, `EMAIL_NOT_VERIFIED` on
+  generate).
 
 Env: `PORT`, `SECRET`, `REFRESH_SECRET` (falls back to `SECRET`), `CLIENT_URL`,
 `CLIENT_ID`, `GEMINI_API_KEY`, `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `CLOUDINARY_NAME`, `SMTP_HOST`, `SMTP_USER`,
 `SMTP_PASSWORD`, `SMTP_TLS_PORT`, `MONGO_DB_URL`, `TRUST_PROXY` (number of reverse proxies,
 unset when clients connect directly).
-Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`).
+Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`), `VITE_SITE_URL` (the
+site's public origin, filled into the Open Graph tags in `index.html`; set it for production).
 
 ## Current state / gotchas
 
@@ -345,21 +395,23 @@ Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`).
 - Like/unlike, publish/unpublish, soft delete/restore/permanent delete
 - Profile editing + avatar upload via Cloudinary
 - Dark mode via `data-theme` attribute + CSS variables in `globals.css`
-- Settings page with EditProfile section (BillingSection/InvoicesSection are UI shells)
+- Settings page with EditProfile and Billing (balance and refill date); InvoicesSection is a UI shell
+- Monthly free-credit refill, stuck-generation cleanup, the 30-day recycle-bin purge and the
+  trending score (likes and views decayed by age, `TRENDING_*` in `constants.ts`)
+  (`utils/scheduled-jobs.ts`); permanent deletes all go through `deleteThumbnailsForever`
+- `/thumbnail/:id` fetches by id (`useThumbnail`, router state is only a placeholder), counts a
+  view on open, and Share copies the server's `/share` link so previews show the image
 
 ### Not implemented / placeholder
 - **Payment/subscription** — pricing page exists, user model has plan fields, but no
-  payment integration (Stripe/LemonSqueezy). Credits never reset.
+  payment integration (Stripe/LemonSqueezy). The Upgrade button is disabled.
 - **Google OAuth** — no `/auth/google` endpoint; the Google button is hidden until it exists.
 - **Recreate** — placeholder page only; no upload-and-remix flow.
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
-- **View counting** — `viewsCount` field exists but is never incremented.
 
 ### Known bugs
 - `hf.ts` error message says "GEMINI_API_KEY is missing" (copy-paste bug).
 - `likeDislik.modal.ts` — filename should be `.model.ts`; `unique: true` is set at
   schema level instead of as a compound index on `{ userId, thumbnailId }`.
-- `lib/axios.ts` interceptor has an operator precedence bug: missing parentheses around
-  the OR condition so `TOKEN_MISSING` triggers refresh without checking status code.
 - `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.
 - `.env.example` is incomplete (missing SMTP, REFRESH_SECRET, MONGO_URI vars).
