@@ -58,11 +58,18 @@ export enum UserPlan {
   Ultra = "ultra",
 }
 
+// Mirrors Paddle's subscription statuses.
 export enum SubscriptionStatus {
   Active = "active",
   Canceled = "canceled",
   PastDue = "past_due",
+  Paused = "paused",
   Trialing = "trialing",
+}
+
+export enum BillingPeriod {
+  Monthly = "monthly",
+  Yearly = "yearly",
 }
 
 // ---------------------------------------------------------------------- auth
@@ -94,6 +101,12 @@ export enum GenerationErrorCode {
   Blocked = "CONTENT_BLOCKED",
   Busy = "GENERATION_BUSY",
   TimedOut = "GENERATION_TIMEOUT",
+}
+
+// ------------------------------------------------------------------ billing
+
+export enum BillingErrorCode {
+  AlreadySubscribed = "ALREADY_SUBSCRIBED",
 }
 
 // ------------------------------------------------------------------ uploads

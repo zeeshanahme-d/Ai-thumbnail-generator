@@ -38,12 +38,7 @@ function createLimiter({ windowMinutes, limit, by, skipSuccessfulRequests = fals
       const minutes = resetTime
         ? Math.max(1, Math.ceil((resetTime.getTime() - Date.now()) / 60000))
         : windowMinutes;
-      return ApiResponse.error(
-        res,
-        429,
-        `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
-        RequestErrorCode.RateLimited,
-      );
+      return ApiResponse.error(res, 429, `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`, RequestErrorCode.RateLimited);
     },
   });
 }
@@ -68,6 +63,9 @@ export const generateLimiter = createLimiter({ windowMinutes: 1, limit: 5, by: "
 
 /** Thumbnail views per IP, so one client cannot push a thumbnail up the trending sort. */
 export const viewLimiter = createLimiter({ windowMinutes: 1, limit: 30, by: "ip" });
+
+/** Checkouts and billing-portal links per signed-in user. Each one calls the Paddle API. */
+export const billingLimiter = createLimiter({ windowMinutes: 10, limit: 10, by: "user" });
 
 /** Free prompt improvements per signed-in user, since they cost no credits. */
 export const improvePromptLimiter = createLimiter({ windowMinutes: 10, limit: 10, by: "user" });

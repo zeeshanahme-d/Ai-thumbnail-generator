@@ -141,7 +141,30 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Null while a cancellation is scheduled: the plan then ends at subscriptionPeriodEnd.
     subscriptionRenewsAt: {
+      type: Date,
+      default: null,
+    },
+
+    paddleCustomerId: {
+      type: String,
+      default: null,
+    },
+
+    // The last billing period Paddle took payment for. Each one refills the credits once.
+    subscriptionPeriodStart: {
+      type: Date,
+      default: null,
+    },
+
+    subscriptionPeriodEnd: {
+      type: Date,
+      default: null,
+    },
+
+    // Paddle's updated_at of the last synced subscription event, so an older retry never overwrites a newer state.
+    subscriptionUpdatedAt: {
       type: Date,
       default: null,
     },
