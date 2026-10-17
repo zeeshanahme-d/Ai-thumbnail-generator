@@ -143,6 +143,37 @@ body::selection {
   backdrop-filter: blur(2px);
 }
 
+/* Navbar account menu — anchored under the avatar, right edges aligned. */
+.profile-menu-anchor {
+  anchor-name: --profile-menu;
+}
+
+.profile-menu-popover {
+  position: fixed;
+  position-anchor: --profile-menu;
+  inset: auto;
+  top: anchor(bottom);
+  right: anchor(right);
+  margin: 0.5rem 0 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.profile-menu-popover:popover-open {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Without anchor positioning, sit under the right end of the max-w-7xl navbar. */
+@supports not (anchor-name: --profile-menu) {
+  .profile-menu-popover {
+    top: 4.75rem;
+    right: calc(max(0px, (100vw - 80rem) / 2) + 2.5rem);
+  }
+}
+
 /* Prompt card tool panels — anchored above the toolbar they belong to. */
 .prompt-tools-anchor {
   anchor-name: --prompt-tools;

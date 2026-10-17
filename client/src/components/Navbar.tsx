@@ -1,27 +1,16 @@
 import { ArrowRight } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
 import { navlinks } from "../data/navlinks";
 import MobileNav from "./MobileNav";
+import ProfileMenu from "./ProfileMenu";
 //icons
 import Logo from "../assets/svgs/logo.svg?react";
-import Button from "./Button";
 import ThemeButton from "./ThemeButton";
-import { getUserInitial } from "../lib/herlper-fuctions";
 
 export default function Navbar() {
   const isAuthenticated = useSession((state) => state.isAuthenticated);
-  const user = useSession((state) => state.user);
   const { pathname } = useLocation();
-  const navigate = useNavigate();
-
-  const handleNavigateToProfile = () => {
-    if (user?.username) {
-      navigate(`/profile/${user.username}`);
-    } else {
-      navigate("/profile");
-    }
-  };
 
   return (
     <div className="sticky top-4 z-50 mx-auto mt-4 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -51,19 +40,7 @@ export default function Navbar() {
             <ThemeButton showLabel={false} />
 
             {isAuthenticated ? (
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleNavigateToProfile}
-                aria-label="Open your profile"
-                className="hidden md:flex items-center overflow-hidden p-0"
-              >
-                {user?.avatar?.url ? (
-                  <img src={user.avatar.url} alt="" className="h-full w-full rounded-full object-cover" />
-                ) : (
-                  <span className="text-sm font-semibold text-text-primary">{getUserInitial(user?.fullName)}</span>
-                )}
-              </Button>
+              <ProfileMenu />
             ) : (
               <Link
                 to="/login"

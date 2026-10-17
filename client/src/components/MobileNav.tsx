@@ -1,5 +1,5 @@
 import { useRef, useState, type ToggleEvent } from "react";
-import { ArrowRight, LogIn, LogOut, MenuIcon, User, XIcon } from "lucide-react";
+import { ArrowRight, LogIn, LogOut, MenuIcon, Settings, User, XIcon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
 import { useLogout } from "../core/auth/hooks";
@@ -72,6 +72,13 @@ export default function MobileNav() {
                         <User size={16} />
                         Profile
                     </Link>
+
+                    {isAuthenticated && (
+                        <Link to="/dashboard/settings" onClick={closeMenu} className={ITEM_CLASSES}>
+                            <Settings size={16} />
+                            Settings
+                        </Link>
+                    )}
 
                     {isAuthenticated ? (
                         <button onClick={handleLogout} className={`w-full ${ITEM_CLASSES}`}>
