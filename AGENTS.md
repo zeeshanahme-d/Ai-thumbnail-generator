@@ -89,7 +89,9 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
   (`generate`, `recreate`, `community`, `gallery`, `settings`, `recycle-bin`).
   `/dashboard` redirects to `/dashboard/generate`.
 - **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
-  `/profile`, `/thumbnail/:id` are public.
+  `/profile`, `/thumbnail/:id`, `/pricing`, `/privacy-policy`, `/terms` and
+  `/refund-policy` are public. The three legal routes share `pages/legal/LegalPage`, whose
+  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top.
 
 Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
 
@@ -156,9 +158,10 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
    Tailwind v4 syntax: gradients are `bg-linear-to-b` (not `bg-gradient-to-b`), and
    the important suffix is `text-base!`.
 6. **Animation** — `motion` is used **only on the homepage sections** (`sections/` and
-   the components only they render). Every other page, the navbar, the footer and shared
-   components like `ThumbnailCard` have no motion animation; don't add any there. Loading
-   states use Tailwind's `animate-spin` / `animate-pulse`. On the homepage the entrance pattern is
+   the components only they render) **and the `/pricing` page**. Every other page, the
+   navbar, the footer and shared components like `ThumbnailCard` have no motion animation;
+   don't add any there. Loading states use Tailwind's `animate-spin` / `animate-pulse`.
+   Scroll-in entrances go through `Reveal`. The entrance pattern is
    `initial={{ y: 50, opacity: 0 }}` → `whileInView={{ y: 0, opacity: 1 }}`,
    `viewport={{ once: true }}`, spring (`stiffness: 240–320, damping: 70, mass: 1`),
    staggered by `delay: index * 0.1`. Do **not** put `transform` in a CSS
@@ -184,6 +187,15 @@ Check these before writing anything new:
   signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
   Used by both `HeroSection` and the dashboard generate page.
 - **`PopoverPanel.tsx`** — native-popover shell (title + Done). Wrap any picker in it.
+- **`SectionTitle.tsx`** — pill + heading + description. `as="h1"` for a page title;
+  `animate={false}` everywhere except the homepage and `/pricing`.
+- **`Reveal.tsx`** — the standard scroll-in entrance (`delay` for staggering).
+  **`AnimatedValue.tsx`** slides a changing value such as a price.
+- **`PricingCard` / `BillingToggle`** — plan card and monthly/yearly switch (sliding pill),
+  used by the homepage `PricingSection` and the `/pricing` page. Plans, the pay-as-you-go
+  `CREDIT_PACK` settings, credit facts and the comparison table come from `data/pricing.ts`.
+- **`FaqAccordion.tsx`** — animated accordion, one answer open at a time; questions live
+  in `data/faq.ts`.
 - **`StylePicker` / `AspectRatioPicker` / `ColorSchemePicker` / `ReferenceImageUpload`**
   — controlled (`value`/`onChange`) pickers used inside `PromptCard`.
 - **`ThumbnailCard.tsx`** — the unified card for displaying thumbnails. Supports
