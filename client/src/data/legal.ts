@@ -169,7 +169,8 @@ const termsAndConditions: ILegalDocument = {
             id: "paid-plans",
             title: "Paid plans and credit packs",
             paragraphs: [
-                "Pro and Ultra plans are billed monthly or yearly and renew automatically until cancelled. Each plan includes a monthly credit allowance, also on yearly billing, and unused plan credits don't roll over. One-time credit packs are not on sale yet.",
+                "Pro and Ultra plans are billed monthly or yearly and renew automatically until cancelled. Each plan includes a monthly credit allowance, also on yearly billing, and unused plan credits don't roll over.",
+                "Credit packs are one-time purchases. Credits bought in a pack don't expire and are used after your monthly credits. They are lost if you delete your account.",
                 "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns.",
                 "You can cancel anytime from Settings. Our Refund Policy applies to every payment.",
             ],
@@ -292,7 +293,7 @@ const refundPolicy: ILegalDocument = {
             id: "paid-plans",
             title: "Paid plans and credit packs",
             paragraphs: [
-                "Payments for Pro and Ultra are processed by Paddle.com, our Merchant of Record. Credit packs are not on sale yet. These rules apply:",
+                "Payments for Pro, Ultra and credit packs are processed by Paddle.com, our Merchant of Record. These rules apply:",
             ],
             list: [
                 "You can cancel a plan anytime. Cancelling stops the next renewal and you keep your plan until the end of the period you paid for.",

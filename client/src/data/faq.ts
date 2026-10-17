@@ -55,11 +55,11 @@ export const pricingFaqs: IFaq[] = [
     },
     {
         question: "What are credit packs?",
-        answer: `A one-time top-up with no subscription. Pick exactly how many credits you need at $${(CREDIT_PACK.stepPriceCents / 100).toFixed(2)} for every ${CREDIT_PACK.step} credits, and bought credits never expire. If you create a lot, a plan costs less per credit.`,
+        answer: `A one-time top-up with no subscription. Pick exactly how many credits you need at $${(CREDIT_PACK.stepPriceCents / 100).toFixed(2)} for every ${CREDIT_PACK.step} credits, and bought credits never expire. Your monthly credits are always used first. If you create a lot, a plan costs less per credit.`,
     },
     {
         question: "Do unused credits roll over?",
-        answer: `No. Every 30 days a verified free account is topped back up to ${FREE_MONTHLY_CREDITS} credits, so unused credits don't stack.`,
+        answer: `Monthly credits don't. Every 30 days a verified free account is topped back up to ${FREE_MONTHLY_CREDITS} credits, so unused monthly credits don't stack. Credits you buy in a pack never expire.`,
     },
     {
         question: "What if a generation fails?",
@@ -74,7 +74,7 @@ export const pricingFaqs: IFaq[] = [
     {
         question: "Can I buy credits or a plan today?",
         answer:
-            "Yes, the Pro and Ultra plans are available now, billed monthly or yearly. One-time credit packs are coming soon.",
+            "Yes. Buy a one-time credit pack, or subscribe to Pro or Ultra, billed monthly or yearly.",
     },
     {
         question: "How does yearly billing work?",
