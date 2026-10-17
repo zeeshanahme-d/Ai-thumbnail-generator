@@ -202,7 +202,16 @@ export interface INavLink {
 
 export type BillingPeriod = "monthly" | "yearly";
 
+export type PlanId = "free" | "pro" | "ultra";
+
+export interface CheckoutPayload {
+  plan: Exclude<PlanId, "free">;
+  billing: BillingPeriod;
+}
+
 export interface IPricingPlan {
+  /** Matches UserPlan on the server. */
+  id: PlanId;
   name: string;
   tagline: string;
   monthlyPrice: number;
@@ -351,6 +360,8 @@ export interface IUser {
   subscriptionId: string | null;
   subscriptionStatus: string | null;
   subscriptionRenewsAt: string | null;
+  /** End of the last paid billing period: the plan ends here when it no longer renews. */
+  subscriptionPeriodEnd: string | null;
   generationsThisMonth: number;
   generationsResetAt: string | null;
   followersCount: number;

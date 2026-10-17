@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import Wrapper from "../../components/Wrapper";
 import SectionTitle from "../../components/SectionTitle";
 import BillingToggle from "../../components/BillingToggle";
@@ -10,10 +11,19 @@ import PlanComparison from "./components/PlanComparison";
 import PricingFaq from "./components/PricingFaq";
 import { pricingPlans } from "../../data/pricing";
 import { FREE_MONTHLY_CREDITS } from "../../lib/credits";
+import { getPaddle } from "../../lib/paddle";
 import type { BillingPeriod } from "../../types";
 
 export default function Pricing() {
     const [billing, setBilling] = useState<BillingPeriod>("monthly");
+
+    // This page is Paddle's default payment link: its links and "update payment method" emails
+    // land here with ?_ptxn=. Loading Paddle.js is enough, it opens that transaction's checkout itself.
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).has("_ptxn")) {
+            getPaddle().catch(() => toast.error("Checkout couldn't load. Please try again."));
+        }
+    }, []);
 
     return (
         <main className="relative isolate overflow-hidden py-12 md:py-20">

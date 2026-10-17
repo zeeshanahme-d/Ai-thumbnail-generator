@@ -13,5 +13,6 @@ export function useSyncSessionUser() {
         const user = await getMe();
         setSession(user);
         queryClient.setQueryData(authKeys.me(), user);
+        return user;
     }, [queryClient, setSession]);
 }

@@ -1,19 +1,36 @@
-import { Check, Star } from "lucide-react";
+import { Check, Loader2, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 import AnimatedValue from "./AnimatedValue";
 import { useSession } from "../store/useSessionStore";
 import { YEARLY_DISCOUNT } from "../data/pricing";
+import { hasLiveSubscription } from "../lib/paddle";
+import { useCheckout } from "../core/billing/hooks/use-checkout";
 import type { PricingCardProps } from "../types";
 
 export default function PricingCard({ plan, billing }: PricingCardProps) {
-    const { name, tagline, monthlyPrice, cta, features, mostPopular } = plan;
+    const { id, name, tagline, monthlyPrice, cta, features, mostPopular } = plan;
     const navigate = useNavigate();
     const isAuthenticated = useSession((state) => state.isAuthenticated);
+    const user = useSession((state) => state.user);
+    const { startCheckout, isPending } = useCheckout();
 
-    const isFree = monthlyPrice === 0;
+    const isFree = id === "free";
     const isYearly = billing === "yearly";
     const price = isYearly ? Math.round(monthlyPrice * (1 - YEARLY_DISCOUNT)) : monthlyPrice;
+
+    const subscribed = hasLiveSubscription(user);
+    const isCurrentPlan = subscribed && user?.plan === id;
+
+    // One subscription per account: subscribers manage theirs in Settings instead of buying a second one.
+    const handleClick = () => {
+        if (!isAuthenticated) return navigate("/signup");
+        if (isFree) return navigate("/dashboard/generate");
+        if (subscribed) return navigate("/dashboard/settings");
+        startCheckout({ plan: id, billing });
+    };
+
+    const label = isCurrentPlan ? "Current plan" : !isFree && subscribed ? "Manage plan" : cta;
 
     return (
         <div
@@ -50,10 +67,11 @@ export default function PricingCard({ plan, billing }: PricingCardProps) {
                 variant={mostPopular ? "primary" : "outline"}
                 rounded="lg"
                 className="mt-5"
-                disabled={!isFree}
-                onClick={() => navigate(isAuthenticated ? "/dashboard/generate" : "/signup")}
+                disabled={isPending || isCurrentPlan}
+                onClick={handleClick}
             >
-                {isFree ? cta : "Coming soon"}
+                {isPending && <Loader2 size={16} className="animate-spin" />}
+                {label}
             </Button>
 
             <ul className="mt-8 space-y-3">

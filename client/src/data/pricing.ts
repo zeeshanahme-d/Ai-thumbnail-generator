@@ -31,6 +31,7 @@ export const creditPackFeatures = [
 
 export const pricingPlans: IPricingPlan[] = [
     {
+        id: "free",
         name: "Free",
         tagline: "Perfect for getting started",
         monthlyPrice: 0,
@@ -44,6 +45,7 @@ export const pricingPlans: IPricingPlan[] = [
         ],
     },
     {
+        id: "pro",
         name: "Pro",
         tagline: "For creators who need more",
         monthlyPrice: 9,
@@ -58,6 +60,7 @@ export const pricingPlans: IPricingPlan[] = [
         ],
     },
     {
+        id: "ultra",
         name: "Ultra",
         tagline: "For power creators and agencies",
         monthlyPrice: 29,
