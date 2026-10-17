@@ -11,6 +11,8 @@ import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
 import { userViewerKey } from "../utils/viewer.js";
 import { matchHashedPassword } from "../helper/halper-functions.js";
 import { usernameSchema } from "../validations/user-fields.validation.js";
+import { isLiveSubscription } from "../utils/billing.js";
+import paddle from "../config/paddle.js";
 
 async function handleUpdateUserProfile(req: Request, res: Response) {
   const { fullName, username, bio, website } = req.validated!.body;
@@ -98,6 +100,11 @@ async function handleDeleteAccount(req: Request, res: Response) {
 
   if (!user.password || !(await matchHashedPassword(password, user.password))) {
     return ApiResponse.error(res, 400, "Password is incorrect.", "INVALID_PASSWORD");
+  }
+
+  // Otherwise Paddle keeps charging a customer whose account is gone. A failure stops the deletion.
+  if (user.subscriptionId && isLiveSubscription(user.subscriptionStatus)) {
+    await paddle().subscriptions.cancel(user.subscriptionId, { effectiveFrom: "immediately" });
   }
 
   // Delete avatar from Cloudinary if it exists
