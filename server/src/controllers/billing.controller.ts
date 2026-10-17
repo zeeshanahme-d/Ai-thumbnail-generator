@@ -3,6 +3,7 @@ import { EventName } from "@paddle/paddle-node-sdk";
 import paddle from "../config/paddle.js";
 import userModel from "../models/user.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+import logger from "../utils/logger.js";
 import { grantPaidPeriod, isLiveSubscription, syncSubscription } from "../utils/billing.js";
 import { AuthErrorCode, BillingErrorCode } from "../constants/enums.js";
 
@@ -19,7 +20,7 @@ async function handleCreateCheckout(req: Request, res: Response) {
 
   const priceId = priceIdFor(plan, billing);
   if (!priceId) {
-    console.error(`Missing env PADDLE_PRICE_${plan.toUpperCase()}_${billing.toUpperCase()}`);
+    logger.error("Paddle price is not configured", { env: `PADDLE_PRICE_${plan.toUpperCase()}_${billing.toUpperCase()}` });
     return ApiResponse.error(res, 503, "Payments are not available right now. Please try again later.");
   }
 
@@ -51,6 +52,7 @@ async function handleCreateCheckout(req: Request, res: Response) {
     customData: { userId: String(user._id) },
   });
 
+  logger.info("Checkout created", { userId: String(user._id), plan, billing, transactionId: transaction.id });
   return ApiResponse.success(res, 201, "Checkout ready.", { transactionId: transaction.id });
 }
 
@@ -86,11 +88,12 @@ async function handlePaddleWebhook(req: Request, res: Response) {
   const secret = process.env.PADDLE_WEBHOOK_SECRET ?? "";
   // The destination's ID (ntfset_...) is easy to paste by mistake; every signature then fails.
   if (!secret.startsWith("pdl_ntfset_")) {
-    console.error("PADDLE_WEBHOOK_SECRET must be the destination's secret key (pdl_ntfset_...), not its ID.");
+    logger.error("PADDLE_WEBHOOK_SECRET must be the destination's secret key (pdl_ntfset_...), not its ID");
   }
 
   try {
     const event = await paddle().webhooks.unmarshal(rawBody, secret, signature);
+    logger.info("Paddle webhook received", { eventType: event.eventType, eventId: event.eventId });
 
     switch (event.eventType) {
       case EventName.SubscriptionCreated:
@@ -111,7 +114,7 @@ async function handlePaddleWebhook(req: Request, res: Response) {
     return ApiResponse.success(res, 200, "Received.");
   } catch (error) {
     // Any non-2xx makes Paddle retry, which also recovers from a rotated secret once it is deployed.
-    console.error("Paddle webhook failed:", error);
+    logger.error("Paddle webhook failed", { requestId: req.get("x-vercel-id"), error });
     return ApiResponse.error(res, 500, "Webhook processing failed.");
   }
 }

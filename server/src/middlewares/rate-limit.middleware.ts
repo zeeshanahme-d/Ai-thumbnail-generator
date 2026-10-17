@@ -2,6 +2,7 @@ import rateLimit, { ipKeyGenerator, type AugmentedRequest } from "express-rate-l
 import type { Request, Response } from "express";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { RequestErrorCode } from "../constants/enums.js";
+import logger from "../utils/logger.js";
 
 // Counters live in memory, so they reset on restart and are per process.
 // Running several server instances needs a shared store such as rate-limit-redis.
@@ -38,6 +39,8 @@ function createLimiter({ windowMinutes, limit, by, skipSuccessfulRequests = fals
       const minutes = resetTime
         ? Math.max(1, Math.ceil((resetTime.getTime() - Date.now()) / 60000))
         : windowMinutes;
+      // The key itself can be an email or an IP, so only its kind is logged.
+      logger.warn("Rate limit hit", { limitBy: by, path: req.originalUrl.split("?")[0], userId: req.user?.userId });
       return ApiResponse.error(res, 429, `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`, RequestErrorCode.RateLimited);
     },
   });

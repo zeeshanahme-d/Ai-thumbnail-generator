@@ -3,6 +3,7 @@ import type { SubscriptionNotification, TransactionNotification } from "@paddle/
 import userModel from "../models/user.model.js";
 import { SubscriptionStatus, UserPlan } from "../constants/enums.js";
 import { nextPaidRefill, resetDueCredits } from "./credits.js";
+import logger from "./logger.js";
 
 // Statuses that keep the paid plan. past_due keeps it while Paddle retries the payment.
 const LIVE_STATUSES: (string | null | undefined)[] = [
@@ -46,13 +47,23 @@ const ownedByOtherSubscription = (user: BillingUser, subscriptionId: string) =>
 
 /** subscription.* events: mirrors the plan and status. Credits come from paid transactions. */
 export async function syncSubscription(subscription: SubscriptionNotification): Promise<void> {
+  const context = { subscriptionId: subscription.id, status: subscription.status };
+
   const user = await findBillingUser(subscription.customData, subscription.id);
-  if (!user || ownedByOtherSubscription(user, subscription.id)) return;
+  if (!user) {
+    logger.warn("Subscription event for no known user", context);
+    return;
+  }
+  const userId = String(user._id);
+  if (ownedByOtherSubscription(user, subscription.id)) {
+    logger.warn("Subscription event ignored: another live subscription owns the account", { ...context, userId, currentSubscriptionId: user.subscriptionId });
+    return;
+  }
 
   const live = isLiveSubscription(subscription.status);
   const grant = readPlanGrant(subscription.items[0]?.price?.customData);
   if (live && !grant) {
-    console.error(`Paddle subscription ${subscription.id} has a price without plan custom_data.`);
+    logger.error("Subscription price has no plan custom_data", { ...context, userId, priceId: subscription.items[0]?.price?.id });
     return;
   }
 
@@ -80,8 +91,14 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
     { $set: set },
   );
 
-  if (modifiedCount && !live) {
-    await resetDueCredits(String(user._id));
+  if (!modifiedCount) {
+    logger.debug("Subscription event already applied", { ...context, userId });
+    return;
+  }
+
+  logger.info("Subscription synced", { ...context, userId, plan: set.plan });
+  if (!live) {
+    await resetDueCredits(userId);
   }
 }
 
@@ -90,19 +107,35 @@ export async function grantPaidPeriod(transaction: TransactionNotification): Pro
   const { subscriptionId, billingPeriod } = transaction;
   if (!subscriptionId || !billingPeriod || !PAID_PERIOD_ORIGINS.includes(transaction.origin)) return;
 
+  const context = { transactionId: transaction.id, subscriptionId, origin: transaction.origin };
+
   const grant = readPlanGrant(transaction.items.find((item) => item.price?.billingCycle)?.price?.customData);
-  if (!grant) return;
+  if (!grant) {
+    logger.error("Paid transaction has no plan custom_data", context);
+    return;
+  }
 
   const user = await findBillingUser(transaction.customData, subscriptionId);
-  if (!user || ownedByOtherSubscription(user, subscriptionId)) return;
+  if (!user) {
+    logger.warn("Paid transaction for no known user", context);
+    return;
+  }
+  const userId = String(user._id);
+  if (ownedByOtherSubscription(user, subscriptionId)) {
+    logger.warn("Paid transaction ignored: another live subscription owns the account", { ...context, userId });
+    return;
+  }
   // A payment that arrives after this subscription already ended grants nothing.
-  if (user.subscriptionId === subscriptionId && user.subscriptionStatus && !isLiveSubscription(user.subscriptionStatus)) return;
+  if (user.subscriptionId === subscriptionId && user.subscriptionStatus && !isLiveSubscription(user.subscriptionStatus)) {
+    logger.warn("Paid transaction ignored: subscription already ended", { ...context, userId, status: user.subscriptionStatus });
+    return;
+  }
 
   const periodStart = new Date(billingPeriod.startsAt);
   const periodEnd = new Date(billingPeriod.endsAt);
 
   // Retries and duplicate events find the period already granted and change nothing.
-  await userModel.updateOne(
+  const { modifiedCount } = await userModel.updateOne(
     {
       _id: user._id,
       $or: [{ subscriptionPeriodStart: null }, { subscriptionPeriodStart: mongoose.trusted({ $lt: periodStart }) }],
@@ -117,4 +150,10 @@ export async function grantPaidPeriod(transaction: TransactionNotification): Pro
       },
     },
   );
+
+  if (modifiedCount) {
+    logger.info("Plan credits granted", { ...context, userId, plan: grant.plan, credits: grant.credits, periodStart, periodEnd });
+  } else {
+    logger.debug("Billing period already granted", { ...context, userId });
+  }
 }

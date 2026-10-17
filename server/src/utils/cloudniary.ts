@@ -1,4 +1,5 @@
 import { v2 as cloudinary, UploadApiOptions, UploadApiResponse } from "cloudinary";
+import logger from "./logger.js";
 
 const configureCloudinary = () => {
   cloudinary.config({
@@ -32,7 +33,7 @@ const uploadFileOnCloudniary = (
       .upload_stream(options, (error, result) => (result ? resolve(result) : reject(error)))
       .end(buffer);
   }).catch((error) => {
-    console.error("Cloudinary upload failed:", error);
+    logger.error("Cloudinary upload failed", { error });
     return null;
   });
 };
@@ -43,7 +44,7 @@ export const deleteFileFromCloudinary = async (publicId: string) => {
   try {
     return await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    console.error("Cloudinary delete failed:", error);
+    logger.error("Cloudinary delete failed", { publicId, error });
     return null;
   }
 };

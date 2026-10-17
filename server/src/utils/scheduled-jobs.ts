@@ -11,6 +11,7 @@ import {
 } from "../constants/constants.js";
 import { refundCredits, resetDueCredits } from "./credits.js";
 import { deleteThumbnailsForever } from "./delete-thumbnails.js";
+import logger from "./logger.js";
 
 // Removes generations that a crash or restart left running and refunds their credits.
 async function removeStuckGenerations() {
@@ -27,6 +28,8 @@ async function removeStuckGenerations() {
     const removed = await thumbnailModel.findOneAndDelete({ _id, isGenerating: true });
     if (removed) {
       await refundCredits(String(removed.userId), CREDIT_COST.GENERATE_COST);
+      // Each one means a request died mid-generation: a crash, a restart or a function timeout.
+      logger.warn("Stuck generation removed and refunded", { thumbnailId: String(_id), userId: String(removed.userId) });
     }
   }
 }
@@ -70,10 +73,14 @@ const updateTrendingScores = () =>
 // Runs the maintenance jobs once at startup, then every SCHEDULED_JOB_INTERVAL_MS.
 export function startScheduledJobs() {
   const run = () => {
-    removeStuckGenerations().catch((error) => console.error("Stuck generation cleanup failed:", error));
-    resetDueCredits().catch((error) => console.error("Monthly credit reset failed:", error));
-    purgeRecycleBins().catch((error) => console.error("Recycle bin purge failed:", error));
-    updateTrendingScores().catch((error) => console.error("Trending score update failed:", error));
+    removeStuckGenerations().catch((error) => logger.error("Stuck generation cleanup failed", { error }));
+    resetDueCredits().catch((error) => logger.error("Monthly credit reset failed", { error }));
+    purgeRecycleBins()
+      .then((count) => {
+        if (count) logger.info("Recycle bins purged", { count });
+      })
+      .catch((error) => logger.error("Recycle bin purge failed", { error }));
+    updateTrendingScores().catch((error) => logger.error("Trending score update failed", { error }));
   };
 
   run();

@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { addMonths, nextPaidRefill } from "./credits.js";
 import { readPlanGrant } from "./billing.js";
+import logger from "./logger.js";
 
 const d = (iso: string) => new Date(iso);
 
@@ -28,4 +29,4 @@ assert.equal(readPlanGrant({ plan: "free", credits_per_month: 20 }), null);
 assert.equal(readPlanGrant({ plan: "pro", credits_per_month: "500" }), null);
 assert.equal(readPlanGrant(null), null);
 
-console.log("billing checks passed");
+logger.info("billing checks passed");

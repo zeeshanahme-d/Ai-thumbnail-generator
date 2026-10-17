@@ -23,6 +23,7 @@ import { AuthErrorCode } from "../constants/enums.js";
 import { sendOtpEmail } from "../utils/email.js";
 import { generateOtp, generateUniqueUsername, isDisposableEmail } from "../utils/helpers.js";
 import { getRemainingCredits, resetDueCredits } from "../utils/credits.js";
+import logger from "../utils/logger.js";
 import { CREDIT_COST, MAX_OTP_ATTEMPTS, OTP_EXPIRY_MS, REFRESH_REUSE_GRACE_MS } from "../constants/constants.js";
 
 // ────────────────────────────────────────────── Helpers
@@ -78,6 +79,7 @@ function clearAuthCookies(res: Response) {
 async function revokeAllSessions(userId: UserId) {
   await userModel.updateOne({ _id: userId }, { $inc: { tokenVersion: 1 } });
   await refreshTokenModel.deleteMany({ userId });
+  logger.info("All sessions revoked", { userId: String(userId) });
 }
 
 async function resolveUserFromRefreshToken(req: Request, res: Response) {
@@ -101,6 +103,7 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
   // A token that was already exchanged is being replayed, so one copy is in the wrong hands.
   // Revoke every token from that login; the real user signs in again.
   if (storedToken.usedAt && Date.now() - storedToken.usedAt.getTime() > REFRESH_REUSE_GRACE_MS) {
+    logger.warn("Refresh token reused, session revoked", { userId: String(storedToken.userId), family: storedToken.family });
     await refreshTokenModel.deleteMany({ family: storedToken.family });
     clearAuthCookies(res);
     ApiResponse.error(res, 401, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
@@ -198,7 +201,7 @@ async function issueOtp(userId: UserId, email: string, purpose: OtpPurpose) {
 // Replies never wait for the email, so every address gets the same answer in the same time.
 function sendOtpInBackground(userId: UserId, email: string, purpose: OtpPurpose) {
   issueOtp(userId, email, purpose).catch((error) => {
-    console.error(`Failed to send ${purpose} email:`, error);
+    logger.error("Failed to send code email", { userId: String(userId), purpose, error });
   });
 }
 
@@ -382,8 +385,8 @@ async function handleSignupUser(req: Request, res: Response) {
 
   try {
     await issueOtp(user._id, email, "verify-email");
-  } catch (emailError) {
-    console.error("Failed to send verification email:", emailError);
+  } catch (error) {
+    logger.error("Failed to send verification email", { userId: String(user._id), error });
     return ApiResponse.success(
       res,
       201,

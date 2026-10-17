@@ -1,5 +1,6 @@
 import { ApiError, FinishReason, type GenerateContentParameters, type GenerateContentResponse } from "@google/genai";
 import genai from "../config/genai.js";
+import logger from "./logger.js";
 import { GenerationErrorCode } from "../constants/enums.js";
 import { GEMINI_MAX_ATTEMPTS, GEMINI_RETRY_BASE_DELAY_MS, GEMINI_TIMEOUT_MS } from "../constants/constants.js";
 
@@ -56,13 +57,14 @@ async function callGemini<T extends { ok: true }>(request: GenerateContentParame
       if (error instanceof ApiError) {
         if (!RETRYABLE_STATUSES.includes(error.status)) {
           // Gemini's own message can expose setup details such as an invalid API key.
-          console.error("Gemini request failed:", error);
+          logger.error("Gemini request failed", { error });
           return { ok: false, code: GenerationErrorCode.Failed };
         }
+        logger.warn("Gemini busy", { attempt, maxAttempts: GEMINI_MAX_ATTEMPTS, status: error.status });
       } else if (error instanceof TypeError && error.message === "fetch failed") {
         // Node's fetch throws this when the connection drops (ECONNRESET, DNS, TLS) before
         // Gemini sends any status, so it is retried like an overloaded server.
-        console.warn(`Gemini connection failed (attempt ${attempt}/${GEMINI_MAX_ATTEMPTS}):`, error.cause ?? error);
+        logger.warn("Gemini connection failed", { attempt, maxAttempts: GEMINI_MAX_ATTEMPTS, error: error.cause ?? error });
       } else {
         throw error;
       }

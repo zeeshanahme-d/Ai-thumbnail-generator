@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../utils/apiResponse.js";
+import logger from "../utils/logger.js";
 
 interface AppError extends Error {
   statusCode?: number;
@@ -11,15 +12,13 @@ interface AppError extends Error {
 
 export const errorHandler = (
   err: AppError,
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   if (res.headersSent) {
     return next(err);
   }
-
-  console.error("Global Error Handler:", err);
 
   let statusCode = err.statusCode || err.status || 500;
   let message = err.message || "Something went wrong.";
@@ -66,6 +65,21 @@ export const errorHandler = (
     statusCode = 401;
     message = "Token expired. Please log in again.";
     errorCode = "TOKEN_EXPIRED";
+  }
+
+  // x-vercel-id matches this line to the request in Vercel's request logs.
+  const context = {
+    method: req.method,
+    path: req.originalUrl.split("?")[0],
+    userId: req.user?.userId,
+    requestId: req.get("x-vercel-id"),
+    status: statusCode,
+    error: err,
+  };
+  if (statusCode >= 500) {
+    logger.error("Unhandled request error", context);
+  } else {
+    logger.debug("Request error", context);
   }
 
   // Unexpected failures can carry internal details; the full error is logged above.

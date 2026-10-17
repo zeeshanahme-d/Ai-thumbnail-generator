@@ -13,6 +13,7 @@ import { matchHashedPassword } from "../helper/halper-functions.js";
 import { usernameSchema } from "../validations/user-fields.validation.js";
 import { isLiveSubscription } from "../utils/billing.js";
 import paddle from "../config/paddle.js";
+import logger from "../utils/logger.js";
 
 async function handleUpdateUserProfile(req: Request, res: Response) {
   const { fullName, username, bio, website } = req.validated!.body;
@@ -105,6 +106,7 @@ async function handleDeleteAccount(req: Request, res: Response) {
   // Otherwise Paddle keeps charging a customer whose account is gone. A failure stops the deletion.
   if (user.subscriptionId && isLiveSubscription(user.subscriptionStatus)) {
     await paddle().subscriptions.cancel(user.subscriptionId, { effectiveFrom: "immediately" });
+    logger.info("Subscription canceled for account deletion", { userId: String(userId), subscriptionId: user.subscriptionId });
   }
 
   // Delete avatar from Cloudinary if it exists
@@ -128,6 +130,7 @@ async function handleDeleteAccount(req: Request, res: Response) {
   await deleteThumbnailsForever({ userId });
   await refreshTokenModel.deleteMany({ userId });
   await userModel.findByIdAndDelete(userId);
+  logger.info("Account deleted", { userId: String(userId) });
 
   // Clear auth cookies
   res.clearCookie("accessToken");

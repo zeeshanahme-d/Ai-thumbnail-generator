@@ -255,6 +255,15 @@ server/
 ESM (`"type": "module"`) — **relative imports must carry the `.js` extension**
 (`import app from "./src/app.js"`), even though the files are `.ts`.
 
+### Logging
+
+Never call `console` directly: use `utils/logger.ts` (`logger.info("Checkout created", { userId })`).
+In production it prints one JSON line per entry to stdout/stderr, which is all Vercel collects;
+locally it prints readable lines. `LOG_LEVEL` sets the minimum (default `info` in production,
+`debug` locally). Pass errors as a field (`{ error }`) so their stack is kept. Log ids, never
+passwords, tokens, codes, cookies, emails or prompts. Requests are not logged one by one
+(Vercel's request log has them); the error handler logs every 5xx with `x-vercel-id`.
+
 ### Responses
 
 Every response goes through `utils/apiResponse.ts`:

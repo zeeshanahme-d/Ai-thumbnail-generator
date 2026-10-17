@@ -26,6 +26,7 @@ import mongoose from "mongoose";
 import { escapeRegex } from "../utils/helpers.js";
 import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/share-page.js";
 import { getViewerKey } from "../utils/viewer.js";
+import logger from "../utils/logger.js";
 
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
@@ -240,6 +241,7 @@ QUALITY REQUIREMENTS
     });
 
     if (!result.ok) {
+      logger.warn("Thumbnail generation failed", { userId, code: result.code });
       const failure = GENERATION_FAILURES[result.code];
       return ApiResponse.error(res, failure.status, failure.message, result.code);
     }
@@ -272,8 +274,8 @@ QUALITY REQUIREMENTS
         : true;
 
       if (removed) {
-        await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((refundError) => {
-          console.error("Failed to refund generation credits:", refundError);
+        await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((error) => {
+          logger.error("Failed to refund generation credits", { userId, credits: CREDIT_COST.GENERATE_COST, error });
         });
       }
     }
