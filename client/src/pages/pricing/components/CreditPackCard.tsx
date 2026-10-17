@@ -1,15 +1,24 @@
 import { useState } from "react";
-import { Check, Minus, Plus, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Check, Loader2, Minus, Plus, Sparkles } from "lucide-react";
 import Button from "../../../components/Button";
 import AnimatedValue from "../../../components/AnimatedValue";
 import { CREDIT_PACK, creditPackFeatures } from "../../../data/pricing";
 import { GENERATION_CREDIT_COST } from "../../../lib/credits";
+import { useCheckout } from "../../../core/billing/hooks/use-checkout";
+import { useSession } from "../../../store/useSessionStore";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const clamp = (credits: number) => Math.min(CREDIT_PACK.max, Math.max(CREDIT_PACK.min, credits));
 
 export default function CreditPackCard() {
     const [credits, setCredits] = useState(CREDIT_PACK.initial);
+    const navigate = useNavigate();
+    const isAuthenticated = useSession((state) => state.isAuthenticated);
+    const { startCheckout, isPending } = useCheckout();
+
+    // The server checks the amount again and the webhook grants what Paddle reports as paid.
+    const handleBuy = () => (isAuthenticated ? startCheckout({ credits }) : navigate("/signup"));
 
     const price = usd.format((credits / CREDIT_PACK.step) * CREDIT_PACK.stepPriceCents / 100);
     const thumbnails = credits / GENERATION_CREDIT_COST;
@@ -100,8 +109,9 @@ export default function CreditPackCard() {
                     <span>{CREDIT_PACK.max.toLocaleString("en-US")}</span>
                 </div>
 
-                <Button type="button" variant="primary" className="mt-6" disabled>
-                    Coming soon
+                <Button type="button" variant="primary" className="mt-6" disabled={isPending} onClick={handleBuy}>
+                    {isPending && <Loader2 size={16} className="animate-spin" />}
+                    Buy {credits.toLocaleString("en-US")} credits
                 </Button>
                 <p className="mt-3 text-center text-xs text-text-muted">One-time purchase. No monthly fees.</p>
             </div>

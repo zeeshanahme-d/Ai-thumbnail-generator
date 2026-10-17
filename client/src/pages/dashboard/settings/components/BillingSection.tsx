@@ -1,7 +1,7 @@
 import { Loader2, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/Button";
-import { getRemainingCredits } from "../../../../lib/credits";
+import { getAllowanceLeft } from "../../../../lib/credits";
 import { hasLiveSubscription } from "../../../../lib/paddle";
 import { useBillingPortal } from "../../../../core/billing/hooks/use-billing-portal";
 import { useSession } from "../../../../store/useSessionStore";
@@ -34,7 +34,8 @@ export default function BillingSection() {
 
     const totalCredits = user?.totalcredits ?? 0;
     const creditsUsed = user?.creditsUsed ?? 0;
-    const remainingCredits = getRemainingCredits(user);
+    const allowanceLeft = getAllowanceLeft(user);
+    const packCredits = user?.packCredits ?? 0;
     const usagePercentage = totalCredits > 0 ? Math.min(100, Math.max(0, (creditsUsed / totalCredits) * 100)) : 0;
 
     // Unverified accounts have no refill date yet, so the line stays hidden for them.
@@ -106,9 +107,15 @@ export default function BillingSection() {
                     </div>
 
                     <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-text-muted">
-                        <span>{usagePercentage.toFixed(1)}% consumed this billing cycle ({remainingCredits} remaining)</span>
+                        <span>{usagePercentage.toFixed(1)}% consumed this billing cycle ({allowanceLeft} remaining)</span>
                         {formattedResetDate && <span>Resets on {formattedResetDate}</span>}
                     </div>
+
+                    {packCredits > 0 && (
+                        <p className="mt-4 text-sm text-text-secondary">
+                            <span className="font-semibold text-text-primary">+{packCredits.toLocaleString("en-US")}</span> purchased credits. They never expire and are used after your monthly credits.
+                        </p>
+                    )}
                 </div>
             </div>
         </section>

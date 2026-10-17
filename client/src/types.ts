@@ -209,6 +209,11 @@ export interface CheckoutPayload {
   billing: BillingPeriod;
 }
 
+/** A one-time credit pack: 25 to 2,500 credits in steps of 5 (CREDIT_PACK in data/pricing.ts). */
+export interface CreditPackCheckoutPayload {
+  credits: number;
+}
+
 export interface IPricingPlan {
   /** Matches UserPlan on the server. */
   id: PlanId;
@@ -356,6 +361,8 @@ export interface IUser {
   plan: "free" | "pro" | "ultra" | string;
   totalcredits: number;
   creditsUsed: number;
+  /** Credits bought in packs. They never expire and are spent after the monthly allowance. */
+  packCredits: number;
   creditsResetAt: string | null;
   subscriptionId: string | null;
   subscriptionStatus: string | null;

@@ -11,7 +11,8 @@ export const billingOptions: IBillingOption[] = [
     { value: "yearly", label: "Yearly" },
 ];
 
-// One-time credit packs: each step adds one thumbnail's worth of credits.
+// One-time credit packs: each step adds one thumbnail's worth of credits. Mirrors CREDIT_PACK in
+// server/src/constants/constants.ts and the Paddle credit pack price (USD 0.25 per 5 credits).
 export const CREDIT_PACK = {
     step: GENERATION_CREDIT_COST,
     stepPriceCents: 25,
