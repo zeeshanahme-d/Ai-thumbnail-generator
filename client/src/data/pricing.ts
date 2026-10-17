@@ -1,4 +1,33 @@
-import type { IPricingPlan } from "../types";
+import { CalendarClock, Coins, RotateCcw, Sparkles } from "lucide-react";
+import type { IBillingOption, ICreditFact, IPlanComparisonRow, IPricingPlan } from "../types";
+import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../lib/credits";
+
+const FREE_THUMBNAILS = FREE_MONTHLY_CREDITS / GENERATION_CREDIT_COST;
+
+export const YEARLY_DISCOUNT = 0.2;
+
+export const billingOptions: IBillingOption[] = [
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+];
+
+// One-time credit packs: each step adds one thumbnail's worth of credits.
+export const CREDIT_PACK = {
+    step: GENERATION_CREDIT_COST,
+    stepPriceCents: 25,
+    min: 25,
+    max: 2500,
+    initial: 100,
+};
+
+export const creditPackFeatures = [
+    "No monthly subscription required",
+    "Credits never expire",
+    "Every style, color scheme & aspect ratio",
+    "Reference image upload",
+    "Free AI prompt improver",
+    "Failed generations refunded automatically",
+];
 
 export const pricingPlans: IPricingPlan[] = [
     {
@@ -7,11 +36,11 @@ export const pricingPlans: IPricingPlan[] = [
         monthlyPrice: 0,
         cta: "Start Free",
         features: [
-            "5 generations per month",
-            "Standard quality",
-            "16:9 & 1:1 aspect ratios",
-            "Community gallery access",
-            "Basic style presets",
+            `${FREE_MONTHLY_CREDITS} credits every month (${FREE_THUMBNAILS} thumbnails)`,
+            "All styles, color schemes & aspect ratios",
+            "Reference image upload",
+            "AI prompt improver",
+            "Publish to the community gallery",
         ],
     },
     {
@@ -21,14 +50,11 @@ export const pricingPlans: IPricingPlan[] = [
         cta: "Get Pro",
         mostPopular: true,
         features: [
-            "100 generations per month",
-            "HD & Ultra quality",
-            "All aspect ratios",
-            "Image upload & blending",
-            "All style presets",
+            "500 credits every month (100 thumbnails)",
+            "Everything in Free",
+            "Premium image model",
             "Recreate & modify thumbnails",
             "Priority generation",
-            "Download without watermark",
         ],
     },
     {
@@ -37,12 +63,48 @@ export const pricingPlans: IPricingPlan[] = [
         monthlyPrice: 29,
         cta: "Get Ultra",
         features: [
-            "500 generations per month",
-            "Ultra quality always",
-            "All style presets",
-            "API access",
+            "2,500 credits every month (500 thumbnails)",
+            "Everything in Pro",
             "Priority support",
-            "Commercial license",
+            "Early access to new features",
         ],
     },
+];
+
+export const creditFacts: ICreditFact[] = [
+    {
+        icon: Coins,
+        title: `${GENERATION_CREDIT_COST} credits per thumbnail`,
+        description: "Every generation costs the same, whatever the style, color scheme or size.",
+    },
+    {
+        icon: RotateCcw,
+        title: "Failed? Refunded",
+        description: "If a generation fails or gets blocked, the credits go straight back to you.",
+    },
+    {
+        icon: CalendarClock,
+        title: "Monthly refill",
+        description: `Verified free accounts are topped back up to ${FREE_MONTHLY_CREDITS} credits every 30 days.`,
+    },
+    {
+        icon: Sparkles,
+        title: "Free prompt improver",
+        description: "Rewriting your prompt with AI never costs credits.",
+    },
+];
+
+export const planComparison: IPlanComparisonRow[] = [
+    { feature: "Credits per month", values: [String(FREE_MONTHLY_CREDITS), "500", "2,500"] },
+    { feature: "Thumbnails per month", values: [String(FREE_THUMBNAILS), "100", "500"] },
+    { feature: "All styles, color schemes & aspect ratios", values: [true, true, true] },
+    { feature: "Reference image upload", values: [true, true, true] },
+    { feature: "AI prompt improver", values: [true, true, true] },
+    { feature: "YouTube preview mockups", values: [true, true, true] },
+    { feature: "Community gallery publishing", values: [true, true, true] },
+    { feature: "Premium image model", values: [false, true, true] },
+    { feature: "Recreate & modify thumbnails", values: [false, true, true] },
+    { feature: "Priority generation", values: [false, true, true] },
+    { feature: "Priority support", values: [false, false, true] },
+    { feature: "Early access to new features", values: [false, false, true] },
 ];

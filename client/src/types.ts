@@ -214,7 +214,39 @@ export interface IPricingPlan {
 export interface PricingCardProps {
   plan: IPricingPlan;
   billing: BillingPeriod;
-  index: number;
+}
+
+export interface BillingToggleProps {
+  billing: BillingPeriod;
+  onChange: (value: BillingPeriod) => void;
+}
+
+export interface IBillingOption {
+  value: BillingPeriod;
+  label: string;
+}
+
+export interface RevealProps {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}
+
+export interface AnimatedValueProps {
+  value: string | number;
+  className?: string;
+}
+
+export interface ICreditFact {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+export interface IPlanComparisonRow {
+  feature: string;
+  /** One value per plan, in `pricingPlans` order: text, or whether the plan includes it. */
+  values: (string | boolean)[];
 }
 
 export type LegalDocumentId = "privacy" | "terms" | "refund";
