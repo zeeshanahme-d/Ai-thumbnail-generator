@@ -249,6 +249,22 @@ export interface IPlanComparisonRow {
   values: (string | boolean)[];
 }
 
+export interface IFaq {
+  question: string;
+  answer: string;
+}
+
+export interface FaqAccordionProps {
+  items: IFaq[];
+}
+
+export interface FaqItemProps {
+  faq: IFaq;
+  number: number;
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
 export type LegalDocumentId = "privacy" | "terms" | "refund";
 
 export interface ILegalSection {

@@ -5,6 +5,7 @@ import CapabilitiesSection from "../../sections/CapabilitiesSection";
 import ProcessSection from "../../sections/ProcessSection";
 import TestimonialSection from "../../sections/TestimonialSection";
 import PricingSection from "../../sections/PricingSection";
+import FaqSection from "../../sections/FaqSection";
 import CTASection from "../../sections/CTASection";
 
 export default function HomePage() {
@@ -22,6 +23,7 @@ export default function HomePage() {
       <ProcessSection />
       <TestimonialSection />
       <PricingSection />
+      <FaqSection />
       {/* <ContactSection /> */}
       <CTASection />
     </main>
