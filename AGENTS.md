@@ -375,6 +375,10 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   subscription (`ALREADY_SUBSCRIBED`), finds or creates the Paddle customer by email, and
   creates a transaction with `custom_data.userId`. The client opens Paddle.js overlay checkout
   with the returned `transactionId` (`lib/paddle.ts`, `core/billing/`).
+- `POST /billing/credits` `{ credits }` (auth, `billingLimiter`) — one-time credit pack:
+  25–2,500 in steps of 5 (`CREDIT_PACK` in `constants.ts`, mirrored in `data/pricing.ts`),
+  verified accounts only. Quantity = credits / 5 of `PADDLE_PRICE_CREDITS` (USD 0.25 per unit,
+  Paddle limits the quantity to 5–500 too). Subscribers can buy packs as well.
 - `POST /billing/portal` (auth) — Paddle customer portal link: cancel, card, invoices.
 - `POST /billing/webhook` (public, signed) — mounted in `app.ts` **before** `express.json`
   with `express.text`, because the signature covers the raw bytes. Any error returns 500 so
@@ -387,11 +391,14 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
     `credits_per_month`, clears usage and records `subscriptionPeriodStart/End`, once per
     period. Payment-method-change transactions never refill. Renewal credits come from the
     payment, not `subscription.updated`, which Paddle sends before charging.
+  - `transaction.completed` without a subscription is a credit pack (`grantCreditPack`):
+    `credits_per_unit × quantity` from the paid transaction is added to `packCredits`, with the
+    transaction id pushed to `creditPackTransactionIds` in the same write, so retries add nothing.
 - Paid refills inside a period (`resetDueCredits`): yearly plans clear usage on each monthly
   anniversary of the period start (`nextPaidRefill`, capped at the period end); monthly plans
   wait for the next payment. Check: `npx tsx src/utils/billing.check.ts`.
-- Not built: switching plans (needs `subscriptions.update`), credit packs (`CREDIT_PACK`
-  stays "Coming soon").
+- Not built: switching plans (needs `subscriptions.update`); refunds of pack purchases are
+  not taken back out of `packCredits`.
 
 ### AI Generation flow
 
@@ -419,8 +426,12 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   (`$max`, so older accounts that already have 20 are not topped up twice). Signup rejects
   disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
-- `user.totalcredits` vs `user.creditsUsed` — `utils/credits.ts` reserves credits
-  atomically before calling Gemini and refunds them if generation fails (never below 0)
+- `user.totalcredits` vs `user.creditsUsed` is the monthly allowance, which refills overwrite;
+  `user.packCredits` is bought credits, which never expire and no refill touches. Balance =
+  `getRemainingCredits` (allowance left + pack). `reserveCredits` charges atomically before
+  calling Gemini, allowance first (`splitCharge` / `chargeExpressions`, one pipeline update),
+  and returns how much came from the pack; the thumbnail stores it (`packCreditsUsed`) so a
+  failed or stuck generation refunds each part to where it came from (never below 0)
 - **Monthly refill** — only **verified** free accounts refill. When `creditsResetAt` passes
   (or is missing), the account goes back to 20 credits with 0 used and the date moves 30 days
   on (`CREDIT_RESET_INTERVAL_MS`). `resetDueCredits()` runs from `utils/scheduled-jobs.ts`
@@ -459,8 +470,8 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
   view on open, and Share copies the server's `/share` link so previews show the image
 
 ### Not implemented / placeholder
-- **Plan switching and credit packs** — subscribers can cancel and re-subscribe, but not
-  switch Pro ↔ Ultra in place; one-time credit packs are not on sale.
+- **Plan switching** — subscribers can cancel and re-subscribe, but not switch Pro ↔ Ultra
+  in place.
 - **Google OAuth** — no `/auth/google` endpoint; the Google button is hidden until it exists.
 - **Recreate** — placeholder page only; no upload-and-remix flow.
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
