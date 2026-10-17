@@ -156,6 +156,10 @@ export interface SectionTitleProps {
   text1?: string;
   text2: ReactNode;
   text3: string;
+  /** h1 when the title heads its own page. */
+  as?: "h1" | "h2";
+  /** Scroll-in animation, used on the homepage and pricing page. */
+  animate?: boolean;
 }
 
 export interface TestimonialCardProps {
