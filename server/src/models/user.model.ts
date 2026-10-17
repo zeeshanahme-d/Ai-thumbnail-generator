@@ -130,6 +130,20 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Credits bought in packs. They never expire and no refill touches them; generations
+    // spend the monthly allowance above first.
+    packCredits: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // Paddle transactions already turned into pack credits, so a webhook retry adds nothing.
+    creditPackTransactionIds: {
+      type: [String],
+      select: false,
+    },
+
     subscriptionId: {
       type: String,
       default: null,
@@ -210,6 +224,7 @@ const PRIVATE_FIELDS = [
   "emailVerificationOtpExpiresAt",
   "emailVerificationOtpAttempts",
   "tokenVersion",
+  "creditPackTransactionIds",
 ];
 
 userSchema.set("toJSON", {

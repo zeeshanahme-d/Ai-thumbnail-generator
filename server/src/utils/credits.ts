@@ -28,42 +28,88 @@ export function nextPaidRefill(periodStart: Date, periodEnd: Date, now = new Dat
   return next < periodEnd ? next : periodEnd;
 }
 
-type CreditFields = { totalcredits?: number | null; creditsUsed?: number | null } | null;
+type CreditFields = { totalcredits?: number | null; creditsUsed?: number | null; packCredits?: number | null } | null;
+
+/** What is left of the monthly allowance, which refills and doesn't roll over. */
+export const getAllowanceLeft = (user: CreditFields) =>
+  Math.max(0, (user?.totalcredits ?? 0) - (user?.creditsUsed ?? 0));
 
 export const getRemainingCredits = (user: CreditFields) =>
-  Math.max(0, (user?.totalcredits ?? 0) - (user?.creditsUsed ?? 0));
+  getAllowanceLeft(user) + Math.max(0, user?.packCredits ?? 0);
+
+/** Splits a charge: the allowance pays first because it expires, bought pack credits pay the rest. */
+export function splitCharge(user: CreditFields, amount: number) {
+  const fromAllowance = Math.min(amount, getAllowanceLeft(user));
+  return { fromAllowance, fromPack: amount - fromAllowance };
+}
+
+// The same split as splitCharge, worked out inside MongoDB so the check and the charge are one write.
+const allowanceLeftExpr = {
+  $max: [0, { $subtract: [{ $ifNull: ["$totalcredits", 0] }, { $ifNull: ["$creditsUsed", 0] }] }],
+};
+
+/** The condition and update reserveCredits runs, exported so the check can run them in MongoDB. */
+export function chargeExpressions(amount: number) {
+  const fromAllowance = { $min: [amount, allowanceLeftExpr] };
+  return {
+    enoughCredits: { $gte: [{ $add: [allowanceLeftExpr, { $ifNull: ["$packCredits", 0] }] }, amount] },
+    charge: {
+      creditsUsed: { $add: [{ $ifNull: ["$creditsUsed", 0] }, fromAllowance] },
+      packCredits: { $subtract: [{ $ifNull: ["$packCredits", 0] }, { $subtract: [amount, fromAllowance] }] },
+    },
+  };
+}
 
 /**
  * Takes `amount` credits in one atomic update that only matches while enough remain,
  * so parallel requests cannot all pass the check and overspend.
- * Returns the balance after the charge, or null when the user is missing or short on credits.
+ * Returns the balance after the charge and how many pack credits it took (needed to refund),
+ * or null when the user is missing or short on credits.
  */
 export async function reserveCredits(userId: string, amount: number) {
-  return userModel.findOneAndUpdate(
+  const { enoughCredits, charge } = chargeExpressions(amount);
+
+  // returnDocument "before" so the split can be worked out exactly as the update applied it.
+  const before = await userModel.findOneAndUpdate(
+    // Marked trusted so sanitizeFilter lets this intentional operator through.
+    { _id: userId, $expr: mongoose.trusted(enoughCredits) },
+    [{ $set: charge }],
     {
-      _id: userId,
-      // Marked trusted so sanitizeFilter lets this intentional operator through.
-      $expr: mongoose.trusted({
-        $lte: [
-          { $add: [{ $ifNull: ["$creditsUsed", 0] }, amount] },
-          { $ifNull: ["$totalcredits", 0] },
-        ],
-      }),
+      returnDocument: "before",
+      updatePipeline: true,
+      projection: { _id: 0, totalcredits: 1, creditsUsed: 1, packCredits: 1, creditsResetAt: 1 },
     },
-    { $inc: { creditsUsed: amount } },
-    { returnDocument: "after", projection: { _id: 0, totalcredits: 1, creditsUsed: 1, creditsResetAt: 1 } },
   ).lean();
+
+  if (!before) return null;
+
+  const split = splitCharge(before, amount);
+  return {
+    fromPack: split.fromPack,
+    balance: {
+      totalcredits: before.totalcredits ?? 0,
+      creditsUsed: (before.creditsUsed ?? 0) + split.fromAllowance,
+      packCredits: (before.packCredits ?? 0) - split.fromPack,
+      creditsResetAt: before.creditsResetAt ?? null,
+    },
+  };
 }
 
 /**
- * Gives back credits taken by reserveCredits when the work they paid for failed.
- * Skipped when a monthly refill already cleared the usage in between.
+ * Gives back credits taken by reserveCredits when the work they paid for failed. Pack credits
+ * always go back; allowance credits are skipped when a monthly refill already cleared the usage.
  */
-export async function refundCredits(userId: string, amount: number): Promise<void> {
-  await userModel.updateOne(
-    { _id: userId, creditsUsed: mongoose.trusted({ $gte: amount }) },
-    { $inc: { creditsUsed: -amount } },
-  );
+export async function refundCredits(userId: string, amount: number, fromPack = 0): Promise<void> {
+  const fromAllowance = amount - fromPack;
+  if (fromPack > 0) {
+    await userModel.updateOne({ _id: userId }, { $inc: { packCredits: fromPack } });
+  }
+  if (fromAllowance > 0) {
+    await userModel.updateOne(
+      { _id: userId, creditsUsed: mongoose.trusted({ $gte: fromAllowance }) },
+      { $inc: { creditsUsed: -fromAllowance } },
+    );
+  }
 }
 
 /**

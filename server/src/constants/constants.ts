@@ -37,6 +37,14 @@ export const CREDIT_COST = {
   RECREATE_COST: 10,
 };
 
+// One-time credit packs. Mirrors CREDIT_PACK in client/src/data/pricing.ts and the Paddle
+// credit pack price (credits_per_unit 5, quantity 5–500), so 25 to 2,500 credits in steps of 5.
+export const CREDIT_PACK = {
+  CREDITS_PER_UNIT: 5,
+  MIN_CREDITS: 25,
+  MAX_CREDITS: 2500,
+};
+
 // Free accounts get CREDIT_COST.SIGNUP_BONUS back this long after the last refill.
 export const CREDIT_RESET_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
 

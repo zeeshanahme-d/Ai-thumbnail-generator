@@ -47,6 +47,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
   const userId = req.user!.userId as string;
   let thumbnailId: string | null = null;
   let creditsReserved = false;
+  let packCreditsUsed = 0;
   let succeeded = false;
 
   try {
@@ -60,10 +61,11 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     await resetDueCredits(userId);
 
     // Take the credits before calling Gemini. The finally block refunds them if anything fails.
-    const credits = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
-    creditsReserved = credits !== null;
+    const reservation = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
+    creditsReserved = reservation !== null;
+    packCreditsUsed = reservation?.fromPack ?? 0;
 
-    if (!credits) {
+    if (!reservation) {
       const user = await userModel.findById(userId);
       if (!user) {
         return ApiResponse.error(res, 404, "User account not found.");
@@ -101,6 +103,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       text_overlay: Boolean(text_overlay),
       color_scheme: color_scheme || "Vibrant",
       isGenerating: true,
+      packCreditsUsed,
     });
     thumbnailId = thumbnail._id.toString();
 
@@ -263,7 +266,7 @@ QUALITY REQUIREMENTS
     await thumbnail.save();
 
     succeeded = true;
-    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", { thumbnail, credits });
+    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", { thumbnail, credits: reservation.balance });
 
   } finally {
     if (creditsReserved && !succeeded) {
@@ -274,7 +277,7 @@ QUALITY REQUIREMENTS
         : true;
 
       if (removed) {
-        await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((error) => {
+        await refundCredits(userId, CREDIT_COST.GENERATE_COST, packCreditsUsed).catch((error) => {
           logger.error("Failed to refund generation credits", { userId, credits: CREDIT_COST.GENERATE_COST, error });
         });
       }

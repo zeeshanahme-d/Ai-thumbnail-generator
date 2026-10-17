@@ -29,6 +29,15 @@ export function readPlanGrant(customData: unknown): { plan: UserPlan; credits: n
   return { plan: data.plan, credits };
 }
 
+/** Credits one unit of a credit pack price grants, or null when the price is not a credit pack. */
+export function readCreditPack(customData: unknown): number | null {
+  const data = (customData ?? {}) as Record<string, unknown>;
+  const perUnit = data.credits_per_unit;
+  if (data.type !== "credit_pack") return null;
+  if (typeof perUnit !== "number" || !Number.isInteger(perUnit) || perUnit <= 0) return null;
+  return perUnit;
+}
+
 // Our checkout puts the userId in the transaction's custom_data; Paddle copies it to the
 // subscription and every renewal. The subscription id is the fallback.
 async function findBillingUser(customData: unknown, subscriptionId: string): Promise<BillingUser | null> {
@@ -155,5 +164,53 @@ export async function grantPaidPeriod(transaction: TransactionNotification): Pro
     logger.info("Plan credits granted", { ...context, userId, plan: grant.plan, credits: grant.credits, periodStart, periodEnd });
   } else {
     logger.debug("Billing period already granted", { ...context, userId });
+  }
+}
+
+// Our checkout puts the userId in custom_data; the Paddle customer is the fallback.
+async function findPackBuyer(customData: unknown, customerId: string | null) {
+  const userId = (customData as Record<string, unknown> | null)?.userId;
+  if (typeof userId === "string" && mongoose.isValidObjectId(userId)) {
+    const user = await userModel.findById(userId).select("_id").lean();
+    if (user) return user;
+  }
+  return customerId ? userModel.findOne({ paddleCustomerId: customerId }).select("_id").lean() : null;
+}
+
+/**
+ * transaction.completed without a subscription: a credit pack. Adds credits_per_unit × quantity
+ * to the pack balance, once per transaction, read from the paid transaction rather than the client.
+ */
+export async function grantCreditPack(transaction: TransactionNotification): Promise<void> {
+  const context = { transactionId: transaction.id, origin: transaction.origin };
+
+  const item = transaction.items.find((entry) => readCreditPack(entry.price?.customData) !== null);
+  if (!item) {
+    logger.debug("Completed transaction is not a credit pack", context);
+    return;
+  }
+  const perUnit = readCreditPack(item.price?.customData)!;
+  if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+    logger.error("Credit pack transaction has an invalid quantity", { ...context, quantity: item.quantity });
+    return;
+  }
+  const credits = perUnit * item.quantity;
+
+  const user = await findPackBuyer(transaction.customData, transaction.customerId);
+  if (!user) {
+    logger.warn("Credit pack paid for no known user", { ...context, credits });
+    return;
+  }
+
+  // One write adds the credits and records the transaction, so a retry finds it and adds nothing.
+  const { modifiedCount } = await userModel.updateOne(
+    { _id: user._id, creditPackTransactionIds: mongoose.trusted({ $ne: transaction.id }) },
+    { $inc: { packCredits: credits }, $push: { creditPackTransactionIds: transaction.id } },
+  );
+
+  if (modifiedCount) {
+    logger.info("Credit pack granted", { ...context, userId: String(user._id), credits });
+  } else {
+    logger.debug("Credit pack already granted", { ...context, userId: String(user._id) });
   }
 }

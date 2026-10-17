@@ -435,7 +435,7 @@ async function handleVerifyEmail(req: Request, res: Response) {
     await resetDueCredits(String(user._id));
   }
 
-  const updated = await userModel.findById(user._id).select("totalcredits creditsUsed").lean();
+  const updated = await userModel.findById(user._id).select("totalcredits creditsUsed packCredits").lean();
   const grantedCredits = getRemainingCredits(updated) - creditsBefore;
 
   return ApiResponse.success(

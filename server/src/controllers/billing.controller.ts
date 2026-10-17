@@ -4,8 +4,9 @@ import paddle from "../config/paddle.js";
 import userModel from "../models/user.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import logger from "../utils/logger.js";
-import { grantPaidPeriod, isLiveSubscription, syncSubscription } from "../utils/billing.js";
+import { grantCreditPack, grantPaidPeriod, isLiveSubscription, syncSubscription } from "../utils/billing.js";
 import { AuthErrorCode, BillingErrorCode } from "../constants/enums.js";
+import { CREDIT_PACK } from "../constants/constants.js";
 
 // PADDLE_PRICE_PRO_MONTHLY, PADDLE_PRICE_ULTRA_YEARLY, ...
 const priceIdFor = (plan: string, billing: string) => process.env[`PADDLE_PRICE_${plan.toUpperCase()}_${billing.toUpperCase()}`];
@@ -38,22 +39,57 @@ async function handleCreateCheckout(req: Request, res: Response) {
     return ApiResponse.error(res, 409, "You already have a plan. Manage it from Settings.", BillingErrorCode.AlreadySubscribed);
   }
 
-  // One Paddle customer per account, matched by email, so checkout opens with the email filled in.
-  let customerId = user.paddleCustomerId;
-  if (!customerId) {
-    const [existing] = await paddle().customers.list({ email: [user.email] }).next();
-    customerId = existing?.id ?? (await paddle().customers.create({ email: user.email, name: user.fullName })).id;
-    await userModel.updateOne({ _id: user._id }, { $set: { paddleCustomerId: customerId } });
-  }
-
   const transaction = await paddle().transactions.create({
     items: [{ priceId, quantity: 1 }],
-    customerId,
+    customerId: await paddleCustomerFor(user),
     customData: { userId: String(user._id) },
   });
 
   logger.info("Checkout created", { userId: String(user._id), plan, billing, transactionId: transaction.id });
   return ApiResponse.success(res, 201, "Checkout ready.", { transactionId: transaction.id });
+}
+
+/**
+ * POST /billing/credits
+ * Checkout for a one-time credit pack. The validated credit count becomes the quantity of the
+ * 5-credit price; the webhook grants what Paddle reports as paid, not what the client asked for.
+ */
+async function handleCreateCreditPackCheckout(req: Request, res: Response) {
+  const { credits } = req.validated!.body;
+
+  const priceId = process.env.PADDLE_PRICE_CREDITS;
+  if (!priceId) {
+    logger.error("Paddle price is not configured", { env: "PADDLE_PRICE_CREDITS" });
+    return ApiResponse.error(res, 503, "Payments are not available right now. Please try again later.");
+  }
+
+  const user = await userModel.findById(req.user!.userId);
+  if (!user) {
+    return ApiResponse.error(res, 404, "User account not found.");
+  }
+
+  if (!user.isVerified) {
+    return ApiResponse.error(res, 403, "Verify your email before buying credits.", AuthErrorCode.EmailNotVerified);
+  }
+
+  const transaction = await paddle().transactions.create({
+    items: [{ priceId, quantity: credits / CREDIT_PACK.CREDITS_PER_UNIT }],
+    customerId: await paddleCustomerFor(user),
+    customData: { userId: String(user._id) },
+  });
+
+  logger.info("Credit pack checkout created", { userId: String(user._id), credits, transactionId: transaction.id });
+  return ApiResponse.success(res, 201, "Checkout ready.", { transactionId: transaction.id });
+}
+
+// One Paddle customer per account, matched by email, so checkout opens with the email filled in.
+async function paddleCustomerFor(user: { _id: unknown; email: string; fullName: string; paddleCustomerId?: string | null }) {
+  if (user.paddleCustomerId) return user.paddleCustomerId;
+
+  const [existing] = await paddle().customers.list({ email: [user.email] }).next();
+  const customerId = existing?.id ?? (await paddle().customers.create({ email: user.email, name: user.fullName })).id;
+  await userModel.updateOne({ _id: user._id }, { $set: { paddleCustomerId: customerId } });
+  return customerId;
 }
 
 /**
@@ -107,7 +143,8 @@ async function handlePaddleWebhook(req: Request, res: Response) {
         await syncSubscription(event.data);
         break;
       case EventName.TransactionCompleted:
-        await grantPaidPeriod(event.data);
+        // Subscription payments refill the plan; payments without a subscription are credit packs.
+        await (event.data.subscriptionId ? grantPaidPeriod(event.data) : grantCreditPack(event.data));
         break;
     }
 
@@ -119,4 +156,4 @@ async function handlePaddleWebhook(req: Request, res: Response) {
   }
 }
 
-export { handleCreateCheckout, handleCreatePortalSession, handlePaddleWebhook };
+export { handleCreateCheckout, handleCreateCreditPackCheckout, handleCreatePortalSession, handlePaddleWebhook };
