@@ -58,7 +58,8 @@ client/src/
 ├─ sections/         # large composed marketing sections (HeroSection, PricingSection, …)
 ├─ core/             # shared API layer: _models.ts, _requests.ts, hooks/ (React Query)
 │  ├─ auth/          # session, login/signup, OTP and verification hooks
-│  └─ thumbnails/    # list, generate, like, publish, delete and restore hooks
+│  ├─ thumbnails/    # list, generate, like, publish, delete and restore hooks
+│  └─ billing/       # checkout (Paddle overlay) and billing-portal hooks
 ├─ pages/
 │  ├─ auth/          # login/signup/forgot/otp/reset + core/_schemas.ts (form schemas)
 │  ├─ dashboard/     # generate / gallery / recreate / recycle-bin / settings
@@ -236,16 +237,16 @@ server/
 ├─ server.ts                 # dotenv + connect mongo + startScheduledJobs() + app.listen(PORT)
 └─ src/
    ├─ app.ts                 # express app; cors({ origin: CLIENT_URL, credentials: true })
-   ├─ config/                # genai.ts (Gemini), cloudinary.ts, hf.ts (HuggingFace — unused)
+   ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts, hf.ts (HuggingFace — unused)
    ├─ constants/             # enums.ts (all enums), constants.ts (style prompts, credit costs, sort)
-   ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files
-   ├─ controllers/           # auth, user, thumbnail, upload-files
+   ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
+   ├─ controllers/           # auth, user, thumbnail, upload-files, billing
    ├─ middlewares/            # auth (JWT), multer (image upload), validate (zod)
    ├─ models/                # user, refreshToken, thumbnail, likeDislike, thumbnailView
    ├─ schemas/               # media.schema.ts (reusable Mongoose subdocument)
-   ├─ validations/           # zod schemas for auth + thumbnail endpoints
+   ├─ validations/           # zod schemas for auth, thumbnail and billing endpoints
    ├─ helper/                # halper-functions.ts (bcrypt), token-helpers.ts (JWT)
-   ├─ utils/                 # apiResponse, cloudniary, credits, delete-thumbnails, email, gemini,
+   ├─ utils/                 # apiResponse, billing, cloudniary, credits, delete-thumbnails, email, gemini,
    │                         # pagination, scheduled-jobs, helpers
    ├─ db/                    # connection.ts (Mongoose connect)
    └─ types/express.d.ts     # augments Request.user, Request.validated
@@ -346,12 +347,42 @@ through but checks anyone with a session cookie, so signed-in users get `isLiked
 - `PATCH /users/profile` — update profile (fullName, username, bio, website)
 - `DELETE /users/account` — delete account; body must include the current `password`.
   The user's likes are taken off other thumbnails' counts, and likes on their thumbnails
-  are deleted.
+  are deleted. A live Paddle subscription is cancelled immediately first; if that fails,
+  nothing is deleted.
 - `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary)
 
 `uploadSingleImage` keeps the file in memory (`req.file.buffer`, never on disk) and checks
 its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
 With `NODE_ENV=production` the error handler replaces 5xx messages with a generic one.
+
+### Billing (Paddle)
+
+Pro and Ultra are Paddle subscriptions (monthly or yearly). The catalog lives in Paddle;
+each price carries `custom_data: { plan, billing, credits_per_month }` and each product
+`{ plan }`, so the webhook never hardcodes Paddle IDs. The Free plan exists only in the app.
+
+- `POST /billing/checkout` `{ plan, billing }` (auth, `billingLimiter`) — picks the price from
+  `PADDLE_PRICE_<PLAN>_<BILLING>`, refuses unverified accounts and accounts with a live
+  subscription (`ALREADY_SUBSCRIBED`), finds or creates the Paddle customer by email, and
+  creates a transaction with `custom_data.userId`. The client opens Paddle.js overlay checkout
+  with the returned `transactionId` (`lib/paddle.ts`, `core/billing/`).
+- `POST /billing/portal` (auth) — Paddle customer portal link: cancel, card, invoices.
+- `POST /billing/webhook` (public, signed) — mounted in `app.ts` **before** `express.json`
+  with `express.text`, because the signature covers the raw bytes. Any error returns 500 so
+  Paddle retries. Logic in `utils/billing.ts`:
+  - `subscription.*` events own `plan`, `subscriptionStatus`, `subscriptionId`,
+    `subscriptionRenewsAt` (null while a cancel is scheduled) and `paddleCustomerId`. An older
+    event (`subscriptionUpdatedAt`) or one from a different subscription while the stored one
+    is still live is ignored. `canceled`/`paused` move the account to Free and refill 20.
+  - `transaction.completed` owns the credits: a paid billing period sets `totalcredits` to
+    `credits_per_month`, clears usage and records `subscriptionPeriodStart/End`, once per
+    period. Payment-method-change transactions never refill. Renewal credits come from the
+    payment, not `subscription.updated`, which Paddle sends before charging.
+- Paid refills inside a period (`resetDueCredits`): yearly plans clear usage on each monthly
+  anniversary of the period start (`nextPaidRefill`, capped at the period end); monthly plans
+  wait for the next payment. Check: `npx tsx src/utils/billing.check.ts`.
+- Not built: switching plans (needs `subscriptions.update`), credit packs (`CREDIT_PACK`
+  stays "Coming soon").
 
 ### AI Generation flow
 
@@ -393,9 +424,11 @@ Env: `PORT`, `SECRET`, `REFRESH_SECRET` (falls back to `SECRET`), `CLIENT_URL`,
 `CLIENT_ID`, `GEMINI_API_KEY`, `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `CLOUDINARY_NAME`, `SMTP_HOST`, `SMTP_USER`,
 `SMTP_PASSWORD`, `SMTP_TLS_PORT`, `MONGO_DB_URL`, `TRUST_PROXY` (number of reverse proxies,
-unset when clients connect directly).
+unset when clients connect directly), `PADDLE_ENV` (`production` for live, else sandbox),
+`PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_{PRO,ULTRA}_{MONTHLY,YEARLY}`.
 Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`), `VITE_SITE_URL` (the
-site's public origin, filled into the Open Graph tags in `index.html`; set it for production).
+site's public origin, filled into the Open Graph tags in `index.html`; set it for production),
+`VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_ENV`.
 
 ## Current state / gotchas
 
@@ -407,7 +440,9 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - Like/unlike, publish/unpublish, soft delete/restore/permanent delete
 - Profile editing + avatar upload via Cloudinary
 - Dark mode via `data-theme` attribute + CSS variables in `globals.css`
-- Settings page with EditProfile and Billing (balance and refill date); InvoicesSection is a UI shell
+- Settings page with EditProfile and Billing (balance, refill date, renewal or end date,
+  Upgrade → `/pricing`, Manage Plan → Paddle portal); InvoicesSection is a UI shell
+- Paid Pro/Ultra plans through Paddle (see Billing above); `PricingCard` opens checkout
 - Monthly free-credit refill, stuck-generation cleanup, the 30-day recycle-bin purge and the
   trending score (likes and views decayed by age, `TRENDING_*` in `constants.ts`)
   (`utils/scheduled-jobs.ts`); permanent deletes all go through `deleteThumbnailsForever`
@@ -415,8 +450,8 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
   view on open, and Share copies the server's `/share` link so previews show the image
 
 ### Not implemented / placeholder
-- **Payment/subscription** — pricing page exists, user model has plan fields, but no
-  payment integration (Stripe/LemonSqueezy). The Upgrade button is disabled.
+- **Plan switching and credit packs** — subscribers can cancel and re-subscribe, but not
+  switch Pro ↔ Ultra in place; one-time credit packs are not on sale.
 - **Google OAuth** — no `/auth/google` endpoint; the Google button is hidden until it exists.
 - **Recreate** — placeholder page only; no upload-and-remix flow.
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
