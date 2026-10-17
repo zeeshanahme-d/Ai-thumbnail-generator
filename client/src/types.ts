@@ -217,6 +217,41 @@ export interface PricingCardProps {
   index: number;
 }
 
+export type LegalDocumentId = "privacy" | "terms" | "refund";
+
+export interface ILegalSection {
+  id: string;
+  title: string;
+  paragraphs: string[];
+  list?: string[];
+}
+
+export interface ILegalDocument {
+  id: LegalDocumentId;
+  title: string;
+  path: string;
+  summary: string;
+  updatedAt: string;
+  sections: ILegalSection[];
+}
+
+export interface LegalPageProps {
+  documentId: LegalDocumentId;
+}
+
+export interface LegalTocProps {
+  sections: ILegalSection[];
+}
+
+export interface LegalSectionProps {
+  section: ILegalSection;
+  number: number;
+}
+
+export interface RelatedLegalDocsProps {
+  currentId: LegalDocumentId;
+}
+
 export interface SectionProps {
   title: string;
   description: string;

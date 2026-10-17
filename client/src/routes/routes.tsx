@@ -23,6 +23,7 @@ const RecycleBin = lazy(() => import('../pages/dashboard/recycle-bin/RecycleBin'
 const PublicProfile = lazy(() => import('../pages/profile/Profile'));
 const MyGallery = lazy(() => import('../pages/dashboard/gallery/MyGallery'));
 const ThumbnailPreview = lazy(() => import('../pages/thumbnail-preview/ThumbnailPreview'));
+const LegalPage = lazy(() => import('../pages/legal/LegalPage'));
 const NotFound = lazy(() => import('../pages/not-found/NotFound'));
 
 function AppRoutes() {
@@ -63,6 +64,9 @@ function AppRoutes() {
                             <Route path="/profile" element={<PublicProfile />} />
                             {/* Thumbnail preview — public, shareable */}
                             <Route path="/thumbnail/:id" element={<ThumbnailPreview />} />
+                            <Route path="/privacy-policy" element={<LegalPage documentId="privacy" />} />
+                            <Route path="/terms" element={<LegalPage documentId="terms" />} />
+                            <Route path="/refund-policy" element={<LegalPage documentId="refund" />} />
 
                             {/* Catch-all 404 Route */}
                             <Route path="*" element={<NotFound />} />
