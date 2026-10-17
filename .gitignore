@@ -32,3 +32,5 @@ env/
 .env
 .env.local
 .env.*.local
+
+/brag-output
