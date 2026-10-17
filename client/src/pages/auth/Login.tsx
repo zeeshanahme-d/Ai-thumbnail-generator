@@ -6,8 +6,8 @@ import Button from "../../components/Button";
 import AuthTabs from "./components/AuthTabs";
 import FieldError from "./components/FieldError";
 import Input from "../../components/Input";
-import Alert from "../../components/Alert";
 //hooks & utils
+import toast from "react-hot-toast";
 import { useForm } from "@tanstack/react-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogin } from "../../core/auth/hooks";
@@ -17,7 +17,7 @@ import { getApiErrorMessage } from "../../lib/axios";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { mutateAsync: login, isPending, error } = useLogin();
+  const { mutateAsync: login, isPending } = useLogin();
 
   const from =
     (location.state as { from?: string } | null)?.from ?? "/dashboard/generate";
@@ -29,8 +29,8 @@ export default function Login() {
       try {
         await login(value);
         navigate(from, { replace: true });
-      } catch {
-        // Server error is rendered from the mutation's `error` state below.
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
       }
     },
   });
@@ -41,11 +41,6 @@ export default function Login() {
       subtitle="Sign in to keep generating high-conversion AI thumbnails."
       topSlot={<AuthTabs />}
     >
-      {!!error && (
-        <Alert variant="error" className="mb-6">
-          {getApiErrorMessage(error)}
-        </Alert>
-      )}
       <form
         noValidate
         onSubmit={(e) => {
@@ -53,7 +48,7 @@ export default function Login() {
           e.stopPropagation();
           void form.handleSubmit();
         }}
-        className="space-y-6"
+        className="space-y-6.5"
       >
         <form.Field name="email">
           {(field) => (
@@ -100,17 +95,19 @@ export default function Login() {
           </Link>
         </div>
 
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting || isPending}
-            >
-              {isSubmitting || isPending ? "Signing in..." : "Sign in"}
-            </Button>
-          )}
-        </form.Subscribe>
+        <div className="pt-2">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting || isPending}
+              >
+                {isSubmitting || isPending ? "Signing in..." : "Sign in"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </div>
       </form>
     </AuthLayout>
   );

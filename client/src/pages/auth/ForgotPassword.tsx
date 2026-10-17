@@ -6,7 +6,6 @@ import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import BackButton from "../../components/BackButton";
 import Input from "../../components/Input";
-import Alert from "../../components/Alert";
 import FieldError from "./components/FieldError";
 import { useForgotPassword } from "../../core/auth/hooks";
 import { forgotPasswordSchema } from "./core/_schemas";
@@ -14,7 +13,7 @@ import { getApiErrorMessage } from "../../lib/axios";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { mutateAsync: forgotPasswordMutate, isPending, error } = useForgotPassword();
+  const { mutateAsync: forgotPasswordMutate, isPending } = useForgotPassword();
 
   const form = useForm({
     defaultValues: { email: "" },
@@ -25,8 +24,8 @@ export default function ForgotPassword() {
         sessionStorage.setItem("tg_reset_email", value.email);
         toast.success(response.message || "Reset code sent to your email!");
         navigate("/verify-otp");
-      } catch {
-        // Server error is displayed via the error alert below
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
       }
     },
   });
@@ -37,12 +36,6 @@ export default function ForgotPassword() {
       subtitle="Enter your email and we'll send you a reset code"
       topSlot={<BackButton />}
     >
-      {!!error && (
-        <Alert variant="error" className="mb-6">
-          {getApiErrorMessage(error)}
-        </Alert>
-      )}
-
       <form
         noValidate
         onSubmit={(e) => {
@@ -50,7 +43,7 @@ export default function ForgotPassword() {
           e.stopPropagation();
           void form.handleSubmit();
         }}
-        className="space-y-6"
+        className="space-y-6.5"
       >
         <form.Field name="email">
           {(field) => (
@@ -70,17 +63,19 @@ export default function ForgotPassword() {
           )}
         </form.Field>
 
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting || isPending}
-            >
-              {isSubmitting || isPending ? "Sending code..." : "Send code"}
-            </Button>
-          )}
-        </form.Subscribe>
+        <div className="pt-2">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting || isPending}
+              >
+                {isSubmitting || isPending ? "Sending code..." : "Send code"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </div>
       </form>
     </AuthLayout>
   );

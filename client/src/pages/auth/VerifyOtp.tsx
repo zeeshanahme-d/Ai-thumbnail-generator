@@ -11,7 +11,6 @@ import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import BackButton from "../../components/BackButton";
-import Alert from "../../components/Alert";
 import {
   useForgotPassword,
   useResendVerification,
@@ -54,20 +53,16 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
   );
   const [otp, setOtp] = useState<string[]>(new Array(LENGTH).fill(""));
   const [timer, setTimer] = useState(60);
-  const [validationError, setValidationError] = useState<string | null>(null);
 
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const { mutateAsync: forgotPasswordMutate, isPending: isResendingReset } = useForgotPassword();
   const { mutateAsync: resendVerificationMutate, isPending: isResendingVerification } =
     useResendVerification();
-  const { mutateAsync: verifyOtpMutate, isPending: isVerifyingReset, error: verifyResetError } =
-    useVerifyOtp();
-  const { mutateAsync: verifyEmailMutate, isPending: isVerifyingEmail, error: verifyEmailError } =
-    useVerifyEmail();
+  const { mutateAsync: verifyOtpMutate, isPending: isVerifyingReset } = useVerifyOtp();
+  const { mutateAsync: verifyEmailMutate, isPending: isVerifyingEmail } = useVerifyEmail();
 
   const isResending = isResetMode ? isResendingReset : isResendingVerification;
   const isVerifying = isResetMode ? isVerifyingReset : isVerifyingEmail;
-  const verifyApiError = isResetMode ? verifyResetError : verifyEmailError;
 
   useEffect(() => {
     if (!email) {
@@ -89,7 +84,6 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
     const next = [...otp];
     chars.forEach((char, i) => (next[i] = char));
     setOtp(next);
-    setValidationError(null);
     inputRefs.current[Math.min(chars.length - 1, LENGTH - 1)]?.focus();
   };
 
@@ -100,7 +94,6 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
     const next = [...otp];
     next[index] = value.slice(-1);
     setOtp(next);
-    setValidationError(null);
     if (value && index < LENGTH - 1) inputRefs.current[index + 1]?.focus();
   };
 
@@ -136,7 +129,7 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
     e.preventDefault();
     const otpCode = otp.join("");
     if (otpCode.length < LENGTH || !/^\d{6}$/.test(otpCode)) {
-      setValidationError("Please enter a valid 6-digit verification code.");
+      toast.error("Please enter a valid 6-digit verification code.");
       return;
     }
 
@@ -153,8 +146,8 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
       sessionStorage.removeItem(config.storageKey);
       toast.success(response.message || "Email verified.");
       navigate(isAuthenticated ? "/dashboard/generate" : "/login", { replace: true });
-    } catch {
-      // Error rendered below via Alert
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
     }
   };
 
@@ -164,12 +157,6 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
       subtitle={config.subtitle(email)}
       topSlot={<BackButton />}
     >
-      {(validationError || !!verifyApiError) && (
-        <Alert variant="error" className="mb-6">
-          {validationError || getApiErrorMessage(verifyApiError)}
-        </Alert>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex justify-center gap-2">
           {otp.map((digit, index) => (

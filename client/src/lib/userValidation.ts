@@ -52,5 +52,5 @@ export const usernameSchema = z
     .toLowerCase()
     .min(USERNAME_MIN_LENGTH, `Username must be at least ${USERNAME_MIN_LENGTH} characters`)
     .max(USERNAME_MAX_LENGTH, `Username must be at most ${USERNAME_MAX_LENGTH} characters`)
-    .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores")
+    .regex(/^[a-z0-9_]+$/, "Use lowercase letters, numbers and underscores")
     .refine((username) => !RESERVED_USERNAMES.has(username), "This username is reserved");

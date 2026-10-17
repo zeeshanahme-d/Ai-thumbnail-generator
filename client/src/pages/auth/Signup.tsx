@@ -7,14 +7,13 @@ import Button from "../../components/Button";
 import AuthTabs from "./components/AuthTabs";
 import FieldError from "./components/FieldError";
 import Input from "../../components/Input";
-import Alert from "../../components/Alert";
 import { useSignup } from "../../core/auth/hooks";
 import { signupSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { mutateAsync: signup, isPending, error } = useSignup();
+  const { mutateAsync: signup, isPending } = useSignup();
 
   const form = useForm({
     defaultValues: { fullName: "", email: "", password: "" },
@@ -26,8 +25,8 @@ export default function Signup() {
         sessionStorage.setItem("tg_verify_email", value.email.trim().toLowerCase());
         toast.success(response.message || "Account created. Check your email for a 6-digit code.");
         navigate("/verify-email", { replace: true });
-      } catch {
-        // Server error is rendered from the mutation's `error` state below.
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
       }
     },
   });
@@ -38,11 +37,6 @@ export default function Signup() {
       subtitle="Start creating visually stunning, premium thumbnails for free."
       topSlot={<AuthTabs />}
     >
-      {!!error && (
-        <Alert variant="error" className="mb-6">
-          {getApiErrorMessage(error)}
-        </Alert>
-      )}
       <form
         noValidate
         onSubmit={(e) => {
@@ -50,7 +44,7 @@ export default function Signup() {
           e.stopPropagation();
           void form.handleSubmit();
         }}
-        className="space-y-6"
+        className="space-y-6.5"
       >
         <form.Field name="fullName">
           {(field) => (
@@ -106,20 +100,22 @@ export default function Signup() {
           )}
         </form.Field>
 
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <Button
-              type="submit"
-              variant="primary"
-              // className="cursor-not-allowed"
-              disabled={isSubmitting || isPending}
-            >
-              {isSubmitting || isPending
-                ? "Creating account..."
-                : "Create Account"}
-            </Button>
-          )}
-        </form.Subscribe>
+        <div className="pt-2">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                type="submit"
+                variant="primary"
+                // className="cursor-not-allowed"
+                disabled={isSubmitting || isPending}
+              >
+                {isSubmitting || isPending
+                  ? "Creating account..."
+                  : "Create Account"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </div>
       </form>
     </AuthLayout>
   );

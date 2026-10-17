@@ -128,13 +128,13 @@ export default function EditProfileSection() {
                         e.stopPropagation();
                         void form.handleSubmit();
                     }}
-                    className="space-y-6"
+                    className="space-y-6.5"
                 >
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-6.5 md:grid-cols-2">
                         {/* Full Name */}
                         <form.Field name="fullName">
                             {(field) => (
-                                <div className="space-y-1.5">
+                                <div>
                                     <label htmlFor="fullName" className="pl-1 text-xs font-medium text-text-secondary">Full Name</label>
                                     <Input
                                         icon={User}
@@ -170,9 +170,9 @@ export default function EditProfileSection() {
                                             handleDebouncedUsernameChange(val);
                                         }}
                                     />
-                                    {!isUsernameUnchanged && debouncedUsername.trim().length >= 3 && (
-                                        <div className="mt-1">
-                                            {isCheckingUsername ? (
+                                    <FieldError meta={field.state.meta}>
+                                        {!isUsernameUnchanged && debouncedUsername.trim().length >= 3 && (
+                                            isCheckingUsername ? (
                                                 <span className="flex items-center gap-1 text-xs text-text-muted">
                                                     <Loader2 size={12} className="animate-spin" /> Checking availability...
                                                 </span>
@@ -184,10 +184,9 @@ export default function EditProfileSection() {
                                                 <span className="flex items-center gap-1 text-xs font-medium text-primary">
                                                     <XCircle size={13} /> Username is already taken
                                                 </span>
-                                            ) : null}
-                                        </div>
-                                    )}
-                                    <FieldError meta={field.state.meta} />
+                                            ) : null
+                                        )}
+                                    </FieldError>
                                 </div>
                             )}
                         </form.Field>

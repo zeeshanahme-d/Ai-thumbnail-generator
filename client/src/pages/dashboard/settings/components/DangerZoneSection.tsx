@@ -91,23 +91,26 @@ export default function DangerZoneSection() {
                 loading={isPending}
                 confirmDisabled={!password}
             >
-                <label htmlFor="delete-account-password" className="mb-1.5 block pl-1 text-left text-xs font-medium text-text-secondary">
-                    Enter your password to confirm
-                </label>
-                <Input
-                    icon={Lock}
-                    id="delete-account-password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Current password"
-                    value={password}
-                    onChange={(event) => {
-                        setPassword(event.target.value);
-                        setPasswordError(null);
-                    }}
-                    onKeyDown={handlePasswordKeyDown}
-                />
-                <FieldError message={passwordError} />
+                {/* pb-2 keeps room under the error line above the dialog buttons */}
+                <div className="pb-2">
+                    <label htmlFor="delete-account-password" className="mb-1.5 block pl-1 text-left text-xs font-medium text-text-secondary">
+                        Enter your password to confirm
+                    </label>
+                    <Input
+                        icon={Lock}
+                        id="delete-account-password"
+                        type="password"
+                        autoComplete="current-password"
+                        placeholder="Current password"
+                        value={password}
+                        onChange={(event) => {
+                            setPassword(event.target.value);
+                            setPasswordError(null);
+                        }}
+                        onKeyDown={handlePasswordKeyDown}
+                    />
+                    <FieldError message={passwordError} />
+                </div>
             </ConfirmDialog>
         </section>
     );

@@ -7,7 +7,6 @@ import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
 import BackButton from "../../components/BackButton";
 import Input from "../../components/Input";
-import Alert from "../../components/Alert";
 import FieldError from "./components/FieldError";
 import { useResetPassword } from "../../core/auth/hooks";
 import { resetPasswordSchema } from "./core/_schemas";
@@ -18,7 +17,7 @@ export default function ResetPassword() {
   const [email] = useState(() => sessionStorage.getItem("tg_reset_email") || "");
   const [otp] = useState(() => sessionStorage.getItem("tg_reset_otp") || "");
 
-  const { mutateAsync: resetPasswordMutate, isPending, error } = useResetPassword();
+  const { mutateAsync: resetPasswordMutate, isPending } = useResetPassword();
 
   useEffect(() => {
     if (!email || !otp) {
@@ -40,8 +39,8 @@ export default function ResetPassword() {
         sessionStorage.removeItem("tg_reset_otp");
         toast.success(response.message || "Password reset successful! Please log in.");
         navigate("/login", { replace: true });
-      } catch {
-        // Server error is displayed via the Alert component below
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
       }
     },
   });
@@ -52,12 +51,6 @@ export default function ResetPassword() {
       subtitle="Choose a new password for your account"
       topSlot={<BackButton />}
     >
-      {!!error && (
-        <Alert variant="error" className="mb-6">
-          {getApiErrorMessage(error)}
-        </Alert>
-      )}
-
       <form
         noValidate
         onSubmit={(e) => {
@@ -65,7 +58,7 @@ export default function ResetPassword() {
           e.stopPropagation();
           void form.handleSubmit();
         }}
-        className="space-y-6"
+        className="space-y-6.5"
       >
         <form.Field name="newPassword">
           {(field) => (
@@ -103,17 +96,19 @@ export default function ResetPassword() {
           )}
         </form.Field>
 
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isSubmitting || isPending}
-            >
-              {isSubmitting || isPending ? "Resetting password..." : "Reset password"}
-            </Button>
-          )}
-        </form.Subscribe>
+        <div className="pt-2">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting || isPending}
+              >
+                {isSubmitting || isPending ? "Resetting password..." : "Reset password"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </div>
       </form>
     </AuthLayout>
   );
