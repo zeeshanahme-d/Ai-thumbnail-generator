@@ -1,20 +1,36 @@
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/Button";
 import { getRemainingCredits } from "../../../../lib/credits";
+import { hasLiveSubscription } from "../../../../lib/paddle";
+import { useBillingPortal } from "../../../../core/billing/hooks/use-billing-portal";
 import { useSession } from "../../../../store/useSessionStore";
+
+const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 export default function BillingSection() {
     const user = useSession((state) => state.user);
+    const navigate = useNavigate();
+    const { openPortal, isPending } = useBillingPortal();
 
     const planName = user?.plan
         ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) + " Plan"
         : "Free Plan";
 
-    const isSubscribed = Boolean(user?.plan && user.plan !== "free");
+    const isSubscribed = Boolean(user?.plan && user.plan !== "free") && hasLiveSubscription(user);
+    const isPastDue = user?.subscriptionStatus === "past_due";
 
-    const statusText = user?.subscriptionStatus
-        ? user.subscriptionStatus.charAt(0).toUpperCase() + user.subscriptionStatus.slice(1)
-        : "Active";
+    const statusText = isPastDue ? "Payment failed" : "Active";
+
+    // No renewal date on a live plan means its cancellation is scheduled.
+    const renewalText = !isSubscribed
+        ? null
+        : user?.subscriptionRenewsAt
+            ? `Renews on ${formatDate(user.subscriptionRenewsAt)}.`
+            : user?.subscriptionPeriodEnd
+                ? `Ends on ${formatDate(user.subscriptionPeriodEnd)}, then you move to the Free Plan.`
+                : null;
 
     const totalCredits = user?.totalcredits ?? 0;
     const creditsUsed = user?.creditsUsed ?? 0;
@@ -22,13 +38,7 @@ export default function BillingSection() {
     const usagePercentage = totalCredits > 0 ? Math.min(100, Math.max(0, (creditsUsed / totalCredits) * 100)) : 0;
 
     // Unverified accounts have no refill date yet, so the line stays hidden for them.
-    const formattedResetDate = user?.creditsResetAt
-        ? new Date(user.creditsResetAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        })
-        : null;
+    const formattedResetDate = user?.creditsResetAt ? formatDate(user.creditsResetAt) : null;
 
     return (
         <section>
@@ -40,19 +50,25 @@ export default function BillingSection() {
                     <div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                             <h3 className="text-xl font-bold text-text-primary">{planName}</h3>
-                            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">
-                                <span className="size-1.5 rounded-full bg-emerald-500"></span>
+                            <span
+                                className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${isPastDue ? "bg-warning/10 text-warning" : "bg-emerald-500/10 text-emerald-500"}`}
+                            >
+                                <span className={`size-1.5 rounded-full ${isPastDue ? "bg-warning" : "bg-emerald-500"}`}></span>
                                 {statusText}
                             </span>
                         </div>
                         <p className="mt-2 text-sm text-text-secondary">
-                            {isSubscribed ? (
+                            {isPastDue ? (
                                 <>
-                                    You are currently on the <span className="font-semibold text-primary">{planName}</span>. Upgrade or manage your subscription to adjust generation limits.
+                                    Your last payment didn't go through. Update your payment method in <span className="font-semibold text-primary">Manage Plan</span> to keep your plan.
+                                </>
+                            ) : isSubscribed ? (
+                                <>
+                                    You are currently on the <span className="font-semibold text-primary">{planName}</span>. {renewalText} Cancel, change your card or download invoices in Manage Plan.
                                 </>
                             ) : (
                                 <>
-                                    You are currently on the <span className="font-semibold text-primary">Free Plan</span>. Upgrade to unlock HD/Ultra qualities and unlimited presets.
+                                    You are currently on the <span className="font-semibold text-primary">Free Plan</span>. Upgrade to Pro or Ultra for more credits every month.
                                 </>
                             )}
                         </p>
@@ -61,9 +77,10 @@ export default function BillingSection() {
                         variant="primary"
                         size="sm"
                         className="w-fit! shrink-0"
-                        disabled
-                        title="Paid plans are coming soon."
+                        disabled={isPending}
+                        onClick={isSubscribed ? openPortal : () => navigate("/pricing")}
                     >
+                        {isPending && <Loader2 size={16} className="animate-spin" />}
                         {isSubscribed ? "Manage Plan" : "Upgrade +"}
                     </Button>
                 </div>
