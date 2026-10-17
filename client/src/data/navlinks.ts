@@ -5,4 +5,5 @@ export const navlinks: INavLink[] = [
   { name: "Community", href: "/community" },
   { name: "Generate", href: "/dashboard/generate" },
   { name: "Gallery", href: "/dashboard/gallery" },
+  { name: "Pricing", href: "/pricing" },
 ];

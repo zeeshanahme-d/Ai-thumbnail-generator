@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import Wrapper from "../components/Wrapper";
 import SectionTitle from "../components/SectionTitle";
 import BillingToggle from "../components/BillingToggle";
@@ -27,6 +29,14 @@ export default function PricingSection() {
                         </Reveal>
                     ))}
                 </div>
+
+                <Link
+                    to="/pricing"
+                    className="mx-auto mt-10 flex w-max items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                >
+                    Compare all plan features
+                    <ArrowRight size={15} />
+                </Link>
             </Wrapper>
         </section>
     );

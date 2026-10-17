@@ -249,6 +249,10 @@ export interface IPlanComparisonRow {
   values: (string | boolean)[];
 }
 
+export interface ComparisonValueProps {
+  value: string | boolean;
+}
+
 export interface IFaq {
   question: string;
   answer: string;
