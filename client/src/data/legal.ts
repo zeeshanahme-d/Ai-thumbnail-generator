@@ -62,6 +62,7 @@ const privacyPolicy: ILegalDocument = {
                 "Cloudinary, which stores and delivers generated thumbnails and profile photos.",
                 "MongoDB, which hosts our database.",
                 "Our email provider, which delivers verification and password reset codes.",
+                "Paddle, our payment provider, which receives your name, email and payment details when you buy a plan. We never see or store your card number.",
             ],
         },
         {
@@ -168,7 +169,9 @@ const termsAndConditions: ILegalDocument = {
             id: "paid-plans",
             title: "Paid plans and credit packs",
             paragraphs: [
-                "Pro and Ultra plans and one-time credit packs are not on sale yet, and no payment is taken. When they launch, subscriptions will renew automatically until cancelled, credits bought in a pack won't expire, and our Refund Policy will apply.",
+                "Pro and Ultra plans are billed monthly or yearly and renew automatically until cancelled. Each plan includes a monthly credit allowance, also on yearly billing, and unused plan credits don't roll over. One-time credit packs are not on sale yet.",
+                "Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns.",
+                "You can cancel anytime from Settings. Our Refund Policy applies to every payment.",
             ],
         },
         {
@@ -289,7 +292,7 @@ const refundPolicy: ILegalDocument = {
             id: "paid-plans",
             title: "Paid plans and credit packs",
             paragraphs: [
-                "Pro, Ultra and credit packs are not on sale yet and you will not be charged. When they launch, these rules will apply:",
+                "Payments for Pro and Ultra are processed by Paddle.com, our Merchant of Record. Credit packs are not on sale yet. These rules apply:",
             ],
             list: [
                 "You can cancel a plan anytime. Cancelling stops the next renewal and you keep your plan until the end of the period you paid for.",
@@ -310,7 +313,7 @@ const refundPolicy: ILegalDocument = {
             id: "changes",
             title: "Changes to this policy",
             paragraphs: [
-                "We may update this policy, especially when paid plans launch. The date at the top shows the latest version.",
+                "We may update this policy. The date at the top shows the latest version.",
             ],
         },
     ],

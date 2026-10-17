@@ -74,16 +74,16 @@ export const pricingFaqs: IFaq[] = [
     {
         question: "Can I buy credits or a plan today?",
         answer:
-            "Not yet. Credit packs and the Pro and Ultra plans are coming soon, and no payment is taken until they launch. Everyone uses the Free plan in the meantime.",
+            "Yes, the Pro and Ultra plans are available now, billed monthly or yearly. One-time credit packs are coming soon.",
     },
     {
         question: "How does yearly billing work?",
-        answer: `Yearly plans cost ${YEARLY_DISCOUNT * 100}% less than paying monthly and are billed once a year.`,
+        answer: `Yearly plans cost ${YEARLY_DISCOUNT * 100}% less than paying monthly and are billed once a year. Your credits still arrive every month.`,
     },
     {
         question: "Can I cancel anytime?",
         answer:
-            "Yes. Once paid plans launch, cancelling stops the next renewal and you keep your plan until the end of the period you paid for. See the Refund Policy for details.",
+            "Yes. Cancel from Settings > Manage Plan. Cancelling stops the next renewal and you keep your plan until the end of the period you paid for. See the Refund Policy for details.",
     },
     {
         question: "Do I need a credit card for the free plan?",
