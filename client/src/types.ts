@@ -253,6 +253,10 @@ export interface ComparisonValueProps {
   value: string | boolean;
 }
 
+export interface FooterColumnProps {
+  column: IFooter;
+}
+
 export interface IFaq {
   question: string;
   answer: string;
