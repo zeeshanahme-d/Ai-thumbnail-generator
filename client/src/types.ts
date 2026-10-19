@@ -232,6 +232,19 @@ export interface SectionTitleProps {
    * start and split reveal the heading line by line: pass `text2` as an array of lines.
    */
   align?: "center" | "start" | "split";
+  /** Extra content under the description, such as an action or a "last updated" note. */
+  children?: ReactNode;
+}
+
+export interface PageHeaderProps {
+  eyebrow: string;
+  /** One entry per line. */
+  title: ReactNode[];
+  description: string;
+  /** Under the description: an action, a count, a date. */
+  children?: ReactNode;
+  /** The line-by-line reveal; only where motion is allowed (/pricing). */
+  animate?: boolean;
 }
 
 export interface MaskedLinesProps {

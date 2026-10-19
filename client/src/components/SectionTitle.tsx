@@ -12,6 +12,7 @@ export default function SectionTitle({
   as = "h2",
   animate = true,
   align = "center",
+  children,
 }: SectionTitleProps) {
   const Heading = as === "h1" ? motion.h1 : motion.h2;
   const reveal = (delay: number) =>
@@ -42,6 +43,7 @@ export default function SectionTitle({
         >
           {text3}
         </motion.p>
+        {children && <div className="mt-6">{children}</div>}
       </div>
     );
   }
@@ -58,15 +60,21 @@ export default function SectionTitle({
           </motion.div>
         )}
         <Heading className="text-[clamp(2rem,1.4rem+2.6vw,3.5rem)] font-medium leading-[1.04] tracking-[-0.035em] text-text-primary">
-          {animate ? <MaskedLines lines={lines} /> : text2}
+          {animate ? (
+            <MaskedLines lines={lines} />
+          ) : (
+            lines.map((line, index) => (
+              <span key={index} className="block">
+                {line}
+              </span>
+            ))
+          )}
         </Heading>
       </div>
-      <motion.p
-        className={`max-w-[46ch] text-pretty text-base leading-relaxed text-text-secondary ${isSplit ? "lg:col-span-5 lg:justify-self-end" : "mt-5"}`}
-        {...reveal(0.1)}
-      >
-        {text3}
-      </motion.p>
+      <motion.div className={isSplit ? "lg:col-span-5 lg:justify-self-end" : "mt-5"} {...reveal(0.1)}>
+        <p className="max-w-[46ch] text-pretty text-base leading-relaxed text-text-secondary">{text3}</p>
+        {children && <div className="mt-6">{children}</div>}
+      </motion.div>
     </div>
   );
 }

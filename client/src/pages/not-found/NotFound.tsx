@@ -1,7 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Home, ArrowLeft, Sparkles, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Button from "../../components/Button";
+import Eyebrow from "../../components/Eyebrow";
 import Wrapper from "../../components/Wrapper";
+import { buttonClasses } from "../../lib/buttonClasses";
 import { useSession } from "../../store/useSessionStore";
 
 export default function NotFound() {
@@ -9,79 +11,33 @@ export default function NotFound() {
   const isAuthenticated = useSession((state) => state.isAuthenticated);
 
   return (
-    <main className="relative flex min-h-[calc(100dvh-80px)] items-center justify-center overflow-hidden bg-background py-16 sm:py-20">
-      {/* Background decorative glowing orbs */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-125 w-125 -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-40 left-1/3 -z-10 h-100 w-100 rounded-full bg-primary/10 blur-[100px]"
-      />
+    <main className="relative overflow-hidden">
+      <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-x-0 top-0 h-144" />
+      <div aria-hidden="true" className="public-grain pointer-events-none absolute inset-0" />
 
-      <Wrapper className="flex flex-col items-center text-center">
-        {/* Animated 404 badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary backdrop-blur">
-          <Sparkles size={14} className="animate-spin" />
-          Page Not Found
-        </div>
-
-        {/* Animated 404 Large Glitch/Floating text */}
-        <h1 className="mt-6 text-7xl font-extrabold leading-none tracking-tight text-text-primary sm:text-9xl md:text-[11rem]">
-          <span className="bg-linear-to-b from-text-primary via-text-primary to-text-muted bg-clip-text text-transparent">
-            404
-          </span>
+      {/* Fills the screen under the 4rem navbar, so the footer stays below the fold. */}
+      <Wrapper className="relative flex min-h-[calc(100dvh-4rem)] flex-col justify-center py-16">
+        <Eyebrow dot>Error 404</Eyebrow>
+        <h1 className="mt-6 text-[clamp(2.5rem,1.5rem+5vw,5.5rem)] font-medium leading-[0.98] tracking-[-0.045em] text-text-primary">
+          <span className="block">This page</span>
+          <span className="block">doesn't exist.</span>
         </h1>
+        <p className="mt-6 max-w-[46ch] text-pretty text-[clamp(1.0625rem,1rem+0.3vw,1.25rem)] leading-[1.55] text-text-secondary">
+          The link may be out of date, or the page has moved. Go back, or pick up where you left off.
+        </p>
 
-        {/* Message */}
-        <div className="max-w-md">
-          <h2 className="text-xl font-semibold text-text-primary sm:text-2xl">
-            Lost in the AI generation space?
-          </h2>
-          <p className="mt-3 text-sm text-text-secondary">
-            The page you are looking for might have been moved, deleted, or never existed in the first place.
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button
-            variant="secondary"
-            size="md"
-            fullWidth={false}
-            onClick={() => navigate(-1)}
-            className="gap-2"
-          >
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <Button type="button" variant="secondary" size="lg" rounded="lg" fullWidth={false} onClick={() => navigate(-1)} className="max-sm:w-full">
             <ArrowLeft size={16} />
-            Go Back
+            Go back
           </Button>
-
-          {isAuthenticated ? (
-            <Link to="/dashboard/generate">
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth={false}
-                className="gap-2"
-              >
-                <LayoutDashboard size={16} />
-                Go to Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/">
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth={false}
-                className="gap-2"
-              >
-                <Home size={16} />
-                Back to Home
-              </Button>
-            </Link>
-          )}
+          <Link
+            to={isAuthenticated ? "/dashboard/generate" : "/"}
+            className={buttonClasses({ size: "lg", rounded: "lg", fullWidth: false, className: "max-sm:w-full" })}
+          >
+            {isAuthenticated ? "Open the generator" : "Back to the homepage"}
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </Wrapper>
     </main>
