@@ -25,17 +25,6 @@ import usePublishThumbnail from "../core/thumbnails/hooks/usePublishThumbnail";
 import { handleDownloadFile } from "../lib/herlper-fuctions";
 import { useSession } from "../store/useSessionStore";
 
-const AVATAR_COLORS = [
-  "bg-red-500",
-  "bg-teal-500",
-  "bg-amber-500",
-  "bg-purple-500",
-  "bg-blue-500",
-];
-
-const avatarColor = (name: string) =>
-  AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
-
 export default function ThumbnailCard({
   thumbnail,
   showDelete = false,
@@ -106,7 +95,7 @@ export default function ThumbnailCard({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl border border-border bg-background-card transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-16px_rgba(0,0,0,0.18)] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-primary"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-background-card shadow-card transition-[transform,border-color] duration-200 hover:-translate-y-1 hover:border-border-strong has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-primary"
     >
       <div className="relative aspect-video overflow-hidden bg-background-surface-2">
         {isGenerating || !imageUrl ? (
@@ -131,7 +120,7 @@ export default function ThumbnailCard({
         )}
 
         {showRecycleBinActions && (
-          <span className="absolute right-3 top-3 rounded-full bg-red-500/80 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+          <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             Deleted
           </span>
         )}
@@ -186,7 +175,7 @@ export default function ThumbnailCard({
                   e.stopPropagation();
                   onDelete?.(thumbnail._id);
                 }}
-                className="bg-black/60 backdrop-blur border-none text-white hover:text-red-400"
+                className="bg-black/60 backdrop-blur border-none text-white hover:text-primary"
                 aria-label="Delete thumbnail"
               >
                 <Trash2 size={15} />
@@ -232,9 +221,7 @@ export default function ThumbnailCard({
 
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
-            <span
-              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white ${avatarColor(authorName)}`}
-            >
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background-surface-2 text-[10px] font-medium text-text-primary">
               {authorName.charAt(0).toUpperCase()}
             </span>
             <span className="truncate text-xs text-text-secondary">
@@ -267,7 +254,7 @@ export default function ThumbnailCard({
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               rounded="lg"
               size="sm"
               onClick={() => onRestore?.(thumbnail._id)}
@@ -286,7 +273,7 @@ export default function ThumbnailCard({
               rounded="lg"
               size="sm"
               onClick={() => onPermanentDelete?.(thumbnail._id)}
-              className="text-red-500 hover:text-red-400 hover:border-red-500/30"
+              className="text-primary! hover:border-primary/40"
             >
               <Trash2 size={14} />
               Delete Forever

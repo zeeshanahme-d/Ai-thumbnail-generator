@@ -62,24 +62,24 @@ export default function ConfirmDialog({
     <dialog
       ref={dialogRef}
       onClick={handleBackdropClick}
-      className="m-auto max-w-md w-[calc(100%-2rem)] rounded-2xl border border-border bg-background-card p-0 text-text-primary backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-background-card p-0 text-text-primary shadow-card backdrop:bg-backdrop backdrop:backdrop-blur-sm"
     >
       <div className="p-6">
-        {/* Icon */}
+        {/* Icon: brand red for destructive actions, neutral otherwise */}
         <div
           className={`mx-auto flex size-12 items-center justify-center rounded-full ${variant === "danger"
-            ? "bg-red-500/10 text-red-500"
-            : "bg-primary/10 text-primary"
+            ? "bg-primary/10 text-primary"
+            : "bg-background-surface-2 text-text-primary"
             }`}
         >
           <AlertTriangle size={22} />
         </div>
 
         {/* Content */}
-        <h3 className="mt-4 text-center text-lg font-semibold text-text-primary">
+        <h3 className="mt-4 text-center text-lg font-medium tracking-[-0.015em] text-text-primary">
           {title}
         </h3>
-        <p className="mt-2 text-center text-sm text-text-secondary">
+        <p className="mt-2 text-center text-sm leading-relaxed text-text-secondary">
           {description}
         </p>
 
@@ -99,16 +99,11 @@ export default function ConfirmDialog({
           </Button>
           <Button
             type="button"
-            variant={variant === "danger" ? "primary" : "primary"}
+            variant="primary"
             size="sm"
             rounded="lg"
             onClick={onConfirm}
             disabled={loading || confirmDisabled}
-            className={
-              variant === "danger"
-                ? "bg-red-600 hover:bg-red-700 text-white"
-                : ""
-            }
           >
             {loading ? "Please wait..." : confirmLabel}
           </Button>

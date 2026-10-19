@@ -1,7 +1,6 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
   ArrowLeft,
   ChevronDown,
   ChevronUp,
@@ -12,7 +11,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Button from "./Button";
+import Eyebrow from "./Eyebrow";
 import Wrapper from "./Wrapper";
+import { buttonClasses } from "../lib/buttonClasses";
 import { useSession } from "../store/useSessionStore";
 import type { ErrorBoundaryProps } from "../types";
 
@@ -35,92 +36,43 @@ function DefaultErrorFallback({ error, reset }: FallbackProps) {
   };
 
   return (
-    <main className="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden bg-background px-6 py-20">
-      {/* Background decorative glowing orbs */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-125 w-125 -translate-x-1/2 rounded-full bg-red-500/10 blur-[120px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-40 left-1/3 -z-10 h-100 w-100 rounded-full bg-primary/10 blur-[100px]"
-      />
+    <main className="relative overflow-hidden">
+      <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-x-0 top-0 h-128" />
 
-      <Wrapper className="flex max-w-xl flex-col items-center text-center">
-        {/* Error Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-red-500 backdrop-blur">
-          <AlertTriangle size={14} className="text-red-500" />
-          Application Error
-        </div>
-
-        {/* Heading */}
-        <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-text-primary sm:text-5xl">
-          Something went wrong
+      <Wrapper className="relative flex min-h-dvh flex-col justify-center py-16">
+        <Eyebrow dot>Application error</Eyebrow>
+        <h1 className="mt-6 text-[clamp(2.25rem,1.5rem+3.5vw,4rem)] font-medium leading-[1.02] tracking-[-0.04em] text-text-primary">
+          Something went wrong.
         </h1>
-
-        {/* Message */}
-        <p className="mt-3 max-w-md text-sm text-text-secondary">
-          An unexpected error occurred while rendering this page. Your data is safe,
-          and you can reload the page or navigate back to safety.
+        <p className="mt-5 max-w-[52ch] text-pretty text-base leading-relaxed text-text-secondary">
+          This page hit an unexpected error. Your data is safe. Try again, or go back to where you were.
         </p>
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button
-            variant="primary"
-            size="md"
-            fullWidth={false}
-            onClick={reset}
-            className="gap-2"
-          >
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Button variant="primary" size="lg" rounded="lg" fullWidth={false} onClick={reset}>
             <RotateCcw size={16} />
-            Try Again
+            Try again
           </Button>
-
-          <Button
-            variant="secondary"
-            size="md"
-            fullWidth={false}
-            onClick={() => navigate(-1)}
-            className="gap-2"
-          >
+          <Button variant="secondary" size="lg" rounded="lg" fullWidth={false} onClick={() => navigate(-1)}>
             <ArrowLeft size={16} />
-            Go Back
+            Go back
           </Button>
-
-          {isAuthenticated ? (
-            <Link to="/dashboard/generate">
-              <Button
-                variant="secondary"
-                size="md"
-                fullWidth={false}
-                className="gap-2"
-              >
-                <LayoutDashboard size={16} />
-                Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/">
-              <Button
-                variant="secondary"
-                size="md"
-                fullWidth={false}
-                className="gap-2"
-              >
-                <Home size={16} />
-                Home
-              </Button>
-            </Link>
-          )}
+          <Link
+            to={isAuthenticated ? "/dashboard/generate" : "/"}
+            className={buttonClasses({ variant: "secondary", size: "lg", rounded: "lg", fullWidth: false })}
+          >
+            {isAuthenticated ? <LayoutDashboard size={16} /> : <Home size={16} />}
+            {isAuthenticated ? "Dashboard" : "Home"}
+          </Link>
         </div>
 
-        {/* Collapsible Error Details */}
-        <div className="mt-8 w-full text-left">
+        {/* Collapsible error details */}
+        <div className="mt-10 w-full max-w-3xl text-left">
           <button
             type="button"
             onClick={() => setShowDetails((prev) => !prev)}
-            className="flex w-full items-center justify-between rounded-lg border border-border bg-background-surface px-4 py-2.5 text-xs font-medium text-text-secondary transition-colors hover:bg-background-surface-2 hover:text-text-primary"
+            aria-expanded={showDetails}
+            className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-background-card px-4 py-2.5 text-xs font-medium text-text-secondary transition-colors hover:bg-background-surface-2 hover:text-text-primary"
           >
             <span>Technical details</span>
             {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -128,21 +80,21 @@ function DefaultErrorFallback({ error, reset }: FallbackProps) {
 
           {showDetails && (
             <div className="mt-2 rounded-lg border border-border bg-background-card p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold text-red-500">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className="font-mono text-xs text-primary">
                   {error.name}: {error.message}
                 </span>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="xs"
+                  rounded="lg"
                   fullWidth={false}
                   onClick={handleCopy}
-                  className="gap-1.5 text-xs text-text-muted hover:text-text-primary"
                 >
                   {copied ? (
                     <>
-                      <Check size={12} className="text-green-500" />
-                      <span className="text-green-500">Copied</span>
+                      <Check size={12} className="text-success" />
+                      <span className="text-success">Copied</span>
                     </>
                   ) : (
                     <>

@@ -115,10 +115,8 @@ const PromptCard = ({
   return (
     <div
       onMouseDown={handleCardMouseDown}
-      className={`cursor-text rounded-2xl border bg-background-card p-4 sm:p-5 transition-[border-color,box-shadow] duration-200 ${
-        isFocused
-          ? "border-primary shadow-[0_8px_32px_-4px_rgba(230,57,70,0.25)]"
-          : "border-border shadow-[0_2px_20px_-8px_rgba(0,0,0,0.12)]"
+      className={`cursor-text rounded-2xl border bg-background-card p-4 shadow-card transition-[border-color] duration-200 sm:p-5 ${
+        isFocused ? "border-primary" : "border-border"
       } ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -365,7 +363,7 @@ const ToolButton = ({
 }: ToolButtonProps) => (
   <Button
     type="button"
-    variant={isOpen ? "primary" : "secondary"}
+    variant={isOpen ? "inverse" : "secondary"}
     size="icon"
     rounded="lg"
     popoverTarget={panelId}
@@ -375,7 +373,7 @@ const ToolButton = ({
   >
     <Icon size={16} />
     {isConfigured && !isOpen && (
-      <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-emerald-500" />
+      <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-success" />
     )}
   </Button>
 );

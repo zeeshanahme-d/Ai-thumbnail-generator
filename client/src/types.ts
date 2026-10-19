@@ -209,8 +209,6 @@ export interface CommunityFiltersProps {
   onSortChange: (value: CommunitySort) => void;
   activeStyle: string;
   onStyleChange: (value: string) => void;
-  /** dashboard: selected filters in brand red (default). public: selected filters in neutral ink. */
-  variant?: "dashboard" | "public";
 }
 
 /** The page a thumbnail detail view was opened from, used for its breadcrumb. */

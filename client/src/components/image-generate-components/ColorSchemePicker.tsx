@@ -1,4 +1,5 @@
-import { CircleCheck, Sparkles } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import Eyebrow from "../Eyebrow";
 import { THUMBNAIL_STYLES_COLORS } from "../../data/generator";
 
 interface ColorSchemePickerProps {
@@ -26,30 +27,30 @@ export default function ColorSchemePicker({
               type="button"
               onClick={() => onChange(scheme.label)}
               aria-pressed={isSelected}
-              className={`rounded-xl cursor-pointer border p-1.5 transition ${
+              className={`cursor-pointer rounded-xl border p-1.5 transition-colors ${
                 isSelected
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-text-muted"
+                  ? "border-text-primary bg-background-surface-2"
+                  : "border-border hover:border-border-strong"
               }`}
             >
-              <div className="flex relative h-14 rounded-lg overflow-hidden">
+              <div className="relative flex h-14 overflow-hidden rounded-lg">
                 {scheme.schemeColors.map((color) => (
                   <div
                     key={color}
-                    className="flex-1 "
+                    className="flex-1"
                     style={{ backgroundColor: color }}
                   ></div>
                 ))}
                 {isSelected && (
                   <CircleCheck
                     size={18}
-                    className="absolute right-1.5 top-1.5 fill-primary text-white"
+                    className="absolute right-1.5 top-1.5 fill-text-primary text-background"
                   />
                 )}
               </div>
               <span
                 className={`mt-2 block truncate text-xs font-medium ${
-                  isSelected ? "text-primary" : "text-text-secondary"
+                  isSelected ? "text-text-primary" : "text-text-secondary"
                 }`}
               >
                 {scheme.label}
@@ -60,14 +61,9 @@ export default function ColorSchemePicker({
       </div>
 
       {selectedStyle && (
-        <div className="mt-4 flex gap-3 rounded-xl border border-border bg-background-surface p-4">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Sparkles size={15} />
-          </span>
-          <p className="text-xs leading-relaxed text-text-secondary">
-            <span className="font-semibold text-text-primary">
-              {selectedStyle.label} Presets
-            </span>{" "}
+        <div className="mt-4 rounded-xl border border-border bg-background-surface p-4">
+          <Eyebrow>{selectedStyle.label}</Eyebrow>
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary">
             {selectedStyle.description}
           </p>
         </div>

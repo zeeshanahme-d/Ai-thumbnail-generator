@@ -8,6 +8,7 @@ import {
 import { Upload, X } from "lucide-react";
 import Alert from "../Alert";
 import Button from "../Button";
+import Eyebrow from "../Eyebrow";
 import {
   ACCEPTED_IMAGE_LABEL,
   IMAGE_ACCEPT_ATTRIBUTE,
@@ -72,9 +73,7 @@ export default function ReferenceImageUpload({
 
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-        Reference image
-      </p>
+      <Eyebrow>Reference image</Eyebrow>
       <p className="mt-1 text-xs text-text-muted">
         Blend a face, logo, or asset directly into your thumbnail output.
       </p>
@@ -124,17 +123,17 @@ export default function ReferenceImageUpload({
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 transition ${
+          className={`mt-4 flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 transition-colors ${
             isDragging
-              ? "border-primary bg-primary/5"
-              : "border-border bg-background-surface hover:border-primary/50"
+              ? "border-text-primary bg-background-surface-2"
+              : "border-border-strong bg-background-surface hover:border-text-muted"
           }`}
         >
-          <Upload size={20} className="text-primary" />
+          <Upload size={20} className="text-text-muted" />
           <span className="text-sm text-text-primary">
             Drag and drop or click to upload
           </span>
-          <span className="text-[11px] uppercase tracking-wide text-text-muted">
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-text-muted">
             {ACCEPTED_IMAGE_LABEL} up to {MAX_IMAGE_SIZE_MB}MB
           </span>
         </button>

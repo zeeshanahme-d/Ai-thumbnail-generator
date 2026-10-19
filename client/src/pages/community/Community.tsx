@@ -52,7 +52,6 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
         onSortChange={handleSort}
         activeStyle={activeStyle}
         onStyleChange={handleStyle}
-        variant={variant}
       />
 
       {/* Grid */}
