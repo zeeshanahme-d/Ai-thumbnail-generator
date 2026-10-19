@@ -185,6 +185,14 @@ export interface DashboardPageProps {
   children?: ReactNode;
 }
 
+export interface SettingsSectionProps {
+  title: string;
+  description?: string;
+  /** Red-tinted card border for destructive settings. */
+  danger?: boolean;
+  children: ReactNode;
+}
+
 export type CommunitySort = "trending" | "newest" | "most-liked";
 
 /** Query filters shared by the thumbnail list pages. */

@@ -8,6 +8,8 @@ import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import ConfirmDialog from "../../../../components/modals/confirmation-dialog/ConfirmDialog";
 import FieldError from "../../../auth/components/FieldError";
+import SettingsSection from "./SettingsSection";
+import { PASSWORD_MIN_LENGTH } from "../../../../lib/passwordValidation";
 import { useSession } from "../../../../store/useSessionStore";
 import { useChangePassword } from "../core/hooks/use-change-password";
 import { changePasswordSchema } from "../core/_schemas";
@@ -57,40 +59,51 @@ export default function ChangePasswordSection() {
     };
 
     return (
-        <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                SECURITY & PASSWORD
-            </h2>
-            <div className="rounded-2xl border border-border bg-background-card p-5 sm:p-6">
-                <div className="mb-6">
-                    <h3 className="text-base font-semibold text-text-primary">Change Password</h3>
-                    <p className="mt-1 text-sm text-text-secondary">
-                        Ensure your account uses a strong password with letters, numbers, and special characters.
-                    </p>
-                </div>
+        <SettingsSection
+            title="Password"
+            description={`At least ${PASSWORD_MIN_LENGTH} characters with an uppercase and a lowercase letter, a number and a symbol. Changing it signs you out on every device.`}
+        >
+            <form
+                noValidate
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void form.handleSubmit();
+                }}
+                className="space-y-6.5"
+            >
+                <form.Field name="currentPassword">
+                    {(field) => (
+                        <div>
+                            <Input
+                                icon={Lock}
+                                type="password"
+                                id="currentPassword"
+                                label="Current password"
+                                autoComplete="current-password"
+                                name={field.name}
+                                placeholder="Enter current password"
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                onChange={(e) => field.handleChange(e.target.value)}
+                            />
+                            <FieldError meta={field.state.meta} />
+                        </div>
+                    )}
+                </form.Field>
 
-
-                <form
-                    noValidate
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void form.handleSubmit();
-                    }}
-                    className="space-y-6.5"
-                >
-                    <form.Field name="currentPassword">
+                <div className="grid grid-cols-1 gap-x-6 gap-y-6.5 md:grid-cols-2">
+                    <form.Field name="newPassword">
                         {(field) => (
                             <div>
-                                <label htmlFor="currentPassword" className="mb-1.5 block pl-1 text-xs font-medium text-text-secondary">
-                                    Current Password
-                                </label>
                                 <Input
                                     icon={Lock}
                                     type="password"
-                                    id="currentPassword"
+                                    id="newPassword"
+                                    label="New password"
+                                    autoComplete="new-password"
                                     name={field.name}
-                                    placeholder="Enter current password"
+                                    placeholder="Enter new password"
                                     value={field.state.value}
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
@@ -100,67 +113,44 @@ export default function ChangePasswordSection() {
                         )}
                     </form.Field>
 
-                    <div className="grid grid-cols-1 gap-x-6 gap-y-6.5 md:grid-cols-2">
-                        <form.Field name="newPassword">
-                            {(field) => (
-                                <div>
-                                    <label htmlFor="newPassword" className="mb-1.5 block pl-1 text-xs font-medium text-text-secondary">
-                                        New Password
-                                    </label>
-                                    <Input
-                                        icon={Lock}
-                                        type="password"
-                                        id="newPassword"
-                                        name={field.name}
-                                        placeholder="Enter new password"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                    />
-                                    <FieldError meta={field.state.meta} />
-                                </div>
-                            )}
-                        </form.Field>
+                    <form.Field name="confirmPassword">
+                        {(field) => (
+                            <div>
+                                <Input
+                                    icon={Lock}
+                                    type="password"
+                                    id="confirmPassword"
+                                    label="Confirm new password"
+                                    autoComplete="new-password"
+                                    name={field.name}
+                                    placeholder="Confirm new password"
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => field.handleChange(e.target.value)}
+                                />
+                                <FieldError meta={field.state.meta} />
+                            </div>
+                        )}
+                    </form.Field>
+                </div>
 
-                        <form.Field name="confirmPassword">
-                            {(field) => (
-                                <div>
-                                    <label htmlFor="confirmPassword" className="mb-1.5 block pl-1 text-xs font-medium text-text-secondary">
-                                        Confirm New Password
-                                    </label>
-                                    <Input
-                                        icon={Lock}
-                                        type="password"
-                                        id="confirmPassword"
-                                        name={field.name}
-                                        placeholder="Confirm new password"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                    />
-                                    <FieldError meta={field.state.meta} />
-                                </div>
-                            )}
-                        </form.Field>
-                    </div>
-
-                    <div className="flex justify-end pt-2">
-                        <form.Subscribe selector={(state) => state.isSubmitting}>
-                            {(isSubmitting) => (
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="sm"
-                                    fullWidth={false}
-                                    disabled={isSubmitting || isPending}
-                                >
-                                    {isSubmitting || isPending ? "Updating..." : "Update Password"}
-                                </Button>
-                            )}
-                        </form.Subscribe>
-                    </div>
-                </form>
-            </div>
+                <div className="flex justify-end pt-2">
+                    <form.Subscribe selector={(state) => state.isSubmitting}>
+                        {(isSubmitting) => (
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                size="sm"
+                                rounded="lg"
+                                fullWidth={false}
+                                disabled={isSubmitting || isPending}
+                            >
+                                {isSubmitting || isPending ? "Updating..." : "Update password"}
+                            </Button>
+                        )}
+                    </form.Subscribe>
+                </div>
+            </form>
 
             <ConfirmDialog
                 open={pendingValues !== null}
@@ -172,6 +162,6 @@ export default function ChangePasswordSection() {
                 variant="danger"
                 loading={isPending}
             />
-        </section>
+        </SettingsSection>
     );
 }

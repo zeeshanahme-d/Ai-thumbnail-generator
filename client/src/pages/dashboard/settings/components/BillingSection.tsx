@@ -1,6 +1,9 @@
-import { Loader2, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import Button from "../../../../components/Button";
+import Eyebrow from "../../../../components/Eyebrow";
+import SettingsSection from "./SettingsSection";
+import { buttonClasses } from "../../../../lib/buttonClasses";
 import { getAllowanceLeft } from "../../../../lib/credits";
 import { hasLiveSubscription } from "../../../../lib/paddle";
 import { useBillingPortal } from "../../../../core/billing/hooks/use-billing-portal";
@@ -11,12 +14,11 @@ const formatDate = (date: string) =>
 
 export default function BillingSection() {
     const user = useSession((state) => state.user);
-    const navigate = useNavigate();
     const { openPortal, isPending } = useBillingPortal();
 
     const planName = user?.plan
-        ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) + " Plan"
-        : "Free Plan";
+        ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) + " plan"
+        : "Free plan";
 
     const isSubscribed = Boolean(user?.plan && user.plan !== "free") && hasLiveSubscription(user);
     const isPastDue = user?.subscriptionStatus === "past_due";
@@ -29,7 +31,7 @@ export default function BillingSection() {
         : user?.subscriptionRenewsAt
             ? `Renews on ${formatDate(user.subscriptionRenewsAt)}.`
             : user?.subscriptionPeriodEnd
-                ? `Ends on ${formatDate(user.subscriptionPeriodEnd)}, then you move to the Free Plan.`
+                ? `Ends on ${formatDate(user.subscriptionPeriodEnd)}, then you move to the Free plan.`
                 : null;
 
     const totalCredits = user?.totalcredits ?? 0;
@@ -42,82 +44,98 @@ export default function BillingSection() {
     const formattedResetDate = user?.creditsResetAt ? formatDate(user.creditsResetAt) : null;
 
     return (
-        <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                CURRENT MEMBERSHIP
-            </h2>
-            <div className="rounded-2xl border border-border bg-background-card p-5 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <h3 className="text-xl font-bold text-text-primary">{planName}</h3>
-                            <span
-                                className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${isPastDue ? "bg-warning/10 text-warning" : "bg-emerald-500/10 text-emerald-500"}`}
-                            >
-                                <span className={`size-1.5 rounded-full ${isPastDue ? "bg-warning" : "bg-emerald-500"}`}></span>
-                                {statusText}
-                            </span>
-                        </div>
-                        <p className="mt-2 text-sm text-text-secondary">
-                            {isPastDue ? (
-                                <>
-                                    Your last payment didn't go through. Update your payment method in <span className="font-semibold text-primary">Manage Plan</span> to keep your plan.
-                                </>
-                            ) : isSubscribed ? (
-                                <>
-                                    You are currently on the <span className="font-semibold text-primary">{planName}</span>. {renewalText} Cancel, change your card or download invoices in Manage Plan.
-                                </>
-                            ) : (
-                                <>
-                                    You are currently on the <span className="font-semibold text-primary">Free Plan</span>. Upgrade to Pro or Ultra for more credits every month.
-                                </>
-                            )}
-                        </p>
-                    </div>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        className="w-fit! shrink-0"
-                        disabled={isPending}
-                        onClick={isSubscribed ? openPortal : () => navigate("/pricing")}
-                    >
-                        {isPending && <Loader2 size={16} className="animate-spin" />}
-                        {isSubscribed ? "Manage Plan" : "Upgrade +"}
-                    </Button>
-                </div>
-
-                <div className="my-6 h-px w-full bg-border" />
-
+        <SettingsSection title="Plan and credits">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
-                        <div className="flex items-center gap-2 font-medium text-text-secondary">
-                            <Sparkles size={16} className="text-primary" />
-                            Thumbnail Generations Limit
-                        </div>
-                        <span className="font-medium text-text-secondary">
-                            <span className="text-text-primary font-semibold">{creditsUsed}</span> / {totalCredits} credits
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <h3 className="text-lg font-medium tracking-[-0.015em] text-text-primary">{planName}</h3>
+                        <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.06em] ${
+                                isPastDue ? "border-warning/30 text-warning" : "border-success/30 text-success"
+                            }`}
+                        >
+                            <span aria-hidden="true" className={`size-1.5 rounded-full ${isPastDue ? "bg-warning" : "bg-success"}`} />
+                            {statusText}
                         </span>
                     </div>
-
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-background-surface-2">
-                        <div
-                            className="h-full rounded-full bg-primary transition-all duration-300"
-                            style={{ width: `${usagePercentage}%` }}
-                        />
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-text-muted">
-                        <span>{usagePercentage.toFixed(1)}% consumed this billing cycle ({allowanceLeft} remaining)</span>
-                        {formattedResetDate && <span>Resets on {formattedResetDate}</span>}
-                    </div>
-
-                    {packCredits > 0 && (
-                        <p className="mt-4 text-sm text-text-secondary">
-                            <span className="font-semibold text-text-primary">+{packCredits.toLocaleString("en-US")}</span> purchased credits. They never expire and are used after your monthly credits.
-                        </p>
-                    )}
+                    <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-secondary">
+                        {isPastDue ? (
+                            <>
+                                Your last payment didn't go through. Update your payment method in{" "}
+                                <span className="font-medium text-text-primary">Manage plan</span> to keep your plan.
+                            </>
+                        ) : isSubscribed ? (
+                            <>
+                                You're on the <span className="font-medium text-text-primary">{planName}</span>.{" "}
+                                {renewalText} Cancel, change your card or download invoices in Manage plan.
+                            </>
+                        ) : (
+                            <>
+                                You're on the <span className="font-medium text-text-primary">Free plan</span>. Upgrade
+                                to Pro or Ultra for more credits every month.
+                            </>
+                        )}
+                    </p>
                 </div>
+
+                {isSubscribed ? (
+                    <Button
+                        type="button"
+                        variant={isPastDue ? "primary" : "secondary"}
+                        size="sm"
+                        rounded="lg"
+                        fullWidth={false}
+                        className="shrink-0 self-start"
+                        disabled={isPending}
+                        onClick={openPortal}
+                    >
+                        {isPending && <Loader2 size={16} className="animate-spin" />}
+                        Manage plan
+                    </Button>
+                ) : (
+                    <Link
+                        to="/pricing"
+                        className={buttonClasses({ size: "sm", rounded: "lg", fullWidth: false, className: "shrink-0 self-start" })}
+                    >
+                        Upgrade
+                    </Link>
+                )}
             </div>
-        </section>
+
+            <div className="mt-6 border-t border-border pt-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <Eyebrow>Monthly credits</Eyebrow>
+                    <span className="font-mono text-sm tabular-nums text-text-secondary">
+                        <span className="text-text-primary">{creditsUsed}</span> / {totalCredits} used
+                    </span>
+                </div>
+
+                <div
+                    role="progressbar"
+                    aria-label="Monthly credits used"
+                    aria-valuenow={Math.round(usagePercentage)}
+                    className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-background-surface-2"
+                >
+                    <div
+                        className="h-full rounded-full bg-text-primary transition-[width] duration-300"
+                        style={{ width: `${usagePercentage}%` }}
+                    />
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-text-muted">
+                    <span className="tabular-nums">{allowanceLeft} left this cycle</span>
+                    {formattedResetDate && <span>Refills on {formattedResetDate}</span>}
+                </div>
+
+                {packCredits > 0 && (
+                    <p className="mt-4 text-sm text-text-secondary">
+                        <span className="font-mono tabular-nums text-text-primary">
+                            +{packCredits.toLocaleString("en-US")}
+                        </span>{" "}
+                        purchased credits. They never expire and are used after your monthly credits.
+                    </p>
+                )}
+            </div>
+        </SettingsSection>
     );
 }

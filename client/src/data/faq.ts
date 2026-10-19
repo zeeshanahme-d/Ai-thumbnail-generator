@@ -83,7 +83,7 @@ export const pricingFaqs: IFaq[] = [
     {
         question: "Can I cancel anytime?",
         answer:
-            "Yes. Cancel from Settings > Manage Plan. Cancelling stops the next renewal and you keep your plan until the end of the period you paid for. See the Refund Policy for details.",
+            "Yes. Cancel from Settings > Manage plan. Cancelling stops the next renewal and you keep your plan until the end of the period you paid for. See the Refund Policy for details.",
     },
     {
         question: "Do I need a credit card for the free plan?",

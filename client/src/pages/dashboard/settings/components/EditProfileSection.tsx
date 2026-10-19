@@ -1,9 +1,10 @@
 //icons
-import { User, AtSign, Mail, Globe, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { User, AtSign, Mail, Globe, Loader2, CheckCircle2, XCircle, Camera } from "lucide-react";
 //components
 import Button from "../../../../components/Button";
 import Input from "../../../../components/Input";
 import FieldError from "../../../auth/components/FieldError";
+import SettingsSection from "./SettingsSection";
 //hooks & utils
 import { useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
@@ -83,193 +84,188 @@ export default function EditProfileSection() {
 
 
     return (
-        <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                EDIT PROFILE
-            </h2>
-            <div className="rounded-2xl border border-border bg-background-card p-5 sm:p-6">
-
-                {/* Avatar */}
-                <div className="mb-8 flex flex-col items-center justify-center">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                    />
-                    <div className="flex size-20 overflow-hidden items-center justify-center rounded-full bg-teal-600 text-3xl font-medium text-white">
-                        {user?.avatar?.url ? (
-                            <img src={user.avatar.url} alt="Avatar" className="size-full object-cover" />
-                        ) : (
-                            getUserInitial(user?.fullName)
-                        )}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="mt-3 flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50 disabled:hover:no-underline"
-                    >
-                        {isUploading ? (
-                            <>
-                                <Loader2 size={12} className="animate-spin" /> Uploading...
-                            </>
-                        ) : (
-                            "Change Photo"
-                        )}
-                    </button>
-                </div>
-
-                <form
-                    noValidate
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void form.handleSubmit();
-                    }}
-                    className="space-y-6.5"
+        <SettingsSection
+            title="Profile"
+            description="Shown on your public profile and with the thumbnails you publish."
+        >
+            {/* Avatar */}
+            <div className="mb-8 flex items-center gap-4">
+                <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                />
+                <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background-surface-2 text-2xl font-medium text-text-primary">
+                    {user?.avatar?.url ? (
+                        <img src={user.avatar.url} alt="Your profile photo" className="size-full object-cover" />
+                    ) : (
+                        getUserInitial(user?.fullName)
+                    )}
+                </span>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    rounded="lg"
+                    fullWidth={false}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
                 >
-                    <div className="grid grid-cols-1 gap-x-6 gap-y-6.5 md:grid-cols-2">
-                        {/* Full Name */}
-                        <form.Field name="fullName">
-                            {(field) => (
-                                <div>
-                                    <label htmlFor="fullName" className="pl-1 text-xs font-medium text-text-secondary">Full Name</label>
-                                    <Input
-                                        icon={User}
-                                        type="text"
-                                        id="fullName"
-                                        name={field.name}
-                                        placeholder="John Doe"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                    />
-                                    <FieldError meta={field.state.meta} />
-                                </div>
-                            )}
-                        </form.Field>
+                    {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+                    {isUploading ? "Uploading..." : "Change photo"}
+                </Button>
+            </div>
 
-                        {/* Username */}
-                        <form.Field name="username">
-                            {(field) => (
-                                <div>
-                                    <label htmlFor="username" className="pl-1 text-xs font-medium text-text-secondary">Username</label>
-                                    <Input
-                                        icon={AtSign}
-                                        type="text"
-                                        id="username"
-                                        name={field.name}
-                                        placeholder="username"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            field.handleChange(val);
-                                            handleDebouncedUsernameChange(val);
-                                        }}
-                                    />
-                                    <FieldError meta={field.state.meta}>
-                                        {!isUsernameUnchanged && debouncedUsername.trim().length >= 3 && (
-                                            isCheckingUsername ? (
-                                                <span className="flex items-center gap-1 text-xs text-text-muted">
-                                                    <Loader2 size={12} className="animate-spin" /> Checking availability...
-                                                </span>
-                                            ) : checkData?.available === true ? (
-                                                <span className="flex items-center gap-1 text-xs font-medium text-emerald-500">
-                                                    <CheckCircle2 size={13} /> Username is available
-                                                </span>
-                                            ) : checkData?.available === false ? (
-                                                <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                                                    <XCircle size={13} /> Username is already taken
-                                                </span>
-                                            ) : null
-                                        )}
-                                    </FieldError>
-                                </div>
-                            )}
-                        </form.Field>
-
-                        {/* Email Address (read-only) */}
-                        <div>
-                            <label htmlFor="email" className="pl-1 text-xs font-medium text-text-secondary">Email Address</label>
-                            <Input
-                                icon={Mail}
-                                type="email"
-                                id="email"
-                                value={user?.email ?? ""}
-                                readOnly
-                                disabled
-                                placeholder="you@example.com"
-                            />
-                        </div>
-
-                        {/* Website */}
-                        <form.Field name="website">
-                            {(field) => (
-                                <div>
-                                    <label htmlFor="website" className="pl-1 text-xs font-medium text-text-secondary">Website</label>
-                                    <Input
-                                        icon={Globe}
-                                        type="url"
-                                        id="website"
-                                        name={field.name}
-                                        placeholder="https://yoursite.com"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                    />
-                                    <FieldError meta={field.state.meta} />
-                                </div>
-                            )}
-                        </form.Field>
-                    </div>
-
-                    {/* Bio */}
-                    <form.Field name="bio">
+            <form
+                noValidate
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void form.handleSubmit();
+                }}
+                className="space-y-6.5"
+            >
+                <div className="grid grid-cols-1 gap-x-6 gap-y-6.5 md:grid-cols-2">
+                    {/* Full Name */}
+                    <form.Field name="fullName">
                         {(field) => (
                             <div>
-                                <div className="flex items-center justify-between px-1">
-                                    <label htmlFor="bio" className="text-xs font-medium text-text-secondary">Bio</label>
-                                    <span className="text-xs text-text-muted">{field.state.value.length}/200</span>
-                                </div>
-                                <div className="rounded-lg border border-border bg-background-surface transition-colors focus-within:border-primary">
-                                    <textarea
-                                        className="w-full resize-none border-none bg-transparent px-4 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted"
-                                        rows={3}
-                                        id="bio"
-                                        name={field.name}
-                                        placeholder="Tell the community a bit about yourself..."
-                                        maxLength={200}
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                    />
-                                </div>
+                                <Input
+                                    icon={User}
+                                    type="text"
+                                    id="fullName"
+                                    label="Full name"
+                                    name={field.name}
+                                    placeholder="John Doe"
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => field.handleChange(e.target.value)}
+                                />
                                 <FieldError meta={field.state.meta} />
                             </div>
                         )}
                     </form.Field>
 
-                    <div className="flex justify-end pt-2">
-                        <form.Subscribe selector={(state) => state.isSubmitting}>
-                            {(isSubmitting) => (
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="sm"
-                                    fullWidth={false}
-                                    disabled={isSubmitting || isUpdating || isUsernameTaken || isCheckingUsername}
-                                >
-                                    {isSubmitting || isUpdating ? "Saving..." : "Save Profile"}
-                                </Button>
-                            )}
-                        </form.Subscribe>
-                    </div>
-                </form>
+                    {/* Username */}
+                    <form.Field name="username">
+                        {(field) => (
+                            <div>
+                                <Input
+                                    icon={AtSign}
+                                    type="text"
+                                    id="username"
+                                    label="Username"
+                                    name={field.name}
+                                    placeholder="username"
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        field.handleChange(val);
+                                        handleDebouncedUsernameChange(val);
+                                    }}
+                                />
+                                <FieldError meta={field.state.meta}>
+                                    {!isUsernameUnchanged && debouncedUsername.trim().length >= 3 && (
+                                        isCheckingUsername ? (
+                                            <span className="flex items-center gap-1 text-xs text-text-muted">
+                                                <Loader2 size={12} className="animate-spin" /> Checking availability...
+                                            </span>
+                                        ) : checkData?.available === true ? (
+                                            <span className="flex items-center gap-1 text-xs font-medium text-success">
+                                                <CheckCircle2 size={13} /> Username is available
+                                            </span>
+                                        ) : checkData?.available === false ? (
+                                            <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                                                <XCircle size={13} /> Username is already taken
+                                            </span>
+                                        ) : null
+                                    )}
+                                </FieldError>
+                            </div>
+                        )}
+                    </form.Field>
 
-            </div>
-        </section>
+                    {/* Email Address (read-only) */}
+                    <div>
+                        <Input
+                            icon={Mail}
+                            type="email"
+                            id="email"
+                            label="Email address"
+                            value={user?.email ?? ""}
+                            readOnly
+                            disabled
+                            placeholder="you@example.com"
+                        />
+                    </div>
+
+                    {/* Website */}
+                    <form.Field name="website">
+                        {(field) => (
+                            <div>
+                                <Input
+                                    icon={Globe}
+                                    type="url"
+                                    id="website"
+                                    label="Website"
+                                    name={field.name}
+                                    placeholder="https://yoursite.com"
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => field.handleChange(e.target.value)}
+                                />
+                                <FieldError meta={field.state.meta} />
+                            </div>
+                        )}
+                    </form.Field>
+                </div>
+
+                {/* Bio */}
+                <form.Field name="bio">
+                    {(field) => (
+                        <div>
+                            <div className="mb-1.5 flex items-center justify-between">
+                                <label htmlFor="bio" className="text-sm font-medium text-text-secondary">Bio</label>
+                                <span className="font-mono text-xs tabular-nums text-text-muted">{field.state.value.length}/200</span>
+                            </div>
+                            <div className="rounded-lg border border-border bg-background-surface transition-colors focus-within:border-primary">
+                                <textarea
+                                    className="w-full resize-none border-none bg-transparent px-4 py-3 text-sm text-text-primary outline-none placeholder:text-text-muted"
+                                    rows={3}
+                                    id="bio"
+                                    name={field.name}
+                                    placeholder="Tell the community a bit about yourself..."
+                                    maxLength={200}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => field.handleChange(e.target.value)}
+                                />
+                            </div>
+                            <FieldError meta={field.state.meta} />
+                        </div>
+                    )}
+                </form.Field>
+
+                <div className="flex justify-end pt-2">
+                    <form.Subscribe selector={(state) => state.isSubmitting}>
+                        {(isSubmitting) => (
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                size="sm"
+                                rounded="lg"
+                                fullWidth={false}
+                                disabled={isSubmitting || isUpdating || isUsernameTaken || isCheckingUsername}
+                            >
+                                {isSubmitting || isUpdating ? "Saving..." : "Save profile"}
+                            </Button>
+                        )}
+                    </form.Subscribe>
+                </div>
+            </form>
+        </SettingsSection>
     );
 }
