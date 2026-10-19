@@ -64,7 +64,7 @@ client/src/
 ├─ pages/
 │  ├─ auth/          # login/signup/forgot/otp/reset + core/_schemas.ts (form schemas)
 │  ├─ dashboard/     # generate / gallery / recreate / recycle-bin / settings
-│  │  └─ components/ # DashboardPage (shared placeholder template)
+│  │  └─ settings/components/  # SettingsSection + the plan, invoices, profile, password, delete blocks
 │  ├─ community/     # public community gallery
 │  ├─ profile/       # user profile page
 │  ├─ thumbnail-preview/  # individual thumbnail detail page
@@ -74,7 +74,7 @@ client/src/
 ├─ store/            # Zustand stores (useSessionStore, useTheme)
 ├─ lib/              # axios, queryClient, imageValidation, thumbnail helpers, motion tokens,
 │                    # gsap (lazy-only), smoothScroll, buttonClasses, small hooks (useMediaQuery, …)
-├─ styles/           # variables.css (global tokens), public-theme.css (public pages' theme)
+├─ styles/           # variables.css (every token, light + dark), backdrops.css (grid + grain)
 └─ data/             # static/mock arrays typed against types.ts
 ```
 
@@ -95,13 +95,11 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
 - **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
   `/profile`, `/thumbnail/:id`, `/pricing`, `/privacy-policy`, `/terms` and
   `/refund-policy` are public. The three legal routes share `pages/legal/LegalPage`, whose
-  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top and wraps every
-  public page in the public theme (see Styling), so they all share the homepage's look.
+  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top.
 
 Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
-The auth pages share `pages/auth/AuthLayout`, which applies the public theme itself: the
-form on the left and, from `lg` up, `AuthShowcase` (sample thumbnails and the homepage's
-headline) on the right.
+The auth pages share `pages/auth/AuthLayout`: the form on the left and, from `lg` up,
+`AuthShowcase` (sample thumbnails and the homepage's headline) on the right.
 
 ### Auth / session flow
 
@@ -129,9 +127,14 @@ headline) on the right.
 | Generate | `/dashboard/generate` | ✅ Fully wired — PromptCard → API → shows generated thumbnails |
 | Gallery | `/dashboard/gallery` | ✅ Filters, sort, pagination, delete, publish |
 | Community | `/dashboard/community` | ✅ Same Community component as `/community`, which passes `variant="public"` for its own header |
-| Recreate | `/dashboard/recreate` | ❌ Placeholder stub — `DashboardPage` template only |
-| Settings | `/dashboard/settings` | 🔲 EditProfile wired; Billing shows the real balance and refill date, Upgrade disabled until payments exist; Invoices is a UI shell |
+| Recreate | `/dashboard/recreate` | ❌ Placeholder — `DashboardPage` without a body ("Coming soon") |
+| Settings | `/dashboard/settings` | 🔲 Profile, password and account deletion wired; Plan and credits shows the real balance, refill and renewal dates, Upgrade → `/pricing`, Manage plan → Paddle portal; Invoices only points to Paddle's receipts and the portal (no in-app list) |
 | Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog, Restore all, Empty bin, Load More; items purged after 30 days |
+
+Every dashboard page renders inside `DashboardPage` (`components/`): mono label, `h1`,
+description, optional `actions` on the right (counts, page buttons) and the body. The settings
+blocks share the page-local `SettingsSection` (heading, description, card; `danger` for the
+delete block).
 
 `/youtube-style-preview` is the YouTube preview: a thumbnail passed in router state
 (`YtPreviewState`) placed in the middle of sample videos in home, search and mobile mockups,
@@ -166,28 +169,24 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
    Tailwind v4 syntax: gradients are `bg-linear-to-b` (not `bg-gradient-to-b`), and
    the important suffix is `text-base!`.
 
-   **Public theme.** `MainLayout` wraps the Navbar, page and Footer of every public page
-   (homepage, community, profiles, thumbnail pages, pricing, legal, 404) in `.public-theme`
-   (`styles/public-theme.css`), and `AuthLayout` puts it on the auth pages. The dashboard
-   (and the YouTube preview) render outside it and keep `variables.css`. The class
-   redefines the same variables as `variables.css` (ink in dark,
-   paper in light, brand red `#d7303d` so white button text passes AA), so the usual tokens
-   just work there. It also sets Geist (400/500) as the font, makes `font-mono` Geist Mono,
-   maps `font-semibold`/`font-bold` to 500, and adds tokens that exist **only inside it**:
-   `border-border-strong`, `shadow-card`, `py-(--section-y)` (section rhythm), and the
-   `.public-grid-bg` / `.public-grain` backgrounds. Never use those in a component the
-   dashboard also renders (`Input`, `Button`, `FieldError`, `ThumbnailCard`, `BackButton`, …);
-   there, change look only through the shared tokens or an opt-in prop (`Community` /
-   `CommunityFilters` take `variant="public"`). Don't change `variables.css` for public-page
-   work. Moving the `.public-theme` values to `:root` is how the look would roll out to the
-   dashboard too.
+   **One look everywhere.** `styles/variables.css` defines every token at `:root` (paper,
+   light) and `[data-theme="dark"]` (ink), so public pages, auth pages, the dashboard and the
+   YouTube preview all share it: brand red `#d7303d` (white button text passes AA), Geist
+   (400/500) as the font, Geist Mono for `font-mono`, and `font-semibold`/`font-bold` mapped
+   to 500 in `@theme`. Besides the tokens above there are `border-border-strong`,
+   `shadow-card`, `py-(--section-y)` (public section rhythm) and the `.backdrop-grid` /
+   `.backdrop-grain` backgrounds (`styles/backdrops.css`). `@theme` resolves
+   `--color-x: var(--y)` at `:root`, so redefining a variable on a wrapper class does **not**
+   re-theme the utilities inside it; change looks in `variables.css`.
 
-   **Public page language:** a `PageHeader` at the top (mono label, display heading, intro,
-   grid backdrop), `SectionTitle` with `align="split"` / `"start"` for sections, cards with
-   `border-border` + `shadow-card`, mono labels and tabular numbers for facts, and red only
-   for the page's main action, focus rings and status dots (selected chips use neutral ink:
-   `variant="inverse"`). No glow blobs, gradient text, sparkle icons or icon-in-a-square
-   card grids, and no copy that claims something the product doesn't do.
+   **Page language** (public, auth and dashboard): public pages open with `PageHeader` (mono
+   label, display heading, intro, grid backdrop), dashboard pages with `DashboardPage`;
+   `SectionTitle` with `align="split"` / `"start"` for public sections; cards with
+   `border-border` + `shadow-card`; mono labels (`Eyebrow`) and tabular numbers for facts;
+   sentence-case labels and buttons; red only for the page's main action, destructive
+   actions, focus rings and status dots (selected chips and open tool buttons use neutral
+   ink, e.g. `variant="inverse"`). No glow blobs, gradient text, sparkle icons or
+   icon-in-a-square card grids, and no copy that claims something the product doesn't do.
 6. **Animation** — `motion` is used **only on the homepage** (`sections/` and the
    components only they render) **and the `/pricing` page**. Every other page, the
    navbar, the footer and shared components like `ThumbnailCard` have no motion animation;
@@ -244,6 +243,8 @@ Check these before writing anything new:
   `children` render under the description (an action, a date).
 - **`PageHeader.tsx`** — the top of a public page: `SectionTitle` (`as="h1"`, split) over the
   fading grid and grain. `animate` only on `/pricing`, where motion is allowed.
+- **`DashboardPage.tsx`** — the shell of every dashboard page: `eyebrow`, `title` (the
+  `h1`), `description`, optional `actions` and the body (a "Coming soon" box without one).
 - **`Reveal.tsx`** — the standard scroll-in entrance (`delay` for staggering).
   **`AnimatedValue.tsx`** slides a changing value such as a price. **`MaskedLines.tsx`**
   reveals a heading line by line; **`Eyebrow.tsx`** is the small mono label (`dot` for
@@ -521,10 +522,12 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - Profile editing + avatar upload via Cloudinary
 - Dark mode via `data-theme` attribute + CSS variables in `globals.css`; until the user picks
   a theme it follows the OS setting (`store/useTheme.ts`)
-- Public pages share one look (`.public-theme`, `PageHeader`); homepage: live control demos, a scroll-scrubbed walkthrough
+- Public, auth and dashboard pages share one look (tokens at `:root`, `PageHeader` /
+  `DashboardPage`); homepage: live control demos, a scroll-scrubbed walkthrough
   (GSAP, lazy) and Lenis smooth scroll; no testimonials until real ones exist
-- Settings page with EditProfile and Billing (balance, refill date, renewal or end date,
-  Upgrade → `/pricing`, Manage Plan → Paddle portal); InvoicesSection is a UI shell
+- Settings page with profile, password, account deletion and Plan and credits (balance,
+  refill date, renewal or end date, Upgrade → `/pricing`, Manage plan → Paddle portal);
+  Invoices has no in-app list, it points to Paddle's receipts and the portal
 - Paid Pro/Ultra plans through Paddle (see Billing above); `PricingCard` opens checkout
 - Monthly free-credit refill, stuck-generation cleanup, the 30-day recycle-bin purge and the
   trending score (likes and views decayed by age, `TRENDING_*` in `constants.ts`)
