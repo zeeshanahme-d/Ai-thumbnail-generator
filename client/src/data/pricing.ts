@@ -6,6 +6,9 @@ const FREE_THUMBNAILS = FREE_MONTHLY_CREDITS / GENERATION_CREDIT_COST;
 
 export const YEARLY_DISCOUNT = 0.2;
 
+// Marks plan features that are announced but not built yet (no plan-based model, queue or Recreate).
+const COMING_SOON = "(coming soon)";
+
 export const billingOptions: IBillingOption[] = [
     { value: "monthly", label: "Monthly" },
     { value: "yearly", label: "Yearly" },
@@ -55,9 +58,9 @@ export const pricingPlans: IPricingPlan[] = [
         features: [
             "500 credits every month (100 thumbnails)",
             "Everything in Free",
-            "Premium image model",
-            "Recreate & modify thumbnails",
-            "Priority generation",
+            `Premium image model ${COMING_SOON}`,
+            `Recreate & modify thumbnails ${COMING_SOON}`,
+            `Priority generation ${COMING_SOON}`,
         ],
     },
     {
@@ -106,9 +109,9 @@ export const planComparison: IPlanComparisonRow[] = [
     { feature: "AI prompt improver", values: [true, true, true] },
     { feature: "YouTube preview mockups", values: [true, true, true] },
     { feature: "Community gallery publishing", values: [true, true, true] },
-    { feature: "Premium image model", values: [false, true, true] },
-    { feature: "Recreate & modify thumbnails", values: [false, true, true] },
-    { feature: "Priority generation", values: [false, true, true] },
+    { feature: `Premium image model ${COMING_SOON}`, values: [false, true, true] },
+    { feature: `Recreate & modify thumbnails ${COMING_SOON}`, values: [false, true, true] },
+    { feature: `Priority generation ${COMING_SOON}`, values: [false, true, true] },
     { feature: "Priority support", values: [false, false, true] },
     { feature: "Early access to new features", values: [false, false, true] },
 ];

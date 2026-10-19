@@ -14,13 +14,15 @@ export default function MainLayout() {
         if (navigationType !== 'POP' && !hash) window.scrollTo(0, 0);
     }, [pathname, hash, navigationType]);
 
+    // The homepage theme (styles/home-theme.css) covers the navbar, page and footer together.
+    // Elsewhere the wrapper is display: contents, so it adds no box and changes no layout.
     return (
-        <>
+        <div className={pathname === '/' ? 'home-theme' : 'contents'}>
             <Navbar />
             <Suspense fallback={<PageLoader />}>
                 <Outlet />
             </Suspense>
             <Footer />
-        </>
+        </div>
     );
 }

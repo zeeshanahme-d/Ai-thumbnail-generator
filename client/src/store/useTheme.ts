@@ -7,26 +7,27 @@ interface ThemeStore {
     toggleTheme: () => void;
 }
 
-const getStoredTheme = (): Theme => {
+// A theme the user picked wins; until then, follow the OS setting (not saved, so it keeps following).
+const getInitialTheme = (): Theme => {
     const stored = localStorage.getItem("theme");
     if (stored === "light" || stored === "dark") return stored;
-    return "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
-const applyTheme = (theme: Theme) => {
+const setThemeAttribute = (theme: Theme) => {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
 };
 
-const initialTheme = getStoredTheme();
-applyTheme(initialTheme);
+const initialTheme = getInitialTheme();
+setThemeAttribute(initialTheme);
 
 export const useTheme = create<ThemeStore>((set) => ({
     theme: initialTheme,
     toggleTheme: () =>
         set((state) => {
             const next = state.theme === "light" ? "dark" : "light";
-            applyTheme(next);
+            setThemeAttribute(next);
+            localStorage.setItem("theme", next);
             return { theme: next };
         }),
 }));

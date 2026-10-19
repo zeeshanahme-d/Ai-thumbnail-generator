@@ -48,11 +48,21 @@ export interface PromptCardProps {
   onChange?: (value: string) => void;
   onSubmit?: (submission: PromptSubmission) => void;
   placeholder?: string;
+  /** Accessible name for the textarea when there is no visible label, e.g. while the placeholder changes. */
+  ariaLabel?: string;
   maxLength?: number;
   rows?: number;
   submitLabel?: string;
   showTools?: boolean;
   disabled?: boolean;
+  className?: string;
+}
+
+export interface ButtonStyleOptions {
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "inverse";
+  size?: "xs" | "sm" | "md" | "lg" | "icon" | "iconSm" | "iconLg";
+  rounded?: "full" | "lg";
+  fullWidth?: boolean;
   className?: string;
 }
 
@@ -160,6 +170,27 @@ export interface SectionTitleProps {
   as?: "h1" | "h2";
   /** Scroll-in animation, used on the homepage and pricing page. */
   animate?: boolean;
+  /**
+   * center: pill, heading and description stacked in the middle (default).
+   * start: the same stack, left-aligned, with a mono eyebrow.
+   * split: heading on the left, description on the right from `lg` up.
+   * start and split reveal the heading line by line: pass `text2` as an array of lines.
+   */
+  align?: "center" | "start" | "split";
+}
+
+export interface MaskedLinesProps {
+  lines: ReactNode[];
+  /** mount: reveal right away (above the fold). inView: when scrolled into view. */
+  trigger?: "mount" | "inView";
+  delay?: number;
+}
+
+export interface EyebrowProps {
+  children: ReactNode;
+  /** A small brand-red status dot before the label. */
+  dot?: boolean;
+  className?: string;
 }
 
 export interface TestimonialCardProps {

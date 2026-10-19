@@ -39,6 +39,7 @@ const PromptCard = ({
   onChange,
   onSubmit,
   placeholder = "Describe your thumbnail vision in detail... a cinematic gaming battle with fire and lightning at sunset",
+  ariaLabel,
   maxLength = 500,
   submitLabel = "Generate Thumbnail",
   showTools = true,
@@ -209,6 +210,7 @@ const PromptCard = ({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
+        aria-label={ariaLabel}
         className={`block w-full min-h-32 sm:min-h-[150px] max-h-[220px] h-auto resize-none border-none bg-transparent text-[0.95rem] leading-relaxed text-text-primary outline-none placeholder:text-text-muted ${
           label || isAuthenticated ? "mt-3" : ""
         }`}
