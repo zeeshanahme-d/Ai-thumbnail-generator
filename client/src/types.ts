@@ -2,12 +2,26 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import type React from "react";
 
+export type CapabilityId = "aspect-ratio" | "style" | "color-scheme" | "improve" | "reference";
+
 export interface ICapability {
-  icon: LucideIcon;
+  id: CapabilityId;
+  /** Short mono label above the title. */
+  label: string;
   title: string;
   description: string;
-  span: "wide" | "narrow"; // wide = 2 grid cols (with visual), narrow = 1 col
-  visual?: "canvas" | "upscale"; // decorative art rendered on the wide cards
+}
+
+export interface CapabilityDemoProps {
+  /** On screen and not being hovered or focused: the demo may play by itself. */
+  active: boolean;
+}
+
+export interface CapabilityTileProps {
+  capability: ICapability;
+  demo: React.ComponentType<CapabilityDemoProps>;
+  index: number;
+  className?: string;
 }
 
 export interface IStep {
