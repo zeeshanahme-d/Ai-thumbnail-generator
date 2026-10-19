@@ -1,54 +1,66 @@
-import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Wrapper from "../components/Wrapper";
-import PreviewCard from "./components/PreviewCard";
-import CtrStatCard from "./components/CtrStatCard";
+import Eyebrow from "../components/Eyebrow";
+import MaskedLines from "../components/MaskedLines";
+import Reveal from "../components/Reveal";
+import { sampleThumbnails } from "../data/hero";
+import { buttonClasses } from "../lib/buttonClasses";
+import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../lib/credits";
+
+const FREE_THUMBNAILS = FREE_MONTHLY_CREDITS / GENERATION_CREDIT_COST;
+
+// Four 16:9 samples for the panel's edge, in two offset columns.
+const panelThumbnails = sampleThumbnails.filter(({ width, height }) => width !== height).slice(0, 4);
 
 export default function CTASection() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="pb-(--section-y)">
       <Wrapper>
-        <motion.div
-          className="relative overflow-hidden rounded-3xl border border-border bg-background-surface px-5 py-14 sm:px-10 md:px-16 md:py-20"
-          initial={{ y: 60, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 280, damping: 70, mass: 1 }}
-        >
-          <PreviewCard className="pointer-events-none absolute left-8 top-10 hidden -rotate-6 opacity-60 lg:block" />
-          <CtrStatCard className="pointer-events-none absolute bottom-10 right-8 hidden rotate-3 opacity-70 lg:block" />
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-background-card shadow-card">
+            <div aria-hidden="true" className="home-grid-bg pointer-events-none absolute inset-0" />
+            <div aria-hidden="true" className="home-grain pointer-events-none absolute inset-0" />
 
-          <div className="relative mx-auto flex max-w-xl flex-col items-center text-center">
-            <span className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-primary">
-              <BarChart3 size={14} />
-              BOOST YOUR CTR
-            </span>
-            <h2 className="mt-6 text-balance text-[clamp(1.75rem,1.3rem+2vw,2.5rem)] font-medium leading-[1.1] tracking-[-0.03em] text-text-primary">
-              Your Best Thumbnails Are Just{" "}
-              <span className="text-primary">One Click Away.</span>
-            </h2>
-            <p className="mt-4 text-pretty text-sm leading-relaxed text-text-secondary sm:text-base">
-              Join 50,000+ creators generating professional thumbnails in
-              seconds. No credit card required.
-            </p>
-            <div className="mt-8 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
-              <Link
-                to="/dashboard/generate"
-                className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-8 text-sm font-medium text-text-on-primary transition-all hover:bg-primary-hover active:scale-[0.97]"
-              >
-                Generate for Free
-                <ArrowRight size={16} />
-              </Link>
-              <Link
-                to="/community"
-                className="flex min-h-11 items-center justify-center rounded-full border border-border bg-background-surface-2 px-8 text-sm font-medium text-text-primary transition hover:bg-background-card active:scale-[0.97]"
-              >
-                Browse Gallery
-              </Link>
+            <div className="relative grid lg:grid-cols-12">
+              <div className="p-6 sm:p-10 lg:col-span-7 lg:p-14">
+                <Eyebrow dot>Free to start</Eyebrow>
+                <h2 className="mt-5 text-[clamp(2rem,1.4rem+2.6vw,3.5rem)] font-medium leading-[1.04] tracking-[-0.035em] text-text-primary">
+                  <MaskedLines lines={["Your next upload", "needs a thumbnail."]} />
+                </h2>
+                <p className="mt-5 max-w-[46ch] text-pretty text-base leading-relaxed text-text-secondary">
+                  Describe the video and have its thumbnail before you hit publish. No card needed:{" "}
+                  {FREE_THUMBNAILS} free thumbnails a month once your email is verified.
+                </p>
+                <Link
+                  to="/dashboard/generate"
+                  className={buttonClasses({ size: "lg", rounded: "lg", fullWidth: false, className: "mt-8 max-sm:w-full" })}
+                >
+                  Start generating free
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+
+              {/* Sample thumbnails running off the panel's right edge; decoration only. */}
+              <div aria-hidden="true" className="relative hidden lg:col-span-5 lg:block">
+                <div className="absolute -right-10 top-10 grid w-[130%] grid-cols-2 gap-4">
+                  {panelThumbnails.map(({ src }, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={640}
+                      height={357}
+                      className={`aspect-video w-full rounded-xl border border-border object-cover ${index % 2 ? "translate-y-10" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </motion.div>
+        </Reveal>
       </Wrapper>
     </section>
   );

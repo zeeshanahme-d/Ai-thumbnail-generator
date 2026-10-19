@@ -1,4 +1,4 @@
-import { ArrowRight, Heart, Sparkles } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import Wrapper from "./Wrapper";
 import { footerData } from "../data/footer";
@@ -9,11 +9,6 @@ import type { FooterColumnProps } from "../types";
 export default function Footer() {
   return (
     <footer className="relative overflow-hidden border-t border-border bg-background-surface">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/60 to-transparent"
-      />
-
       <Wrapper className="pt-14 md:pt-20">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr] lg:gap-16">
           <FooterBrand />
@@ -49,7 +44,7 @@ function FooterBrand() {
         <Logo className="h-7 w-auto" />
       </Link>
       <p className="mt-4 text-sm leading-relaxed text-text-secondary">
-        AI-powered thumbnail generation for creators who want to stand out. Beautiful. Fast. Effortless.
+        Describe your video, pick a style and get a YouTube thumbnail in seconds.
       </p>
       <Link
         to="/dashboard/generate"
@@ -58,9 +53,8 @@ function FooterBrand() {
         Start creating free
         <ArrowRight size={15} />
       </Link>
-      <p className="mt-3 flex items-center gap-1.5 text-xs text-text-muted">
-        <Sparkles size={13} className="text-primary" />
-        {FREE_MONTHLY_CREDITS} free credits every month
+      <p className="mt-3 text-xs text-text-muted">
+        {FREE_MONTHLY_CREDITS} free credits every month once your email is verified
       </p>
     </div>
   );
