@@ -33,7 +33,7 @@ export default function ForgotPassword() {
   return (
     <AuthLayout
       title="Forgot password"
-      subtitle="Enter your email and we'll send you a reset code"
+      subtitle="Enter your email and we'll send you a reset code."
       topSlot={<BackButton />}
     >
       <form
@@ -69,6 +69,8 @@ export default function ForgotPassword() {
               <Button
                 type="submit"
                 variant="primary"
+                size="lg"
+                rounded="lg"
                 disabled={isSubmitting || isPending}
               >
                 {isSubmitting || isPending ? "Sending code..." : "Send code"}

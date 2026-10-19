@@ -519,6 +519,14 @@ export type AuthMode =
   | "resetPassword";
 
 /** Which flow the 6-digit code screen serves. */
+export interface AuthLayoutProps {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+  /** Above the title: the sign-in/register tabs or a back button. */
+  topSlot?: ReactNode;
+}
+
 export type VerifyOtpMode = "reset-password" | "verify-email";
 
 export interface VerifyOtpProps {

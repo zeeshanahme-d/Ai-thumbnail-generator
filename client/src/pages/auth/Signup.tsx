@@ -10,6 +10,7 @@ import Input from "../../components/Input";
 import { useSignup } from "../../core/auth/hooks";
 import { signupSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
+import { FREE_MONTHLY_CREDITS } from "../../lib/credits";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Signup() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Start creating visually stunning, premium thumbnails for free."
+      subtitle={`Get ${FREE_MONTHLY_CREDITS} free credits a month once you verify your email.`}
       topSlot={<AuthTabs />}
     >
       <form
@@ -106,12 +107,13 @@ export default function Signup() {
               <Button
                 type="submit"
                 variant="primary"
-                // className="cursor-not-allowed"
+                size="lg"
+                rounded="lg"
                 disabled={isSubmitting || isPending}
               >
                 {isSubmitting || isPending
                   ? "Creating account..."
-                  : "Create Account"}
+                  : "Create account"}
               </Button>
             )}
           </form.Subscribe>

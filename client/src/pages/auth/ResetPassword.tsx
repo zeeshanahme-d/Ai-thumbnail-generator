@@ -48,7 +48,7 @@ export default function ResetPassword() {
   return (
     <AuthLayout
       title="Reset password"
-      subtitle="Choose a new password for your account"
+      subtitle="Choose a new password for your account."
       topSlot={<BackButton />}
     >
       <form
@@ -102,6 +102,8 @@ export default function ResetPassword() {
               <Button
                 type="submit"
                 variant="primary"
+                size="lg"
+                rounded="lg"
                 disabled={isSubmitting || isPending}
               >
                 {isSubmitting || isPending ? "Resetting password..." : "Reset password"}

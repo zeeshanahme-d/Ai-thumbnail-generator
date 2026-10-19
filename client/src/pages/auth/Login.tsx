@@ -38,7 +38,7 @@ export default function Login() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to keep generating high-conversion AI thumbnails."
+      subtitle="Sign in to pick up where you left off."
       topSlot={<AuthTabs />}
     >
       <form
@@ -89,7 +89,7 @@ export default function Login() {
         <div className="text-right">
           <Link
             to="/forgot-password"
-            className="text-sm text-primary hover:underline"
+            className="text-sm font-medium text-text-secondary underline-offset-4 transition-colors hover:text-text-primary hover:underline"
           >
             Forgot password?
           </Link>
@@ -101,6 +101,8 @@ export default function Login() {
               <Button
                 type="submit"
                 variant="primary"
+                size="lg"
+                rounded="lg"
                 disabled={isSubmitting || isPending}
               >
                 {isSubmitting || isPending ? "Signing in..." : "Sign in"}

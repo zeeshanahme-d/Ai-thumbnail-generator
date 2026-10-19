@@ -30,7 +30,7 @@ const MODES: Record<
   "reset-password": {
     storageKey: "tg_reset_email",
     missingEmailPath: "/forgot-password",
-    title: "Verify OTP",
+    title: "Enter your code",
     subtitle: (email) =>
       email ? `Enter the 6-digit code sent to ${email}` : "Enter the 6-digit code we sent to your email",
   },
@@ -175,30 +175,30 @@ export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={handlePaste}
-              className="h-14 w-11 rounded-lg border border-border bg-background-surface text-center text-lg text-text-primary outline-none transition-colors focus:border-primary sm:w-14"
+              className="h-14 w-11 rounded-lg border border-border bg-background-surface text-center font-mono text-xl tabular-nums text-text-primary outline-none transition-colors focus:border-primary sm:w-14"
             />
           ))}
         </div>
 
-        <Button type="submit" variant="primary" disabled={isVerifying}>
-          {isVerifying ? "Verifying..." : "Verify Code"}
+        <Button type="submit" variant="primary" size="lg" rounded="lg" disabled={isVerifying}>
+          {isVerifying ? "Verifying..." : "Verify code"}
         </Button>
 
         <div className="text-center pt-2">
           <p className="text-sm text-text-secondary">
             Didn't receive the code?{" "}
             {timer > 0 ? (
-              <span className="font-medium text-text-muted">
-                Resend in <span className="text-primary font-semibold">{timer}s</span>
+              <span className="text-text-muted">
+                Resend in <span className="font-mono tabular-nums text-text-primary">{timer}s</span>
               </span>
             ) : (
               <button
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isResending}
-                className="font-medium text-primary hover:underline disabled:opacity-50"
+                className="cursor-pointer font-medium text-text-primary underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isResending ? "Sending..." : "Resend Code"}
+                {isResending ? "Sending..." : "Resend code"}
               </button>
             )}
           </p>
