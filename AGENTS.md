@@ -55,7 +55,8 @@ client/src/
 ├─ components/       # reusable components (shared across pages/sections)
 │  ├─ image-generate-components/  # PromptCard, StylePicker, AspectRatioPicker, etc.
 │  └─ modals/        # ConfirmDialog
-├─ sections/         # large composed marketing sections (HeroSection, PricingSection, …)
+├─ sections/         # homepage sections (HeroSection, CapabilitiesSection, ProcessSection, …)
+│  └─ components/    # homepage-only parts: hero/, capabilities/ (bento demos), process/ (walkthrough)
 ├─ core/             # shared API layer: _models.ts, _requests.ts, hooks/ (React Query)
 │  ├─ auth/          # session, login/signup, OTP and verification hooks
 │  ├─ thumbnails/    # list, generate, like, publish, delete and restore hooks
@@ -71,7 +72,9 @@ client/src/
 │  └─ layouts/       # DashboardLayout, MainLayout, DashboardHeader, DashboardSidebar
 ├─ routes/           # routes.tsx, GuestRoute, ProtectedRoute
 ├─ store/            # Zustand stores (useSessionStore, useTheme)
-├─ lib/              # axios instance, queryClient, imageValidation, thumbnail helpers
+├─ lib/              # axios, queryClient, imageValidation, thumbnail helpers, motion tokens,
+│                    # gsap (lazy-only), smoothScroll, buttonClasses, small hooks (useMediaQuery, …)
+├─ styles/           # variables.css (global tokens), home-theme.css (homepage theme)
 └─ data/             # static/mock arrays typed against types.ts
 ```
 
@@ -158,16 +161,43 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
 
    Tailwind v4 syntax: gradients are `bg-linear-to-b` (not `bg-gradient-to-b`), and
    the important suffix is `text-base!`.
-6. **Animation** — `motion` is used **only on the homepage sections** (`sections/` and
-   the components only they render) **and the `/pricing` page**. Every other page, the
+
+   **Homepage theme.** On `/` only, `MainLayout` wraps the Navbar, page and Footer in
+   `.home-theme` (`styles/home-theme.css`); elsewhere the wrapper is `display: contents`.
+   The class redefines the same variables as `variables.css` (ink in dark, paper in light,
+   brand red `#d7303d` so white button text passes AA), so the usual tokens just work there.
+   It also sets Geist (400/500) as the font, makes `font-mono` Geist Mono, maps
+   `font-semibold`/`font-bold` to 500, and adds tokens that exist **only inside it**:
+   `border-border-strong`, `shadow-card`, `py-(--section-y)` (section rhythm), and the
+   `.home-grid-bg` / `.home-grain` backgrounds. Don't use those outside the homepage, and
+   don't change `variables.css` for homepage work. Moving the `.home-theme` values to
+   `:root` is how the look would roll out to the rest of the site.
+6. **Animation** — `motion` is used **only on the homepage** (`sections/` and the
+   components only they render) **and the `/pricing` page**. Every other page, the
    navbar, the footer and shared components like `ThumbnailCard` have no motion animation;
    don't add any there. Loading states use Tailwind's `animate-spin` / `animate-pulse`.
-   Scroll-in entrances go through `Reveal`. The entrance pattern is
-   `initial={{ y: 50, opacity: 0 }}` → `whileInView={{ y: 0, opacity: 1 }}`,
-   `viewport={{ once: true }}`, spring (`stiffness: 240–320, damping: 70, mass: 1`),
-   staggered by `delay: index * 0.1`. Do **not** put `transform` in a CSS
-   `transition-*` when motion also animates it — scope the CSS transition to
-   `transition-[background-color,border-color,box-shadow]`.
+   - **Tokens** live in `lib/motion.ts`; reuse them instead of new timings: `EASE_OUT`
+     (`cubic-bezier(0.22, 1, 0.36, 1)`, also `ease-out-expo` in CSS), `DURATION`
+     (small 0.5s, enter 0.7s, line 0.8s, exit 0.25s), `STAGGER` (60ms), `DISTANCE` (16px),
+     `VIEWPORT`, and the `fadeUp` / `crossFade` variants. Hover and press stay in CSS at
+     150–250ms. Springs only for physical interactions (press, the billing toggle pill).
+   - Scroll-in entrances go through `Reveal` (fade up 16px). Headings that reveal line by
+     line use `MaskedLines` (`SectionTitle` with `align="start" | "split"` does it for you).
+   - **GSAP** (with ScrollTrigger) is only for scroll-scrubbed scenes, at most two per page;
+     today that's the homepage walkthrough (`sections/components/process/ProcessTimeline`).
+     Only lazy-loaded modules may import `lib/gsap.ts`, so GSAP never reaches the main
+     bundle. Pin with CSS `position: sticky` and let GSAP scrub. Never animate one element
+     with both motion and GSAP.
+   - **Smooth scroll**: Lenis runs only on the homepage, lazy-loaded (`pages/home/components/
+     SmoothScroll`) on GSAP's ticker where `RICH_MOTION_QUERY` matches (wide screen, fine
+     pointer, motion allowed). In-page anchors go through `scrollToHash` (`lib/smoothScroll.ts`),
+     which works with or without Lenis and honours `scroll-mt-*`.
+   - **Reduced motion**: the homepage sits in `MotionConfig reducedMotion="user"`; GSAP code
+     uses `gsap.matchMedia()`; auto-playing demos (`useAutoCycle`, `useTypewriter`) stand
+     still. With reduced motion, or before GSAP loads, content shows in its final state;
+     nothing may stay invisible waiting for JS.
+   - Do **not** put `transform` in a CSS `transition-*` when motion or GSAP animates it —
+     scope the CSS transition to `transition-[background-color,border-color,box-shadow]`.
 7. **Icons** — lucide-react, usually `size={14}`–`size={20}`.
 8. **Popovers** — use the **native HTML Popover API** (`popover="auto"` +
    `popoverTarget`), never a custom outside-click listener. Light-dismiss and Esc
@@ -178,23 +208,34 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
 Check these before writing anything new:
 
 - **`Button.tsx`** — the only button primitive. `variant` (primary | secondary |
-  outline | ghost), `size` (xs | sm | md | icon), `rounded` (full | lg),
-  `fullWidth`. Covers icon buttons and chips; extend it rather than hand-rolling a
-  `<button>` with utility classes.
+  outline | ghost | inverse), `size` (xs | sm | md | lg | icon | iconSm | iconLg),
+  `rounded` (full | lg), `fullWidth`. Covers icon buttons and chips; extend it rather than
+  hand-rolling a `<button>` with utility classes. A `<Link>` that looks like a button uses
+  `buttonClasses()` from `lib/buttonClasses.ts`, the same classes Button renders.
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
   uncontrolled; includes style/aspect-ratio/color-scheme/reference-image pickers.
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
   signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
-  Used by both `HeroSection` and the dashboard generate page.
+  Used by both `HeroSection` (through `HeroPrompt`, with `showTools={false}` and a
+  placeholder that types out the templates, so it passes `ariaLabel`) and the dashboard
+  generate page.
 - **`PopoverPanel.tsx`** — native-popover shell (title + Done). Wrap any picker in it.
-- **`SectionTitle.tsx`** — pill + heading + description. `as="h1"` for a page title;
-  `animate={false}` everywhere except the homepage and `/pricing`.
+- **`SectionTitle.tsx`** — label + heading + description. `as="h1"` for a page title;
+  `animate={false}` everywhere except the homepage and `/pricing`. `align`: `center`
+  (pill, default), `start` (left, mono eyebrow) or `split` (heading left, description
+  right); `start`/`split` take `text2` as an array of lines for the masked reveal.
 - **`Reveal.tsx`** — the standard scroll-in entrance (`delay` for staggering).
-  **`AnimatedValue.tsx`** slides a changing value such as a price.
+  **`AnimatedValue.tsx`** slides a changing value such as a price. **`MaskedLines.tsx`**
+  reveals a heading line by line; **`Eyebrow.tsx`** is the small mono label (`dot` for
+  the red status dot).
 - **`PricingCard` / `BillingToggle`** — plan card and monthly/yearly switch (sliding pill),
-  used by the homepage `PricingSection` and the `/pricing` page. Plans, the pay-as-you-go
-  `CREDIT_PACK` settings, credit facts and the comparison table come from `data/pricing.ts`.
+  used by the homepage `PricingSection` and the `/pricing` page (`BillingToggle` takes a
+  `className` for placement). Plans, the pay-as-you-go `CREDIT_PACK` settings, credit
+  facts and the comparison table come from `data/pricing.ts`; features that aren't built
+  yet carry `COMING_SOON`.
+- **`ThumbnailScroller.tsx`** — the hero's pure-CSS marquee (`animate-marquee`) of the
+  sample thumbnails (`sampleThumbnails` in `data/hero.ts`, 640px WebP copies).
 - **`FaqAccordion.tsx`** — animated accordion, one answer open at a time; questions live
   in `data/faq.ts`.
 - **`StylePicker` / `AspectRatioPicker` / `ColorSchemePicker` / `ReferenceImageUpload`**
@@ -210,7 +251,7 @@ Check these before writing anything new:
   Used by `SessionProvider` and as the `Suspense` fallback for lazy pages.
 - **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Select.tsx`**,
-  **`ThumbnailScroller.tsx`**, **`SectionTitle.tsx`**, **`Skeleton.tsx`**,
+  **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**, **`DebounceSearch.tsx`**.
 
 `lib/imageValidation.ts` owns image rules (extensions, MIME, 5 MB max) and returns a
@@ -459,7 +500,10 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - Dashboard: Generate, Gallery, Community, Recycle Bin (all wired to real API)
 - Like/unlike, publish/unpublish, soft delete/restore/permanent delete
 - Profile editing + avatar upload via Cloudinary
-- Dark mode via `data-theme` attribute + CSS variables in `globals.css`
+- Dark mode via `data-theme` attribute + CSS variables in `globals.css`; until the user picks
+  a theme it follows the OS setting (`store/useTheme.ts`)
+- Homepage redesign: scoped `.home-theme`, live control demos, a scroll-scrubbed walkthrough
+  (GSAP, lazy) and Lenis smooth scroll; no testimonials until real ones exist
 - Settings page with EditProfile and Billing (balance, refill date, renewal or end date,
   Upgrade → `/pricing`, Manage Plan → Paddle portal); InvoicesSection is a UI shell
 - Paid Pro/Ultra plans through Paddle (see Billing above); `PricingCard` opens checkout
