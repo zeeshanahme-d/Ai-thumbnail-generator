@@ -74,7 +74,7 @@ client/src/
 ├─ store/            # Zustand stores (useSessionStore, useTheme)
 ├─ lib/              # axios, queryClient, imageValidation, thumbnail helpers, motion tokens,
 │                    # gsap (lazy-only), smoothScroll, buttonClasses, small hooks (useMediaQuery, …)
-├─ styles/           # variables.css (global tokens), home-theme.css (homepage theme)
+├─ styles/           # variables.css (global tokens), public-theme.css (public pages' theme)
 └─ data/             # static/mock arrays typed against types.ts
 ```
 
@@ -95,7 +95,8 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
 - **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
   `/profile`, `/thumbnail/:id`, `/pricing`, `/privacy-policy`, `/terms` and
   `/refund-policy` are public. The three legal routes share `pages/legal/LegalPage`, whose
-  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top.
+  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top and wraps every
+  public page in the public theme (see Styling), so they all share the homepage's look.
 
 Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
 
@@ -124,7 +125,7 @@ Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/f
 |---|---|---|
 | Generate | `/dashboard/generate` | ✅ Fully wired — PromptCard → API → shows generated thumbnails |
 | Gallery | `/dashboard/gallery` | ✅ Filters, sort, pagination, delete, publish |
-| Community | `/dashboard/community` | ✅ Same Community component as marketing `/community` |
+| Community | `/dashboard/community` | ✅ Same Community component as `/community`, which passes `variant="public"` for its own header |
 | Recreate | `/dashboard/recreate` | ❌ Placeholder stub — `DashboardPage` template only |
 | Settings | `/dashboard/settings` | 🔲 EditProfile wired; Billing shows the real balance and refill date, Upgrade disabled until payments exist; Invoices is a UI shell |
 | Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog, Restore all, Empty bin, Load More; items purged after 30 days |
@@ -162,16 +163,26 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
    Tailwind v4 syntax: gradients are `bg-linear-to-b` (not `bg-gradient-to-b`), and
    the important suffix is `text-base!`.
 
-   **Homepage theme.** On `/` only, `MainLayout` wraps the Navbar, page and Footer in
-   `.home-theme` (`styles/home-theme.css`); elsewhere the wrapper is `display: contents`.
-   The class redefines the same variables as `variables.css` (ink in dark, paper in light,
-   brand red `#d7303d` so white button text passes AA), so the usual tokens just work there.
-   It also sets Geist (400/500) as the font, makes `font-mono` Geist Mono, maps
-   `font-semibold`/`font-bold` to 500, and adds tokens that exist **only inside it**:
+   **Public theme.** `MainLayout` wraps the Navbar, page and Footer of every public page
+   (homepage, community, profiles, thumbnail pages, pricing, legal, 404) in `.public-theme`
+   (`styles/public-theme.css`). The dashboard and auth pages render outside it and keep
+   `variables.css`. The class redefines the same variables as `variables.css` (ink in dark,
+   paper in light, brand red `#d7303d` so white button text passes AA), so the usual tokens
+   just work there. It also sets Geist (400/500) as the font, makes `font-mono` Geist Mono,
+   maps `font-semibold`/`font-bold` to 500, and adds tokens that exist **only inside it**:
    `border-border-strong`, `shadow-card`, `py-(--section-y)` (section rhythm), and the
-   `.home-grid-bg` / `.home-grain` backgrounds. Don't use those outside the homepage, and
-   don't change `variables.css` for homepage work. Moving the `.home-theme` values to
-   `:root` is how the look would roll out to the rest of the site.
+   `.public-grid-bg` / `.public-grain` backgrounds. Never use those in a component the
+   dashboard or auth pages also render; there, change look only through the shared tokens
+   or an opt-in prop (`Community` / `CommunityFilters` take `variant="public"`). Don't change
+   `variables.css` for public-page work. Moving the `.public-theme` values to `:root` is how
+   the look would roll out to the dashboard and auth pages too.
+
+   **Public page language:** a `PageHeader` at the top (mono label, display heading, intro,
+   grid backdrop), `SectionTitle` with `align="split"` / `"start"` for sections, cards with
+   `border-border` + `shadow-card`, mono labels and tabular numbers for facts, and red only
+   for the page's main action, focus rings and status dots (selected chips use neutral ink:
+   `variant="inverse"`). No glow blobs, gradient text, sparkle icons or icon-in-a-square
+   card grids, and no copy that claims something the product doesn't do.
 6. **Animation** — `motion` is used **only on the homepage** (`sections/` and the
    components only they render) **and the `/pricing` page**. Every other page, the
    navbar, the footer and shared components like `ThumbnailCard` have no motion animation;
@@ -192,7 +203,7 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
      SmoothScroll`) on GSAP's ticker where `RICH_MOTION_QUERY` matches (wide screen, fine
      pointer, motion allowed). In-page anchors go through `scrollToHash` (`lib/smoothScroll.ts`),
      which works with or without Lenis and honours `scroll-mt-*`.
-   - **Reduced motion**: the homepage sits in `MotionConfig reducedMotion="user"`; GSAP code
+   - **Reduced motion**: the homepage and `/pricing` sit in `MotionConfig reducedMotion="user"`; GSAP code
      uses `gsap.matchMedia()`; auto-playing demos (`useAutoCycle`, `useTypewriter`) stand
      still. With reduced motion, or before GSAP loads, content shows in its final state;
      nothing may stay invisible waiting for JS.
@@ -224,7 +235,10 @@ Check these before writing anything new:
 - **`SectionTitle.tsx`** — label + heading + description. `as="h1"` for a page title;
   `animate={false}` everywhere except the homepage and `/pricing`. `align`: `center`
   (pill, default), `start` (left, mono eyebrow) or `split` (heading left, description
-  right); `start`/`split` take `text2` as an array of lines for the masked reveal.
+  right); `start`/`split` take `text2` as an array of lines (masked reveal when animated).
+  `children` render under the description (an action, a date).
+- **`PageHeader.tsx`** — the top of a public page: `SectionTitle` (`as="h1"`, split) over the
+  fading grid and grain. `animate` only on `/pricing`, where motion is allowed.
 - **`Reveal.tsx`** — the standard scroll-in entrance (`delay` for staggering).
   **`AnimatedValue.tsx`** slides a changing value such as a price. **`MaskedLines.tsx`**
   reveals a heading line by line; **`Eyebrow.tsx`** is the small mono label (`dot` for
@@ -502,7 +516,7 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - Profile editing + avatar upload via Cloudinary
 - Dark mode via `data-theme` attribute + CSS variables in `globals.css`; until the user picks
   a theme it follows the OS setting (`store/useTheme.ts`)
-- Homepage redesign: scoped `.home-theme`, live control demos, a scroll-scrubbed walkthrough
+- Public pages share one look (`.public-theme`, `PageHeader`); homepage: live control demos, a scroll-scrubbed walkthrough
   (GSAP, lazy) and Lenis smooth scroll; no testimonials until real ones exist
 - Settings page with EditProfile and Billing (balance, refill date, renewal or end date,
   Upgrade → `/pricing`, Manage Plan → Paddle portal); InvoicesSection is a UI shell
