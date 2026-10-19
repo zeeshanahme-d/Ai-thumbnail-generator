@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 //Components
 import Alert from "../../../components/Alert";
 import Button from "../../../components/Button";
+import DashboardPage from "../../../components/DashboardPage";
+import Eyebrow from "../../../components/Eyebrow";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
@@ -13,6 +15,7 @@ import GenerationSkeleton from "./components/GenerationSkeleton";
 import GenerationResultCard from "./components/GenerationResultCard";
 //Libs
 import { getApiErrorMessage } from "../../../lib/axios";
+import { buttonClasses } from "../../../lib/buttonClasses";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
 import { clearPendingPrompt, readPendingPrompt } from "../../../lib/pendingPrompt";
 import { GENERATION_CREDIT_COST, getRemainingCredits } from "../../../lib/credits";
@@ -134,21 +137,13 @@ export default function DashboardGenerate() {
   };
 
   return (
-    <div className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <div className="mx-auto max-w-3xl text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-text-on-primary">
-          <Sparkles size={12} />
-          Powered by top-tier AI.
-        </span>
-        <h1 className="mt-4 text-balance text-[clamp(1.75rem,1.3rem+2vw,2.75rem)] font-semibold leading-tight tracking-[-0.03em] text-text-primary">
-          AI <span className="text-primary">Thumbnail</span> Generator
-        </h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Describe your vision, pick a style, and let the AI do the rest.
-        </p>
-      </div>
-
-      <div className="mx-auto mt-8 max-w-4xl space-y-4 md:mt-10">
+    <DashboardPage
+      eyebrow="Generate"
+      title="Make a thumbnail"
+      description={`Describe the video, then set the style, size and colors. Each thumbnail costs ${GENERATION_CREDIT_COST} credits.`}
+      actions={<Eyebrow className="tabular-nums">{remainingCredits} credits left</Eyebrow>}
+    >
+      <div className="max-w-4xl space-y-4">
         {needsVerification && (
           <Alert variant="warning">
             <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -188,33 +183,24 @@ export default function DashboardGenerate() {
             label="Your prompt"
             defaultValue={homepagePrompt}
             disabled={isPending || !hasEnoughCredits}
-            submitLabel="Generate Thumbnail"
+            submitLabel="Generate thumbnail"
             onSubmit={handleSubmit}
           />
         )}
-
-        <p className="text-right text-xs text-text-muted">
-          <span className="font-semibold text-text-primary">{remainingCredits}</span> credits left
-          {" · "}each thumbnail costs {GENERATION_CREDIT_COST} credits
-        </p>
       </div>
 
-      <hr className="mx-auto my-10 border-border md:my-12" />
-
-      <div>
+      <section className="mt-14 border-t border-border pt-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-text-primary">
-              Recently Generated Thumbnails
-            </h2>
-            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
-              {generations.length}
-            </span>
-          </div>
-          <Link to="/dashboard/gallery">
-            <Button variant="secondary" size="sm" fullWidth={false}>
-              View All
-            </Button>
+          <h2 className="flex items-baseline gap-2.5 text-xl font-medium tracking-[-0.015em] text-text-primary">
+            Recent thumbnails
+            <span className="font-mono text-sm tabular-nums text-text-muted">{generations.length}</span>
+          </h2>
+          <Link
+            to="/dashboard/gallery"
+            className={buttonClasses({ variant: "secondary", size: "sm", fullWidth: false })}
+          >
+            View all
+            <ArrowRight size={14} />
           </Link>
         </div>
 
@@ -240,18 +226,18 @@ export default function DashboardGenerate() {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Thumbnail?"
+        title="Delete this thumbnail?"
         description="This thumbnail will be moved to the recycle bin. You can restore it later."
-        confirmLabel="Move to Bin"
+        confirmLabel="Move to bin"
         variant="danger"
         loading={deleteMutation.isPending}
       />
-    </div>
+    </DashboardPage>
   );
 }

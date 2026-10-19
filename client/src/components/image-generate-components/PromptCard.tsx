@@ -174,7 +174,7 @@ const PromptCard = ({
           >
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="icon"
               rounded="lg"
               disabled={!hasPrompt || disabled || isImproving}

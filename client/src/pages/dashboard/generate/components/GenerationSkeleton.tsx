@@ -1,48 +1,24 @@
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Eyebrow from "../../../../components/Eyebrow";
 import Skeleton from "../../../../components/Skeleton";
 
+// Shown in place of the prompt while a thumbnail is being generated.
 export default function GenerationSkeleton() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-background-card p-6 shadow-xl">
-      {/* Ambient glowing effect */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-20 left-1/2 -z-10 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-pulse"
-      />
+    <div role="status" className="rounded-2xl border border-border bg-background-card p-5 shadow-card sm:p-6">
+      <div className="border-b border-border pb-4">
+        <Eyebrow dot>Generating</Eyebrow>
+      </div>
 
-      <div className="flex flex-col items-center text-center">
-        {/* Animated Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-          <Sparkles size={13} className="animate-spin" />
-          AI Studio Generating Thumbnail...
-        </div>
+      <div className="relative mt-5 aspect-video w-full overflow-hidden rounded-xl border border-border bg-background-surface-2">
+        <Skeleton className="h-full w-full rounded-none" />
 
-        {/* Big Aspect Video Skeleton Preview */}
-        <div className="relative mt-6 aspect-video w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-background-surface-2">
-          <Skeleton className="h-full w-full" />
-          
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
-            <div className="flex size-14 items-center justify-center rounded-full bg-primary/15 text-primary shadow-inner">
-              <Loader2 size={28} className="animate-spin" />
-            </div>
-            <h4 className="text-base font-semibold text-text-primary">
-              Crafting High-CTR Thumbnail
-            </h4>
-            <p className="max-w-sm text-xs text-text-secondary">
-              Analyzing prompt, applying styling parameters, balancing lighting & contrast, and generating in 4K resolution...
-            </p>
-          </div>
-        </div>
-
-        {/* Progress skeleton bars */}
-        <div className="mt-6 flex w-full max-w-md flex-col gap-2">
-          <div className="flex justify-between text-xs text-text-muted">
-            <span>Model Processing (Gemini AI)</span>
-            <span className="text-primary font-medium">Please wait...</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-background-surface-2">
-            <div className="h-full w-full animate-pulse rounded-full bg-linear-to-r from-primary/30 via-primary to-primary/30" />
-          </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
+          <Loader2 size={24} className="animate-spin text-text-secondary" />
+          <p className="text-base font-medium text-text-primary">Generating your thumbnail</p>
+          <p className="max-w-sm text-sm leading-relaxed text-text-secondary">
+            This usually takes under a minute. Keep this tab open.
+          </p>
         </div>
       </div>
     </div>
