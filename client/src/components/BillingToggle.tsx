@@ -3,11 +3,11 @@ import { motion } from "motion/react";
 import { billingOptions, YEARLY_DISCOUNT } from "../data/pricing";
 import type { BillingToggleProps } from "../types";
 
-export default function BillingToggle({ billing, onChange }: BillingToggleProps) {
+export default function BillingToggle({ billing, onChange, className = "mx-auto mt-8" }: BillingToggleProps) {
     const pillId = useId();
 
     return (
-        <div className="mx-auto mt-8 flex w-max items-center gap-1 rounded-full border border-border bg-background-card p-1">
+        <div className={`flex w-max items-center gap-1 rounded-full border border-border bg-background-card p-1 ${className}`}>
             {billingOptions.map(({ value, label }) => {
                 const isActive = billing === value;
 

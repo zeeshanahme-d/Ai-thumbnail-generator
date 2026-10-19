@@ -319,6 +319,8 @@ export interface PricingCardProps {
 export interface BillingToggleProps {
   billing: BillingPeriod;
   onChange: (value: BillingPeriod) => void;
+  /** Placement classes; defaults to centered with space above. */
+  className?: string;
 }
 
 export interface IBillingOption {

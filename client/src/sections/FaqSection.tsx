@@ -5,15 +5,21 @@ import { generalFaqs } from "../data/faq";
 
 export default function FaqSection() {
     return (
-        <section id="faq" className="scroll-mt-24 py-16 md:py-24">
-            <Wrapper>
-                <SectionTitle
-                    text1="FAQ"
-                    text2={<>Questions? <span className="text-primary">Answered.</span></>}
-                    text3="Everything you need to know before you create your first thumbnail."
-                />
+        <section id="faq" className="scroll-mt-16 py-(--section-y)">
+            <Wrapper className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+                {/* The title stays in view while the answers scroll past it. */}
+                <div className="lg:col-span-4">
+                    <div className="lg:sticky lg:top-28">
+                        <SectionTitle
+                            align="start"
+                            text1="FAQ"
+                            text2={["Questions,", "answered."]}
+                            text3="Everything to know before you create your first thumbnail."
+                        />
+                    </div>
+                </div>
 
-                <div className="mx-auto mt-10 max-w-3xl md:mt-12">
+                <div className="lg:col-span-8">
                     <FaqAccordion items={generalFaqs} />
                 </div>
             </Wrapper>

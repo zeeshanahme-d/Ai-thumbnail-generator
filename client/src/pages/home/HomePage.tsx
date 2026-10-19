@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { MotionConfig } from "motion/react";
 import HeroSection from "../../sections/HeroSection";
@@ -8,6 +8,7 @@ import PricingSection from "../../sections/PricingSection";
 import FaqSection from "../../sections/FaqSection";
 import CTASection from "../../sections/CTASection";
 import { scrollToHash } from "../../lib/smoothScroll";
+import { homeFontsLoaded } from "../../lib/homeFonts";
 import { RICH_MOTION_QUERY, useMediaQuery } from "../../lib/useMediaQuery";
 
 // Lenis and GSAP load in their own chunk, only where they run, so other pages never download them.
@@ -17,10 +18,37 @@ export default function HomePage() {
   const { hash } = useLocation();
   const richMotion = useMediaQuery(RICH_MOTION_QUERY);
 
-  // Router navigation does not scroll to a hash, so links like /#pricing do it here.
+  // Router navigation does not scroll to a hash, so links like /#pricing do it here:
+  // a smooth scroll for a hash link clicked on the page, a jump when the page opens on one.
+  const [arrivalHash] = useState(hash);
   useEffect(() => {
-    if (hash) scrollToHash(hash);
-  }, [hash]);
+    if (!hash) return;
+    if (hash !== arrivalHash) {
+      scrollToHash(hash);
+      return;
+    }
+
+    scrollToHash(hash, { instant: true });
+
+    // The web fonts can reflow the text above once they arrive, and scroll anchoring only partly
+    // makes up for it, so land again, unless the visitor has started scrolling or clicking.
+    let hasInteracted = false;
+    let isCancelled = false;
+    const markInteracted = () => {
+      hasInteracted = true;
+    };
+    const events = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+    events.forEach((name) => window.addEventListener(name, markInteracted, { passive: true }));
+
+    homeFontsLoaded().then(() => {
+      if (!hasInteracted && !isCancelled) scrollToHash(hash, { instant: true });
+    });
+
+    return () => {
+      isCancelled = true;
+      events.forEach((name) => window.removeEventListener(name, markInteracted));
+    };
+  }, [hash, arrivalHash]);
 
   return (
     // "user": with reduced motion on, transforms are skipped and content appears in place.

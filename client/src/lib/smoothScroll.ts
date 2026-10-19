@@ -10,16 +10,18 @@ export function setSmoothScroll(instance: Lenis | null) {
 
 // Scrolls to an in-page anchor such as "#pricing". The target's scroll-margin-top (scroll-mt-*)
 // keeps it clear of the sticky navbar on both paths: Lenis when it runs, native scrolling otherwise.
-export function scrollToHash(hash: string) {
+// `instant` is for arriving on the page: a smooth scroll started then would be cut off when
+// Lenis loads a moment later and switches scroll-behavior off.
+export function scrollToHash(hash: string, { instant = false } = {}) {
     const target = document.getElementById(decodeURIComponent(hash.slice(1)));
     if (!target) return;
 
     if (lenis) {
-        const offset = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
-        lenis.scrollTo(target, { offset: -offset });
+        // Lenis applies the target's scroll-margin-top itself.
+        lenis.scrollTo(target, { immediate: instant });
         return;
     }
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    target.scrollIntoView({ behavior: instant || reduceMotion ? "auto" : "smooth" });
 }
