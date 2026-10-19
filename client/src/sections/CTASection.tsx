@@ -19,8 +19,8 @@ export default function CTASection() {
       <Wrapper>
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl border border-border bg-background-card shadow-card">
-            <div aria-hidden="true" className="home-grid-bg pointer-events-none absolute inset-0" />
-            <div aria-hidden="true" className="home-grain pointer-events-none absolute inset-0" />
+            <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-0" />
+            <div aria-hidden="true" className="public-grain pointer-events-none absolute inset-0" />
 
             <div className="relative grid lg:grid-cols-12">
               <div className="p-6 sm:p-10 lg:col-span-7 lg:p-14">

@@ -14,10 +14,9 @@ export default function MainLayout() {
         if (navigationType !== 'POP' && !hash) window.scrollTo(0, 0);
     }, [pathname, hash, navigationType]);
 
-    // The homepage theme (styles/home-theme.css) covers the navbar, page and footer together.
-    // Elsewhere the wrapper is display: contents, so it adds no box and changes no layout.
+    // Every public page shares one look (styles/public-theme.css) across its navbar, page and footer.
     return (
-        <div className={pathname === '/' ? 'home-theme' : 'contents'}>
+        <div className="public-theme">
             <Navbar />
             <Suspense fallback={<PageLoader />}>
                 <Outlet />

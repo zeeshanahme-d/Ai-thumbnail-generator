@@ -57,7 +57,7 @@ export default function MobileNav() {
                                 to={link.href}
                                 onClick={closeMenu}
                                 className={`rounded-xl px-4 py-3 text-sm font-medium transition ${pathname === link.href
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-background-surface-2 text-text-primary"
                                     : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
                                     }`}
                             >

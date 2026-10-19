@@ -1,6 +1,6 @@
 import { gsap, ScrollTrigger, useGSAP } from "../../../lib/gsap";
 import { RICH_MOTION_QUERY } from "../../../lib/useMediaQuery";
-import { homeFontsLoaded } from "../../../lib/homeFonts";
+import { themeFontsLoaded } from "../../../lib/themeFonts";
 import { PROCESS_PROMPT } from "../../../data/steps";
 import type { ProcessTimelineProps } from "../../../types";
 
@@ -124,7 +124,7 @@ export default function ProcessTimeline({ scope }: ProcessTimelineProps) {
           .fromTo(q('[data-process="rail-fill"]'), { scaleY: 0 }, { scaleY: 1, duration: AT.end }, 0);
 
         // Text reflows once the web fonts arrive; measure again then.
-        homeFontsLoaded().then(() => ScrollTrigger.refresh());
+        themeFontsLoaded().then(() => ScrollTrigger.refresh());
 
         return () => {
           promptText.textContent = PROCESS_PROMPT;

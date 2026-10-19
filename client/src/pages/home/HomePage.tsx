@@ -8,7 +8,7 @@ import PricingSection from "../../sections/PricingSection";
 import FaqSection from "../../sections/FaqSection";
 import CTASection from "../../sections/CTASection";
 import { scrollToHash } from "../../lib/smoothScroll";
-import { homeFontsLoaded } from "../../lib/homeFonts";
+import { themeFontsLoaded } from "../../lib/themeFonts";
 import { RICH_MOTION_QUERY, useMediaQuery } from "../../lib/useMediaQuery";
 
 // Lenis and GSAP load in their own chunk, only where they run, so other pages never download them.
@@ -40,7 +40,7 @@ export default function HomePage() {
     const events = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
     events.forEach((name) => window.addEventListener(name, markInteracted, { passive: true }));
 
-    homeFontsLoaded().then(() => {
+    themeFontsLoaded().then(() => {
       if (!hasInteracted && !isCancelled) scrollToHash(hash, { instant: true });
     });
 

@@ -1,8 +1,10 @@
-/* ─── Homepage theme ───
-   MainLayout puts .home-theme on the wrapper around the Navbar, page and Footer only on "/".
-   It redefines the global tokens from variables.css for that subtree, so every Tailwind token
-   (bg-background, text-text-primary, …) picks up the homepage look without per-component changes.
-   Moving these values to :root is all it takes to roll the look out to the rest of the site. */
+/* ─── Public theme ───
+   MainLayout wraps the Navbar, page and Footer of every public page (the homepage, community,
+   profiles, thumbnail pages, pricing, legal pages and the 404) in .public-theme. It redefines the
+   global tokens from variables.css for that subtree, so every Tailwind token (bg-background,
+   text-text-primary, …) picks up this look without per-component changes. The dashboard and the
+   auth pages render outside it and keep variables.css; moving these values to :root would roll
+   the look out to them too. */
 
 /* Arial scaled to Geist's metrics (measured at weight 500, the headline weight), so swapping
    in the web font doesn't move the text. */
@@ -15,7 +17,7 @@
   line-gap-override: 0%;
 }
 
-.home-theme {
+.public-theme {
   /* Paper (light) */
   --bg-base: #fafaf9;
   --bg-surface: #f3f3f1;
@@ -50,7 +52,7 @@
 }
 
 /* Ink (dark) */
-[data-theme="dark"] .home-theme {
+[data-theme="dark"] .public-theme {
   --bg-base: #09090b;
   --bg-surface: #0e0e10;
   --bg-surface-2: #1b1b1f;
@@ -66,8 +68,8 @@
   --backdrop: rgb(9 9 11 / 0.6);
 }
 
-/* A hairline grid that fades out from the top, for the hero and the closing panel. */
-.home-grid-bg {
+/* A hairline grid that fades out from the top, behind page headers and feature panels. */
+.public-grid-bg {
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
@@ -77,7 +79,7 @@
 }
 
 /* Static film grain, painted once behind the content. */
-.home-grain {
+.public-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity: var(--grain-opacity);
 }
