@@ -53,6 +53,7 @@ export default function ForgotPassword() {
                 type="email"
                 name={field.name}
                 label="Email address"
+                placeholder="you@example.com"
                 autoComplete="email"
                 value={field.state.value}
                 onBlur={field.handleBlur}

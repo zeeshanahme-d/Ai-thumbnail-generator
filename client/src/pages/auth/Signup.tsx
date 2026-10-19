@@ -11,6 +11,7 @@ import { useSignup } from "../../core/auth/hooks";
 import { signupSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
 import { FREE_MONTHLY_CREDITS } from "../../lib/credits";
+import { PASSWORD_MIN_LENGTH } from "../../lib/passwordValidation";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ export default function Signup() {
                 type="text"
                 name={field.name}
                 label="Full name"
+                placeholder="Your name"
                 autoComplete="name"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -73,6 +75,7 @@ export default function Signup() {
                 type="email"
                 name={field.name}
                 label="Email address"
+                placeholder="you@example.com"
                 autoComplete="email"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -91,6 +94,7 @@ export default function Signup() {
                 type="password"
                 name={field.name}
                 label="Password"
+                placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                 autoComplete="new-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}

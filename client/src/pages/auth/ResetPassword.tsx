@@ -11,6 +11,7 @@ import FieldError from "./components/FieldError";
 import { useResetPassword } from "../../core/auth/hooks";
 import { resetPasswordSchema } from "./core/_schemas";
 import { getApiErrorMessage } from "../../lib/axios";
+import { PASSWORD_MIN_LENGTH } from "../../lib/passwordValidation";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ export default function ResetPassword() {
                 type="password"
                 name={field.name}
                 label="New password"
+                placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                 autoComplete="new-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -86,6 +88,7 @@ export default function ResetPassword() {
                 type="password"
                 name={field.name}
                 label="Confirm password"
+                placeholder="Repeat your new password"
                 autoComplete="new-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}

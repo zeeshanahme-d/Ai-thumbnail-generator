@@ -58,6 +58,7 @@ export default function Login() {
                 type="email"
                 name={field.name}
                 label="Email address"
+                placeholder="you@example.com"
                 autoComplete="email"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -76,6 +77,7 @@ export default function Login() {
                 type="password"
                 name={field.name}
                 label="Password"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 value={field.state.value}
                 onBlur={field.handleBlur}
