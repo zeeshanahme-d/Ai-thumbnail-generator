@@ -28,34 +28,30 @@ export default function PreviewMoreThumbnails({
 
   return (
     <section>
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-text-primary">
-          More{" "}
-          {dot && (
-            <span className={`inline-block size-2 rounded-full ${dot} mx-1`} />
-          )}
-          {style} Thumbnails
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="flex items-center gap-2 text-xl font-medium tracking-[-0.015em] text-text-primary">
+          {dot && <span className={`size-2 rounded-full ${dot}`} />}
+          More {style} thumbnails
         </h2>
         <Link
-          to="/community"
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          to={style ? `/community?style=${encodeURIComponent(style)}` : "/community"}
+          className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
         >
-          See all <ArrowRight size={12} />
+          See all <ArrowRight size={14} />
         </Link>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {thumbnails.slice(0, 4).map((thumbnail) => {
           const imageUrl = getThumbnailCardImageUrl(thumbnail);
           const authorName = getThumbnailAuthorName(thumbnail);
-          const thumbDot = STYLE_DOTS[thumbnail.style ?? ""] || "bg-gray-400";
 
           return (
             <button
               key={thumbnail._id}
               type="button"
               onClick={() => handleClick(thumbnail)}
-              className="group text-left overflow-hidden rounded-xl border border-border bg-background-card transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group cursor-pointer overflow-hidden rounded-xl border border-border bg-background-card text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <div className="relative aspect-video overflow-hidden bg-background-surface-2">
                 {imageUrl ? (
@@ -66,25 +62,15 @@ export default function PreviewMoreThumbnails({
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-text-muted text-xs">
+                  <div className="flex h-full items-center justify-center text-xs text-text-muted">
                     No image
                   </div>
                 )}
-                {thumbnail.style && (
-                  <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
-                    <span className={`size-1.5 rounded-full ${thumbDot}`} />
-                    {thumbnail.style}
-                  </span>
-                )}
               </div>
 
-              <div className="p-2">
-                <p className="line-clamp-1 text-xs font-medium text-text-primary">
-                  {thumbnail.title}
-                </p>
-                <p className="mt-0.5 truncate text-[10px] text-text-muted">
-                  {authorName}
-                </p>
+              <div className="p-3">
+                <p className="line-clamp-1 text-sm font-medium text-text-primary">{thumbnail.title}</p>
+                <p className="mt-0.5 truncate text-xs text-text-muted">{authorName}</p>
               </div>
             </button>
           );

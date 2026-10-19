@@ -12,7 +12,7 @@ export default function PreviewStats({ thumbnail, isLiked }: PreviewStatsProps) 
   const displayDate = publishedAt ?? createdAt;
 
   return (
-    <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm tabular-nums text-text-secondary">
       <span className="flex items-center gap-1.5">
         <Heart
           size={16}
