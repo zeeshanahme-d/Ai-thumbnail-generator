@@ -66,7 +66,7 @@ export default function Navbar() {
         ) : isHome ? (
           <Link
             to="/login"
-            className={buttonClasses({ variant: "inverse", size: "sm", fullWidth: false, className: "hidden md:inline-flex min-h-9 shrink-0 whitespace-nowrap px-4" })}
+            className={buttonClasses({ variant: "inverse", size: "sm", fullWidth: false, className: "max-md:hidden min-h-9 shrink-0 whitespace-nowrap px-4" })}
           >
             Get Started
           </Link>

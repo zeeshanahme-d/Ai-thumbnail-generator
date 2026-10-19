@@ -1,105 +1,72 @@
-import { CheckIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import PromptCard from "../components/image-generate-components/PromptCard";
-import ThumbnailScroller from "../components/ThumbnailScroller";
-import Wrapper from "../components/Wrapper";
 import { motion } from "motion/react";
-import { savePendingPrompt } from "../lib/pendingPrompt";
-import type { PromptSubmission } from "../types";
+import Wrapper from "../components/Wrapper";
+import Eyebrow from "../components/Eyebrow";
+import MaskedLines from "../components/MaskedLines";
+import ThumbnailScroller from "../components/ThumbnailScroller";
+import HeroPrompt from "./components/hero/HeroPrompt";
+import HeroSpecs from "./components/hero/HeroSpecs";
+import { sampleThumbnails } from "../data/hero";
+import { enterTransition, fadeUp } from "../lib/motion";
+
+// The second marquee row starts mid-list so the two rows never line up.
+const secondRow = [...sampleThumbnails.slice(3), ...sampleThumbnails.slice(0, 3)];
+
+// Above the fold, so everything enters on mount rather than on scroll.
+const enter = (delay: number) => ({ variants: fadeUp, initial: "hidden", animate: "visible", custom: delay });
 
 export default function HeroSection() {
-  const navigate = useNavigate();
-
-  // Signed-out visitors pass through login first; the prompt waits in the generator.
-  const handleGenerate = ({ prompt }: PromptSubmission) => {
-    savePendingPrompt(prompt);
-    navigate("/dashboard/generate");
-  };
-
-  const specialFeatures = [
-    "No design skills needed",
-    "Fast generation",
-    "High CTR templates",
-  ];
-
   return (
-    <section className="relative overflow-hidden border-b border-border bg-background">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.35] dark:opacity-[0.18] bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] bg-size-[48px_48px]"></div>
-      <Wrapper className="relative flex flex-col items-center justify-center pt-14 sm:pt-20 lg:pt-24">
-        <motion.h1
-          className="max-w-4xl text-balance text-[clamp(2.25rem,1.4rem+3.6vw,4rem)] text-center font-medium leading-[1.05] tracking-[-0.04em]"
-          initial={{ y: 50, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 240, damping: 70, mass: 1 }}
-        >
-          Create Thumbnails That <br className="hidden sm:block" />
-          <span className="text-primary">Stop the Scroll.</span>
-        </motion.h1>
-        <motion.p
-          className="mt-5 max-w-lg text-pretty text-center text-sm leading-relaxed text-text-secondary sm:text-base"
-          initial={{ y: 50, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{
-            delay: 0.2,
-            type: "spring",
-            stiffness: 320,
-            damping: 70,
-            mass: 1,
-          }}
-        >
-          Describe your idea and let our AI generate a stunning, click-worthy
-          thumbnail in seconds.
-        </motion.p>
+    <section className="relative overflow-hidden pb-(--section-y)">
+      <div aria-hidden="true" className="home-grid-bg pointer-events-none absolute inset-x-0 top-0 h-176" />
+      <div aria-hidden="true" className="home-grain pointer-events-none absolute inset-0" />
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:gap-x-10">
-          {specialFeatures.map((feature, index) => (
-            <motion.p
-              className="flex items-center gap-2"
-              key={index}
-              initial={{ y: 30, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.2, duration: 0.3 }}
-            >
-              <CheckIcon className="size-3.5 text-primary" />
-              <span className="text-xs text-text-secondary sm:text-sm">{feature}</span>
-            </motion.p>
-          ))}
+      <Wrapper className="relative pt-12 sm:pt-16 lg:pt-24">
+        <div className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-8">
+          <div className="lg:col-span-8">
+            <motion.div {...enter(0)}>
+              <Eyebrow dot>YouTube thumbnail generator</Eyebrow>
+            </motion.div>
+            <h1 className="mt-6 text-[clamp(2.5rem,1.5rem+5vw,5.5rem)] font-medium leading-[0.98] tracking-[-0.045em] text-text-primary">
+              <MaskedLines
+                trigger="mount"
+                lines={[
+                  "Thumbnails that",
+                  <>
+                    earn the <span className="text-primary">click.</span>
+                  </>,
+                ]}
+              />
+            </h1>
+          </div>
+          <motion.p
+            {...enter(0.15)}
+            className="max-w-[38ch] text-pretty text-[clamp(1.0625rem,1rem+0.3vw,1.25rem)] leading-[1.55] text-text-secondary lg:col-span-4"
+          >
+            Describe your video in a sentence. Pick a style, size and colors, add a reference
+            image if you have one, and get a thumbnail in seconds.
+          </motion.p>
         </div>
-        <motion.div
-          className="mt-8 w-full md:mt-10"
-          initial={{ y: 50, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{
-            delay: 0.3,
-            type: "spring",
-            stiffness: 320,
-            damping: 70,
-            mass: 1,
-          }}
-        >
-          <PromptCard
-            id="hero-prompt"
-            showTools={false}
-            submitLabel="Generate Free"
-            className="mx-auto max-w-3xl"
-            onSubmit={handleGenerate}
-          />
-        </motion.div>
-        <motion.div
-          className="relative mt-12 mb-14 flex w-full flex-col gap-3 md:mt-16 md:mb-20 md:gap-4"
-          initial={{ y: 50, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 320, damping: 70, mass: 1 }}
-        >
-          <ThumbnailScroller direction="left" className="max-w-6xl mx-auto" />
-          <ThumbnailScroller direction="right" className="max-w-6xl mx-auto" />
-        </motion.div>
+
+        <div className="mt-10 grid gap-10 lg:mt-14 lg:grid-cols-12 lg:gap-8">
+          {/* min-w-0: grid items grow to their content by default, and the template chips row is long */}
+          <motion.div {...enter(0.25)} className="min-w-0 lg:col-span-8">
+            <HeroPrompt />
+          </motion.div>
+          <HeroSpecs delay={0.35} className="lg:col-span-4 lg:self-start" />
+        </div>
       </Wrapper>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={enterTransition(0.4, 1)}
+        className="relative mt-16 perspective-[1600px] lg:mt-24"
+      >
+        <div className="flex origin-top rotate-x-8 flex-col gap-3 md:gap-4">
+          <ThumbnailScroller items={sampleThumbnails} duration={70} />
+          <ThumbnailScroller items={secondRow} direction="right" duration={85} />
+        </div>
+      </motion.div>
     </section>
   );
 }

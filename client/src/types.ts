@@ -79,13 +79,30 @@ export interface WrapperProps {
   className?: string;
 }
 
+export interface IThumbnailSample {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
 export interface ThumbnailScrollerProps {
-  images?: string[];
+  items: IThumbnailSample[];
   direction?: "left" | "right"; // "left" = scrolls right→left, "right" = left→right
-  speed?: number;
-  gradient?: boolean;
-  gradientColor?: string; // must match the section background
-  pauseOnHover?: boolean;
+  /** Seconds for one full loop. */
+  duration?: number;
+  className?: string;
+}
+
+export interface IHeroSpec {
+  label: string;
+  value: string;
+  note?: string;
+}
+
+export interface HeroSpecsProps {
+  /** Seconds before the first row fades in. */
+  delay?: number;
   className?: string;
 }
 
