@@ -99,6 +99,9 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
   public page in the public theme (see Styling), so they all share the homepage's look.
 
 Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
+The auth pages share `pages/auth/AuthLayout`, which applies the public theme itself: the
+form on the left and, from `lg` up, `AuthShowcase` (sample thumbnails and the homepage's
+headline) on the right.
 
 ### Auth / session flow
 
@@ -165,17 +168,19 @@ light or dark. Opened directly it shows a sample. It has a `BackButton` (shared 
 
    **Public theme.** `MainLayout` wraps the Navbar, page and Footer of every public page
    (homepage, community, profiles, thumbnail pages, pricing, legal, 404) in `.public-theme`
-   (`styles/public-theme.css`). The dashboard and auth pages render outside it and keep
-   `variables.css`. The class redefines the same variables as `variables.css` (ink in dark,
+   (`styles/public-theme.css`), and `AuthLayout` puts it on the auth pages. The dashboard
+   (and the YouTube preview) render outside it and keep `variables.css`. The class
+   redefines the same variables as `variables.css` (ink in dark,
    paper in light, brand red `#d7303d` so white button text passes AA), so the usual tokens
    just work there. It also sets Geist (400/500) as the font, makes `font-mono` Geist Mono,
    maps `font-semibold`/`font-bold` to 500, and adds tokens that exist **only inside it**:
    `border-border-strong`, `shadow-card`, `py-(--section-y)` (section rhythm), and the
    `.public-grid-bg` / `.public-grain` backgrounds. Never use those in a component the
-   dashboard or auth pages also render; there, change look only through the shared tokens
-   or an opt-in prop (`Community` / `CommunityFilters` take `variant="public"`). Don't change
-   `variables.css` for public-page work. Moving the `.public-theme` values to `:root` is how
-   the look would roll out to the dashboard and auth pages too.
+   dashboard also renders (`Input`, `Button`, `FieldError`, `ThumbnailCard`, `BackButton`, …);
+   there, change look only through the shared tokens or an opt-in prop (`Community` /
+   `CommunityFilters` take `variant="public"`). Don't change `variables.css` for public-page
+   work. Moving the `.public-theme` values to `:root` is how the look would roll out to the
+   dashboard too.
 
    **Public page language:** a `PageHeader` at the top (mono label, display heading, intro,
    grid backdrop), `SectionTitle` with `align="split"` / `"start"` for sections, cards with
