@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { MotionConfig } from "motion/react";
 import toast from "react-hot-toast";
 import Wrapper from "../../components/Wrapper";
-import SectionTitle from "../../components/SectionTitle";
+import Eyebrow from "../../components/Eyebrow";
+import PageHeader from "../../components/PageHeader";
 import BillingToggle from "../../components/BillingToggle";
 import PricingCard from "../../components/PricingCard";
 import Reveal from "../../components/Reveal";
@@ -11,6 +13,7 @@ import PlanComparison from "./components/PlanComparison";
 import PricingFaq from "./components/PricingFaq";
 import { pricingPlans } from "../../data/pricing";
 import { FREE_MONTHLY_CREDITS } from "../../lib/credits";
+import { STAGGER } from "../../lib/motion";
 import { getPaddle } from "../../lib/paddle";
 import type { BillingPeriod } from "../../types";
 
@@ -26,44 +29,42 @@ export default function Pricing() {
     }, []);
 
     return (
-        <main className="relative isolate overflow-hidden py-12 md:py-20">
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -top-56 left-1/2 -z-10 size-125 -translate-x-1/2 rounded-full bg-primary/12 blur-[120px]"
-            />
-
-            <Wrapper>
-                <SectionTitle
-                    as="h1"
-                    text1="Pricing"
-                    text2={<>Pay for <span className="text-primary">what you need.</span></>}
-                    text3={`Start free with ${FREE_MONTHLY_CREDITS} credits every month. Top up anytime, or subscribe and save.`}
+        // "user": with reduced motion on, transforms are skipped and content appears in place.
+        <MotionConfig reducedMotion="user">
+            <main>
+                <PageHeader
+                    animate
+                    eyebrow="Pricing"
+                    title={["Pay for what", "you need."]}
+                    description={`Start free with ${FREE_MONTHLY_CREDITS} credits every month once your email is verified. Top up anytime, or subscribe and save.`}
                 />
 
-                <Reveal className="mx-auto mt-12 max-w-5xl md:mt-14">
-                    <CreditPackCard />
-                </Reveal>
+                <Wrapper>
+                    <Reveal>
+                        <CreditPackCard />
+                    </Reveal>
 
-                <div className="mx-auto mt-16 flex max-w-5xl items-center gap-4 text-xs font-semibold uppercase tracking-widest text-text-muted md:mt-20">
-                    <span className="h-px flex-1 bg-border" />
-                    Or subscribe and save
-                    <span className="h-px flex-1 bg-border" />
-                </div>
+                    <div className="mt-16 flex items-center gap-4 md:mt-20">
+                        <span className="h-px flex-1 bg-border" />
+                        <Eyebrow>Or subscribe and save</Eyebrow>
+                        <span className="h-px flex-1 bg-border" />
+                    </div>
 
-                <BillingToggle billing={billing} onChange={setBilling} />
+                    <BillingToggle billing={billing} onChange={setBilling} />
 
-                <div className="mx-auto mt-10 grid max-w-md grid-cols-1 items-start gap-6 md:mt-12 lg:max-w-none lg:grid-cols-3">
-                    {pricingPlans.map((plan, index) => (
-                        <Reveal key={plan.name} delay={index * 0.1}>
-                            <PricingCard plan={plan} billing={billing} />
-                        </Reveal>
-                    ))}
-                </div>
+                    <div className="mt-10 grid grid-cols-1 items-start gap-4 md:mt-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+                        {pricingPlans.map((plan, index) => (
+                            <Reveal key={plan.name} delay={index * STAGGER}>
+                                <PricingCard plan={plan} billing={billing} />
+                            </Reveal>
+                        ))}
+                    </div>
+                </Wrapper>
 
                 <CreditFacts />
                 <PlanComparison />
                 <PricingFaq />
-            </Wrapper>
-        </main>
+            </main>
+        </MotionConfig>
     );
 }

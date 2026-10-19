@@ -360,7 +360,6 @@ export interface AnimatedValueProps {
 }
 
 export interface ICreditFact {
-  icon: LucideIcon;
   title: string;
   description: string;
 }

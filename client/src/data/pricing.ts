@@ -1,4 +1,3 @@
-import { CalendarClock, Coins, RotateCcw, Sparkles } from "lucide-react";
 import type { IBillingOption, ICreditFact, IPlanComparisonRow, IPricingPlan } from "../types";
 import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../lib/credits";
 
@@ -80,22 +79,18 @@ export const pricingPlans: IPricingPlan[] = [
 
 export const creditFacts: ICreditFact[] = [
     {
-        icon: Coins,
         title: `${GENERATION_CREDIT_COST} credits per thumbnail`,
         description: "Every generation costs the same, whatever the style, color scheme or size.",
     },
     {
-        icon: RotateCcw,
         title: "Failed? Refunded",
         description: "If a generation fails or gets blocked, the credits go straight back to you.",
     },
     {
-        icon: CalendarClock,
         title: "Monthly refill",
         description: `Verified free accounts are topped back up to ${FREE_MONTHLY_CREDITS} credits every 30 days.`,
     },
     {
-        icon: Sparkles,
         title: "Free prompt improver",
         description: "Rewriting your prompt with AI never costs credits.",
     },

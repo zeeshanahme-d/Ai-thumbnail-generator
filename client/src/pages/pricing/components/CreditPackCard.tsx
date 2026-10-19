@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Loader2, Minus, Plus, Sparkles } from "lucide-react";
+import { Check, Loader2, Minus, Plus } from "lucide-react";
 import Button from "../../../components/Button";
+import Eyebrow from "../../../components/Eyebrow";
 import AnimatedValue from "../../../components/AnimatedValue";
 import { CREDIT_PACK, creditPackFeatures } from "../../../data/pricing";
 import { GENERATION_CREDIT_COST } from "../../../lib/credits";
@@ -25,13 +26,12 @@ export default function CreditPackCard() {
     const changeBy = (delta: number) => setCredits((current) => clamp(current + delta));
 
     return (
-        <div className="grid overflow-hidden rounded-3xl border border-border bg-background-card shadow-[0_24px_60px_-32px_rgba(0,0,0,0.3)] md:grid-cols-2">
+        <div className="grid overflow-hidden rounded-3xl border border-border bg-background-card shadow-card md:grid-cols-2">
             <div className="p-6 sm:p-8 lg:p-10">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    <Sparkles size={13} />
-                    Pay as you go
-                </span>
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">Thumblify Credits</h2>
+                <Eyebrow dot>Pay as you go</Eyebrow>
+                <h2 className="mt-4 text-[clamp(1.75rem,1.4rem+1.5vw,2.5rem)] font-medium leading-tight tracking-[-0.03em] text-text-primary">
+                    Thumblify Credits
+                </h2>
                 <p className="mt-1 text-sm text-text-secondary">Only pay for what you use.</p>
 
                 <ul className="mt-6 space-y-3">
@@ -48,7 +48,7 @@ export default function CreditPackCard() {
                 <div className="flex items-end gap-4">
                     <AnimatedValue
                         value={price}
-                        className="text-5xl font-bold tracking-tight text-text-primary tabular-nums lg:text-6xl"
+                        className="text-5xl font-medium tracking-[-0.04em] text-text-primary tabular-nums lg:text-6xl"
                     />
                     <p className="pb-1.5 text-sm leading-snug text-text-muted">
                         {credits.toLocaleString("en-US")} credits
@@ -59,15 +59,15 @@ export default function CreditPackCard() {
 
                 <p className="mt-4 text-sm text-text-secondary sm:text-base">
                     Generate up to{" "}
-                    <AnimatedValue value={thumbnails} className="font-semibold text-primary tabular-nums" />{" "}
+                    <AnimatedValue value={thumbnails} className="font-medium text-text-primary tabular-nums" />{" "}
                     thumbnails anytime.
                 </p>
 
                 <div className="mt-6 flex items-center gap-4">
-                    <div className="flex items-center gap-1 rounded-xl border border-border bg-background-card p-1">
+                    <div className="flex items-center gap-2">
                         <Button
                             type="button"
-                            variant="ghost"
+                            variant="secondary"
                             size="icon"
                             rounded="lg"
                             aria-label={`Remove ${CREDIT_PACK.step} credits`}
@@ -76,12 +76,12 @@ export default function CreditPackCard() {
                         >
                             <Minus size={16} />
                         </Button>
-                        <output aria-live="polite" className="min-w-18 text-center text-xl font-semibold text-text-primary">
+                        <output aria-live="polite" className="min-w-18 text-center text-xl font-medium text-text-primary">
                             <AnimatedValue value={credits.toLocaleString("en-US")} className="tabular-nums" />
                         </output>
                         <Button
                             type="button"
-                            variant="ghost"
+                            variant="secondary"
                             size="icon"
                             rounded="lg"
                             aria-label={`Add ${CREDIT_PACK.step} credits`}
