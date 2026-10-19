@@ -12,8 +12,8 @@ export default function NotFound() {
 
   return (
     <main className="relative overflow-hidden">
-      <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-x-0 top-0 h-144" />
-      <div aria-hidden="true" className="public-grain pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-x-0 top-0 h-144" />
+      <div aria-hidden="true" className="backdrop-grain pointer-events-none absolute inset-0" />
 
       {/* Fills the screen under the 4rem navbar, so the footer stays below the fold. */}
       <Wrapper className="relative flex min-h-[calc(100dvh-4rem)] flex-col justify-center py-16">

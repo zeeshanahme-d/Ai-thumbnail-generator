@@ -14,14 +14,13 @@ export default function MainLayout() {
         if (navigationType !== 'POP' && !hash) window.scrollTo(0, 0);
     }, [pathname, hash, navigationType]);
 
-    // Every public page shares one look (styles/public-theme.css) across its navbar, page and footer.
     return (
-        <div className="public-theme">
+        <>
             <Navbar />
             <Suspense fallback={<PageLoader />}>
                 <Outlet />
             </Suspense>
             <Footer />
-        </div>
+        </>
     );
 }

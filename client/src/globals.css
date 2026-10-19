@@ -1,13 +1,17 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap");
 @import "./styles//variables.css";
-@import "./styles/public-theme.css";
+@import "./styles/backdrops.css";
 @import "./styles//custom-scroll-bar.css";
 @import "tailwindcss";
 
 @theme {
-  /* Fonts */
-  --font-poppins: "Poppins", sans-serif;
+  /* Fonts: Geist for everything, Geist Mono for labels and numbers (font-mono). */
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Two weights per family are loaded (400, 500): semibold and bold resolve to 500, so nothing
+     falls back to a synthesized bold. */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
 
   /* Colors — reference CSS vars so they respond to data-theme switching */
   --color-background: var(--bg-base);
@@ -17,10 +21,6 @@
 
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
-  --color-primary-light: var(--primary-light);
-
-  --color-primary-glow: var(--primary-glow);
-  --color-primary-glow-strong: var(--primary-glow-strong);
 
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -45,7 +45,6 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
-  --shadow-primary: var(--shadow-primary);
   --shadow-card: var(--card-shadow);
 
   /* Transition */
@@ -80,8 +79,19 @@
   /* 1600px */
 }
 
+/* Arial scaled to Geist's metrics (measured at weight 500, the headline weight), so swapping
+   in the web font doesn't move the text. */
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial");
+  size-adjust: 104.76%;
+  ascent-override: 96.4%;
+  descent-override: 28.6%;
+  line-gap-override: 0%;
+}
+
 body {
-  @apply bg-background-surface text-text-primary text-sm antialiased font-poppins scroll-smooth overflow-x-clip;
+  @apply bg-background text-text-primary text-sm antialiased font-sans scroll-smooth overflow-x-clip;
 }
 
 /* Fades marquee edges with a mask, so the fade scales with the viewport and

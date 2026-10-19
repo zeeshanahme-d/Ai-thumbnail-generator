@@ -11,7 +11,7 @@ const columns = [wideSamples.filter((_, i) => i % 2 === 0), wideSamples.filter((
 export default function AuthShowcase() {
   return (
     <aside className="relative hidden overflow-hidden border-l border-border bg-background-surface lg:flex lg:flex-col lg:justify-end">
-      <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-0" />
 
       <div
         aria-hidden="true"
@@ -35,7 +35,7 @@ export default function AuthShowcase() {
         ))}
       </div>
 
-      <div aria-hidden="true" className="public-grain pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="backdrop-grain pointer-events-none absolute inset-0" />
 
       <div className="relative p-12 xl:p-16">
         <Eyebrow dot>YouTube thumbnail generator</Eyebrow>

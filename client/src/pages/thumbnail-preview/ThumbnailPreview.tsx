@@ -58,7 +58,7 @@ export default function ThumbnailPreview() {
   if (!thumbnail) {
     return (
       <main className="relative overflow-hidden">
-        <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-x-0 top-0 h-128" />
+        <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-x-0 top-0 h-128" />
         <Wrapper className="relative flex min-h-[60vh] flex-col justify-center py-16">
           <Eyebrow dot>Thumbnail not found</Eyebrow>
           <h1 className="mt-5 text-[clamp(2rem,1.4rem+2.6vw,3.5rem)] font-medium leading-[1.04] tracking-[-0.035em] text-text-primary">

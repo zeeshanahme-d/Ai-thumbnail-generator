@@ -17,8 +17,8 @@ const enter = (delay: number) => ({ variants: fadeUp, initial: "hidden", animate
 export default function HeroSection() {
   return (
     <section className="relative overflow-hidden pb-(--section-y)">
-      <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-x-0 top-0 h-176" />
-      <div aria-hidden="true" className="public-grain pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-x-0 top-0 h-176" />
+      <div aria-hidden="true" className="backdrop-grain pointer-events-none absolute inset-0" />
 
       <Wrapper className="relative pt-12 sm:pt-16 lg:pt-24">
         <div className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-8">

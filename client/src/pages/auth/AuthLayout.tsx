@@ -5,13 +5,12 @@ import AuthShowcase from "./components/AuthShowcase";
 import Logo from "../../assets/svgs/logo.svg?react";
 import type { AuthLayoutProps } from "../../types";
 
-// The sign-in, sign-up and code screens: the form on the left, sample thumbnails on the right
-// from lg up. These pages render outside MainLayout, so the layout wears the public theme itself.
+// The sign-in, sign-up and code screens: the form on the left, sample thumbnails on the right from lg up.
 export default function AuthLayout({ title, subtitle, children, topSlot }: AuthLayoutProps) {
   return (
-    <main className="public-theme grid min-h-dvh lg:grid-cols-2">
+    <main className="grid min-h-dvh lg:grid-cols-2">
       <div className="relative flex flex-col px-4 sm:px-6 lg:px-12">
-        <div aria-hidden="true" className="public-grid-bg pointer-events-none absolute inset-x-0 top-0 h-128" />
+        <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-x-0 top-0 h-128" />
 
         <header className="relative flex h-16 items-center justify-between gap-4">
           <Link to="/" aria-label="Thumblify home">
