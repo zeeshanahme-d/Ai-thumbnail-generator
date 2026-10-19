@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import Button from "./Button";
 import { useSession } from "../store/useSessionStore";
+import { useLogout } from "../core/auth/hooks";
 import { getUserInitial } from "../lib/herlper-fuctions";
 
 const MENU_ID = "profile-menu";
@@ -10,13 +11,20 @@ const MENU_ID = "profile-menu";
 const ITEM_CLASSES =
     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition hover:bg-background-surface-2 hover:text-text-primary";
 
-// The navbar avatar, opening a Profile / Settings menu. Desktop only; MobileNav covers small screens.
+// The navbar avatar, opening a Profile / Settings / Log out menu. Desktop only; MobileNav covers small screens.
 export default function ProfileMenu() {
     const user = useSession((state) => state.user);
+    const { mutate: logout } = useLogout();
     const menuRef = useRef<HTMLDivElement>(null);
 
     // The navbar stays mounted across routes, so the menu is closed by hand when a link is followed.
     const closeMenu = () => menuRef.current?.hidePopover();
+
+    // Clears the session even if the request fails; the navbar then shows Get Started again.
+    const handleLogout = () => {
+        closeMenu();
+        logout();
+    };
 
     return (
         <>
@@ -49,6 +57,13 @@ export default function ProfileMenu() {
                         <Settings size={16} />
                         Settings
                     </Link>
+
+                    <hr className="my-2 border-border" />
+
+                    <button type="button" onClick={handleLogout} className={`w-full cursor-pointer ${ITEM_CLASSES}`}>
+                        <LogOut size={16} />
+                        Log out
+                    </button>
                 </nav>
             </div>
         </>
