@@ -41,7 +41,7 @@ const PromptCard = ({
   placeholder = "Describe your thumbnail vision in detail... a cinematic gaming battle with fire and lightning at sunset",
   ariaLabel,
   maxLength = 500,
-  submitLabel = "Generate Thumbnail",
+  submitLabel = "Generate thumbnail",
   showTools = true,
   disabled = false,
   className = "",
@@ -124,7 +124,7 @@ const PromptCard = ({
           {label && (
             <label
               htmlFor={id}
-              className="text-[11px] font-semibold uppercase tracking-widest text-text-muted"
+              className="font-mono text-xs font-medium uppercase tracking-[0.06em] text-text-muted"
             >
               {label}
             </label>
@@ -250,7 +250,7 @@ const PromptCard = ({
                 <ToolButton
                   panelId={COLOR_PICKER_ID}
                   icon={Palette}
-                  label="Color Scheme"
+                  label="Color scheme"
                   isOpen={openPanelId === COLOR_PICKER_ID}
                   isConfigured
                 />
@@ -316,7 +316,7 @@ const PromptCard = ({
 
           <PopoverPanel
             id={COLOR_PICKER_ID}
-            title="Color Scheme"
+            title="Color scheme"
             onOpenChange={trackPanel(COLOR_PICKER_ID)}
           >
             <ColorSchemePicker value={colorScheme} onChange={setColorScheme} />
