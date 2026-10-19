@@ -9,11 +9,11 @@ export default function DashboardLayout() {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     return (
-        <div className="flex min-h-dvh bg-background-surface relative">
-            {/* Mobile Backdrop */}
+        <div className="relative flex min-h-dvh bg-background">
+            {/* Mobile backdrop */}
             {isMobileOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black/50 lg:hidden backdrop-blur-sm transition-opacity"
+                    className="fixed inset-0 z-40 bg-backdrop backdrop-blur-sm lg:hidden"
                     onClick={() => setIsMobileOpen(false)}
                 />
             )}
@@ -25,10 +25,10 @@ export default function DashboardLayout() {
                 setIsMobileOpen={setIsMobileOpen}
             />
 
-            <main className="min-w-0 flex-1 flex flex-col min-h-dvh relative">
+            <main className="relative flex min-h-dvh min-w-0 flex-1 flex-col">
                 <DashboardHeader setIsMobileOpen={setIsMobileOpen} />
 
-                <div className="flex-1 min-h-0">
+                <div className="min-h-0 flex-1">
                     <Suspense fallback={<PageLoader />}>
                         <Outlet />
                     </Suspense>

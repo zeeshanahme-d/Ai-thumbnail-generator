@@ -175,6 +175,16 @@ export interface IDashboardNavSection {
   items: IDashboardNavItem[];
 }
 
+export interface DashboardPageProps {
+  eyebrow: string;
+  title: string;
+  description: string;
+  /** Right side of the header: counts and page actions. */
+  actions?: ReactNode;
+  /** The page body; a "Coming soon" placeholder when left out. */
+  children?: ReactNode;
+}
+
 export type CommunitySort = "trending" | "newest" | "most-liked";
 
 /** Query filters shared by the thumbnail list pages. */

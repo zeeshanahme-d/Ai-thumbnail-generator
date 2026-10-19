@@ -1,12 +1,11 @@
-import { RefreshCw } from "lucide-react";
-import DashboardPage from "../components/DashboardPage";
+import DashboardPage from "../../../components/DashboardPage";
 
 export default function Recreate() {
     return (
         <DashboardPage
-            icon={RefreshCw}
-            title="Recreate"
-            description="Upload an existing thumbnail and let the AI remix it."
+            eyebrow="Recreate"
+            title="Remix a thumbnail"
+            description="Upload an existing thumbnail and generate a new version of it. This isn't available yet."
         />
     );
 }
