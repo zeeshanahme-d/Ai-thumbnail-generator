@@ -7,6 +7,8 @@ import usePermanentDeleteThumbnail from "../../../core/thumbnails/hooks/use-perm
 import useRestoreAllThumbnails from "../../../core/thumbnails/hooks/use-restore-all-thumbnails";
 import useEmptyRecycleBin from "../../../core/thumbnails/hooks/use-empty-recycle-bin";
 import Button from "../../../components/Button";
+import DashboardPage from "../../../components/DashboardPage";
+import Eyebrow from "../../../components/Eyebrow";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
@@ -86,40 +88,18 @@ export default function RecycleBin() {
   };
 
   return (
-    <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <div
-      >
-        <span className="inline-flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-500">
-          <Trash2 size={12} />
-          Recycle Bin
-        </span>
-        <h1 className="mt-4 text-balance text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
-          Deleted <span className="text-primary">Thumbnails</span>
-        </h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Restore your deleted thumbnails or permanently remove them. Thumbnails are deleted
-          forever {RECYCLE_BIN_RETENTION_DAYS} days after they are moved here.
-        </p>
-      </div>
-
-      <hr className="my-8 border-border" />
-
-      <div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-text-primary">
-              Recycle Bin
-            </h2>
-            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
-              {total}
-            </span>
-          </div>
-
+    <DashboardPage
+      eyebrow="Recycle bin"
+      title="Deleted thumbnails"
+      description={`Restore a thumbnail or delete it for good. Anything left here is deleted forever ${RECYCLE_BIN_RETENTION_DAYS} days after it was moved.`}
+      actions={
+        <>
+          {!isLoading && <Eyebrow className="tabular-nums">{total} in the bin</Eyebrow>}
           {total > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex gap-3">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 rounded="lg"
                 size="sm"
                 fullWidth={false}
@@ -137,15 +117,17 @@ export default function RecycleBin() {
                 fullWidth={false}
                 onClick={() => setIsEmptyBinOpen(true)}
                 disabled={isBulkBusy}
-                className="text-red-500 hover:text-red-400 hover:border-red-500/30"
+                className="text-primary! hover:border-primary/40"
               >
                 <Trash2 size={14} />
                 Empty bin
               </Button>
             </div>
           )}
-        </div>
-
+        </>
+      }
+    >
+      <div>
         {isLoading ? (
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
             <ThumbnailCardSkeleton count={6} showRecycleBinActions />
@@ -155,7 +137,7 @@ export default function RecycleBin() {
             <div className="flex size-16 items-center justify-center rounded-full bg-background-surface-2">
               <Trash size={28} className="text-text-muted" />
             </div>
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-text-secondary">
               Your recycle bin is empty. Deleted thumbnails will appear here.
             </p>
           </div>
@@ -199,9 +181,9 @@ export default function RecycleBin() {
         open={permanentDeleteTarget !== null}
         onClose={() => setPermanentDeleteTarget(null)}
         onConfirm={handlePermanentDeleteConfirm}
-        title="Delete Permanently?"
+        title="Delete permanently?"
         description="This action cannot be undone. The thumbnail and its image will be permanently removed."
-        confirmLabel="Delete Forever"
+        confirmLabel="Delete forever"
         variant="danger"
         loading={isPermanentlyDeleting}
       />
@@ -210,12 +192,12 @@ export default function RecycleBin() {
         open={isEmptyBinOpen}
         onClose={() => setIsEmptyBinOpen(false)}
         onConfirm={handleEmptyBinConfirm}
-        title="Empty Recycle Bin?"
+        title="Empty the recycle bin?"
         description={`All ${total} thumbnail${total === 1 ? "" : "s"} in the recycle bin and their images will be permanently removed. This action cannot be undone.`}
-        confirmLabel="Empty Bin"
+        confirmLabel="Empty bin"
         variant="danger"
         loading={isEmptyingBin}
       />
-    </main>
+    </DashboardPage>
   );
 }

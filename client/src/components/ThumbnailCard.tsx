@@ -276,7 +276,7 @@ export default function ThumbnailCard({
               className="text-primary! hover:border-primary/40"
             >
               <Trash2 size={14} />
-              Delete Forever
+              Delete
             </Button>
           </div>
         )}

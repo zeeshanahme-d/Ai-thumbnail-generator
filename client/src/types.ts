@@ -197,7 +197,7 @@ export interface ThumbnailFilters {
 }
 
 export interface CommunityProps {
-  /** dashboard: the in-app gallery header (default). public: the /community page header. */
+  /** dashboard: inside the dashboard shell (default). public: the /community page with its PageHeader. */
   variant?: "dashboard" | "public";
 }
 

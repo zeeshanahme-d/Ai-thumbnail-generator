@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Plus, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ALL_STYLES, STYLE_FILTERS } from "../../data/community";
 import CommunityFilters from "./components/CommunityFilters";
 import type { CommunityProps, CommunitySort, ThumbnailFilters } from "../../types";
 import Button from "../../components/Button";
+import DashboardPage from "../../components/DashboardPage";
+import Eyebrow from "../../components/Eyebrow";
 import PageHeader from "../../components/PageHeader";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
@@ -128,39 +130,13 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
   }
 
   return (
-    <main className="py-8 lg:py-10">
-      <Wrapper>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <Users size={18} className="text-primary" />
-              <span className="rounded-full border border-border bg-background-card px-3 py-1 text-xs font-medium text-text-secondary">
-                {total} Thumbnails
-              </span>
-            </div>
-            <h1 className="mt-4 text-balance text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
-              AI Thumbnail <span className="text-primary">Community</span>{" "}
-              Gallery
-            </h1>
-            <p className="mt-2 max-w-lg text-sm text-text-secondary">
-              Browse, like, and get inspired by AI-generated thumbnails from
-              creators worldwide.
-            </p>
-          </div>
-
-          <Link
-            to="/dashboard/generate"
-            className="hidden shrink-0 items-center gap-2 rounded-full border border-border bg-background-card px-4 py-2 text-sm font-medium text-text-primary transition hover:bg-background-surface-2 sm:flex"
-          >
-            <Plus size={16} />
-            Create Your Own
-          </Link>
-        </div>
-
-        <hr className="my-8 border-border" />
-
-        {gallery}
-      </Wrapper>
-    </main>
+    <DashboardPage
+      eyebrow="Community"
+      title="Community gallery"
+      description="Thumbnails people made with Thumblify and chose to publish. Open any of them to see the prompt behind it."
+      actions={!isPending && <Eyebrow className="tabular-nums">{total} published</Eyebrow>}
+    >
+      {gallery}
+    </DashboardPage>
   );
 }

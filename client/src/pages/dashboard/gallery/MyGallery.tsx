@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ImagePlus, LayoutGrid, Plus } from "lucide-react";
+import { ImagePlus, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import DashboardPage from "../../../components/DashboardPage";
+import Eyebrow from "../../../components/Eyebrow";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
@@ -10,6 +12,7 @@ import Button from "../../../components/Button";
 import useInfiniteThumbnails from "../../../core/thumbnails/hooks/useInfiniteThumbnails";
 import useDeleteThumbnail from "../../../core/thumbnails/hooks/use-delete-thumbnail";
 import { getApiErrorMessage } from "../../../lib/axios";
+import { buttonClasses } from "../../../lib/buttonClasses";
 import { ALL_STYLES } from "../../../data/community";
 import type { CommunitySort, ThumbnailFilters } from "../../../types";
 
@@ -57,40 +60,21 @@ export default function MyGallery() {
   };
 
   return (
-    <main className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <div>
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <LayoutGrid size={18} className="text-primary" />
-              <span className="rounded-full border border-border bg-background-card px-3 py-1 text-xs font-medium text-text-secondary">
-                {total} Thumbnails
-              </span>
-            </div>
-            <h1 className="mt-4 text-balance text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
-              My <span className="text-primary">Gallery</span>
-            </h1>
-            <p className="mt-2 max-w-lg text-sm text-text-secondary">
-              Browse, filter, and manage all your AI-generated thumbnails.
-            </p>
-          </div>
-
-          <Link to="/dashboard/generate" className="hidden sm:block shrink-0">
-            <Button
-              variant="primary"
-              size="sm"
-              fullWidth={false}
-              className="gap-2"
-            >
-              <Plus size={16} />
-              New Thumbnail
-            </Button>
+    <DashboardPage
+      eyebrow="Gallery"
+      title="My gallery"
+      description="Every thumbnail you've generated. Filter them, publish them to the community, or move them to the recycle bin."
+      actions={
+        <>
+          {!isPending && <Eyebrow className="tabular-nums">{total} thumbnails</Eyebrow>}
+          <Link to="/dashboard/generate" className={buttonClasses({ size: "sm", rounded: "lg", fullWidth: false })}>
+            <Plus size={16} />
+            New thumbnail
           </Link>
-        </div>
-
-        <hr className="my-8 border-border" />
-
+        </>
+      }
+    >
+      <div>
         {/* Filters */}
         <CommunityFilters
           setParams={setFilters}
@@ -131,22 +115,15 @@ export default function MyGallery() {
             <div className="flex size-16 items-center justify-center rounded-full bg-background-surface-2">
               <ImagePlus size={28} className="text-text-muted" />
             </div>
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-text-secondary">
               {filters.search || filters.style
                 ? "No thumbnails match your filters."
-                : "Your gallery is empty. Generate your first thumbnail!"}
+                : "Your gallery is empty. Generate your first thumbnail."}
             </p>
             {!filters.search && !filters.style && (
-              <Link to="/dashboard/generate">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  fullWidth={false}
-                  className="gap-2"
-                >
-                  <Plus size={16} />
-                  Generate Thumbnail
-                </Button>
+              <Link to="/dashboard/generate" className={buttonClasses({ size: "sm", rounded: "lg", fullWidth: false })}>
+                <Plus size={16} />
+                Generate a thumbnail
               </Link>
             )}
           </div>
@@ -172,12 +149,12 @@ export default function MyGallery() {
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Thumbnail?"
+        title="Delete this thumbnail?"
         description="This thumbnail will be moved to the recycle bin. You can restore it later."
-        confirmLabel="Move to Bin"
+        confirmLabel="Move to bin"
         variant="danger"
         loading={isDeleting}
       />
-    </main>
+    </DashboardPage>
   );
 }
