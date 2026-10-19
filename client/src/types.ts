@@ -186,6 +186,11 @@ export interface ThumbnailFilters {
   limit?: number;
 }
 
+export interface CommunityProps {
+  /** dashboard: the in-app gallery header (default). public: the /community page header. */
+  variant?: "dashboard" | "public";
+}
+
 export interface CommunityFiltersProps {
   setParams?: React.Dispatch<React.SetStateAction<ThumbnailFilters>>;
   search?: string;
@@ -194,6 +199,8 @@ export interface CommunityFiltersProps {
   onSortChange: (value: CommunitySort) => void;
   activeStyle: string;
   onStyleChange: (value: string) => void;
+  /** dashboard: selected filters in brand red (default). public: selected filters in neutral ink. */
+  variant?: "dashboard" | "public";
 }
 
 /** The page a thumbnail detail view was opened from, used for its breadcrumb. */

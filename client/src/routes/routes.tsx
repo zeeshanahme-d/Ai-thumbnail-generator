@@ -60,7 +60,7 @@ function AppRoutes() {
                         <Route element={<MainLayout />}>
                             {/* Public */}
                             <Route path="/" element={<HomePage />} />
-                            <Route path="/community" element={<Community />} />
+                            <Route path="/community" element={<Community variant="public" />} />
                             <Route path="/profile/:username" element={<PublicProfile />} />
                             <Route path="/profile" element={<PublicProfile />} />
                             {/* Thumbnail preview — public, shareable */}

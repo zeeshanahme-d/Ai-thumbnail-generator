@@ -6,6 +6,19 @@ import { Search } from "lucide-react";
 import type { CommunityFiltersProps } from "../../../types";
 import { SORT_TABS, STYLE_DOTS, STYLE_FILTERS } from "../../../data/community";
 
+// Selected and unselected chip classes. The public pages keep red for their main action,
+// so a selected filter there is neutral ink instead.
+const CHIP_STATES = {
+  dashboard: {
+    sortOn: "border-primary! bg-primary! text-text-on-primary!",
+    styleOn: "border-primary! bg-primary/5! text-primary!",
+  },
+  public: {
+    sortOn: "border-text-primary! bg-text-primary! text-background!",
+    styleOn: "border-text-primary! bg-text-primary! text-background!",
+  },
+};
+
 export default function CommunityFilters({
   setParams,
   search: externalSearch,
@@ -14,7 +27,9 @@ export default function CommunityFilters({
   onSortChange,
   activeStyle,
   onStyleChange,
+  variant = "dashboard",
 }: CommunityFiltersProps) {
+  const chipStates = CHIP_STATES[variant];
   const [internalSearch, setInternalSearch] = useState('');
   const searchValue = externalSearch !== undefined ? externalSearch : internalSearch;
 
@@ -60,7 +75,7 @@ export default function CommunityFilters({
               size="sm"
               aria-pressed={sort === tab.value}
               className={`${sort === tab.value
-                ? "border-primary! bg-primary! text-text-on-primary!"
+                ? chipStates.sortOn
                 : "border-border! text-text-secondary! hover:text-text-primary!"
                 }`}
             >
@@ -85,7 +100,7 @@ export default function CommunityFilters({
               aria-pressed={isActive}
               onClick={() => onStyleChange(style)}
               className={`shrink-0 px-4! ${isActive
-                ? "border-primary! bg-primary/5! text-primary!"
+                ? chipStates.styleOn
                 : "text-text-secondary hover:text-text-primary"
                 }`}
             >
