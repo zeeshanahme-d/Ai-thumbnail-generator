@@ -25,9 +25,33 @@ export interface CapabilityTileProps {
 }
 
 export interface IStep {
-  icon: LucideIcon;
   title: string;
   description: string;
+}
+
+/** A generator setting shown as a chip in the homepage walkthrough: "Style · Bold & Graphic". */
+export interface IProcessSetting {
+  label: string;
+  value: string;
+}
+
+export interface PromptMockProps {
+  prompt: string;
+  settings: IProcessSetting[];
+  showSettings?: boolean;
+  className?: string;
+}
+
+export interface FeedMockProps {
+  videos: IYtPreviewVideo[];
+  /** Index of the video the walkthrough's thumbnail lands on; marked for the timeline. */
+  slot?: number;
+  className?: string;
+}
+
+export interface ProcessTimelineProps {
+  /** The tall scroll container that holds the sticky stage. */
+  scope: React.RefObject<HTMLDivElement | null>;
 }
 
 export interface SelectOption {
