@@ -12,6 +12,7 @@ import ProfileHeader from "./components/ProfileHeader";
 import ProfileHeaderSkeleton from "./components/ProfileHeaderSkeleton";
 //hooks
 import useInfiniteThumbnails from "../../core/thumbnails/hooks/useInfiniteThumbnails";
+import { buttonClasses } from "../../lib/buttonClasses";
 import { useSession } from "../../store/useSessionStore";
 import { usePublicProfile } from "./core/hooks/usePublicProfile";
 import type { ThumbnailFilters } from "../../types";
@@ -80,7 +81,7 @@ export default function Profile() {
   );
 
   return (
-    <main className="min-h-screen bg-background-surface pb-20">
+    <main className="min-h-screen pb-(--section-y)">
       <Banner />
 
       <Wrapper className="relative -mt-12 mb-8 sm:-mt-16">
@@ -100,27 +101,19 @@ export default function Profile() {
 
         {/* Section Title & Actions */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
-            {isOwnProfile ? "My Creations" : "Published Creations"}{" "}
-            <span className="text-sm font-normal text-text-muted">
-              ({totalCount})
-            </span>
+          <h2 className="flex items-baseline gap-2.5 text-xl font-medium tracking-[-0.015em] text-text-primary">
+            {isOwnProfile ? "My creations" : "Published creations"}
+            <span className="font-mono text-sm tabular-nums text-text-muted">{totalCount}</span>
           </h2>
 
           {isOwnProfile && (
-            <div className="flex items-center gap-3">
-              <Link to="/dashboard/generate">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  fullWidth={false}
-                  className="gap-2"
-                >
-                  <Plus size={16} />
-                  New Thumbnail
-                </Button>
-              </Link>
-            </div>
+            <Link
+              to="/dashboard/generate"
+              className={buttonClasses({ size: "sm", rounded: "lg", fullWidth: false })}
+            >
+              <Plus size={16} />
+              New thumbnail
+            </Link>
           )}
         </div>
 
@@ -148,8 +141,10 @@ export default function Profile() {
             )}
           </>
         ) : (
-          <div className="py-12 text-center text-text-muted">
-            <p className="text-sm">No public creations yet.</p>
+          <div className="py-12 text-center text-text-secondary">
+            <p className="text-sm">
+              {isOwnProfile ? "You haven't made any thumbnails yet." : "No published thumbnails yet."}
+            </p>
           </div>
         )}
 

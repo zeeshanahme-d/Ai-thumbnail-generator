@@ -5,7 +5,7 @@ export default function ProfileHeaderSkeleton() {
     <>
       <div className="flex items-end justify-between">
         <div className="flex flex-col">
-          <Skeleton className="size-24 rounded-full border-4 border-background-surface sm:size-32" />
+          <Skeleton className="size-24 rounded-full border-4 border-background sm:size-32" />
         </div>
       </div>
 

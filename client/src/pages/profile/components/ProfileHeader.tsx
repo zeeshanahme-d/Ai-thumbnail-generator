@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Settings, Heart, LayoutGrid, Globe } from "lucide-react";
-import Button from "../../../components/Button";
+import { Settings, Globe } from "lucide-react";
+import { buttonClasses } from "../../../lib/buttonClasses";
 import { getUserInitial } from "../../../lib/herlper-fuctions";
 import type { IUser } from "../../../types";
 import type { PublicUserProfile } from "../core/_models";
@@ -13,48 +13,47 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ user, isOwnProfile, totalCount, likesCount, }: ProfileHeaderProps) {
+  const stats = [
+    { label: "Creations", value: totalCount },
+    { label: "Likes", value: likesCount },
+  ];
+
   return (
     <>
       <div className="flex items-end justify-between">
-        <div className="flex flex-col">
-          <div className="size-24 shrink-0 overflow-hidden rounded-full border-4 border-background-surface bg-[#00897b] flex items-center justify-center text-4xl font-medium text-white sm:size-32 sm:text-5xl">
-            {user?.avatar?.url ? (
-              <img
-                src={user.avatar.url}
-                alt={user.fullName}
-                loading="lazy"
-                decoding="async"
-                className="size-full object-cover"
-              />
-            ) : (
-              getUserInitial(user?.fullName)
-            )}
-          </div>
+        <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-background-surface-2 text-4xl font-medium text-text-primary shadow-card sm:size-32 sm:text-5xl">
+          {user?.avatar?.url ? (
+            <img
+              src={user.avatar.url}
+              alt={user.fullName}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
+          ) : (
+            getUserInitial(user?.fullName)
+          )}
         </div>
 
         {isOwnProfile && (
-          <div className="mb-2 sm:mb-4">
-            <Link to="/dashboard/settings">
-              <Button
-                variant="secondary"
-                size="sm"
-                fullWidth={false}
-                className="gap-2 text-xs"
-              >
-                <Settings size={14} />
-                Edit Profile
-              </Button>
-            </Link>
-          </div>
+          <Link
+            to="/dashboard/settings"
+            className={buttonClasses({ variant: "secondary", size: "sm", rounded: "lg", fullWidth: false, className: "mb-2 sm:mb-4" })}
+          >
+            <Settings size={14} />
+            Edit profile
+          </Link>
         )}
       </div>
 
-      <div className="mt-4">
-        <h1 className="text-2xl font-bold text-text-primary">{user?.fullName}</h1>
-        <p className="text-sm font-medium text-primary">@{user?.username}</p>
+      <div className="mt-5">
+        <h1 className="wrap-break-word text-[clamp(1.75rem,1.4rem+1.5vw,2.5rem)] font-medium leading-tight tracking-[-0.03em] text-text-primary">
+          {user?.fullName}
+        </h1>
+        <p className="mt-1 font-mono text-sm text-text-muted">@{user?.username}</p>
 
         {user?.bio && (
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">
+          <p className="mt-4 max-w-[60ch] text-[0.9375rem] leading-relaxed text-text-secondary">
             {user.bio}
           </p>
         )}
@@ -64,31 +63,21 @@ export default function ProfileHeader({ user, isOwnProfile, totalCount, likesCou
             href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm text-text-secondary underline-offset-4 transition-colors hover:text-text-primary hover:underline"
           >
-            <Globe size={13} />
+            <Globe size={14} />
             {user.website.replace(/^https?:\/\//, "")}
           </a>
         )}
 
-        <div className="mt-6 flex gap-6">
-          <div className="flex flex-col items-start">
-            <span className="text-lg font-semibold text-text-primary">
-              {totalCount}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-text-secondary">
-              <LayoutGrid size={12} /> Creations
-            </span>
-          </div>
-          <div className="flex flex-col items-start">
-            <span className="text-lg font-semibold text-text-primary">
-              {likesCount}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-text-secondary">
-              <Heart size={12} /> Likes
-            </span>
-          </div>
-        </div>
+        <dl className="mt-6 flex gap-8">
+          {stats.map(({ label, value }) => (
+            <div key={label}>
+              <dt className="font-mono text-xs uppercase tracking-[0.06em] text-text-muted">{label}</dt>
+              <dd className="mt-1 text-2xl font-medium tabular-nums text-text-primary">{value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </>
   );
