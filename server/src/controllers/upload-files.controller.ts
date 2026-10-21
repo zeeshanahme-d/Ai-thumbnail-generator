@@ -50,7 +50,7 @@ async function handleUploadAvatar(req: Request, res: Response) {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     },
   ).select("-password");
