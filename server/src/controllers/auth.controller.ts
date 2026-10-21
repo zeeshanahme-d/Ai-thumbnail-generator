@@ -82,22 +82,28 @@ async function revokeAllSessions(userId: UserId) {
   logger.info("All sessions revoked", { userId: String(userId) });
 }
 
+// Every failed refresh or session restore clears both cookies. A dead cookie left behind would
+// send each public request through optionalAuthentication into a refresh that can never succeed.
+function rejectSession(res: Response, message: string, code: string) {
+  clearAuthCookies(res);
+  ApiResponse.error(res, 401, message, code);
+  return null;
+}
+
 async function resolveUserFromRefreshToken(req: Request, res: Response) {
   const token = req.cookies?.refreshToken;
 
   // Only a plain string can be a token. cookie-parser turns "j:{...}" cookies into
   // objects, which would otherwise act as query operators in the lookup below.
   if (typeof token !== "string" || !token) {
-    ApiResponse.error(res, 401, "No refresh token provided.", AuthErrorCode.RefreshMissing);
-    return null;
+    return rejectSession(res, "No refresh token provided.", AuthErrorCode.RefreshMissing);
   }
 
   // Must still exist in the DB (i.e. not logged out / revoked).
   const storedToken = await refreshTokenModel.findOne({ tokenHash: hashToken(token) });
 
   if (!storedToken) {
-    ApiResponse.error(res, 401, "Invalid refresh token. Please log in again.", AuthErrorCode.RefreshInvalid);
-    return null;
+    return rejectSession(res, "Invalid refresh token. Please log in again.", AuthErrorCode.RefreshInvalid);
   }
 
   // A token that was already exchanged is being replayed, so one copy is in the wrong hands.
@@ -105,9 +111,7 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
   if (storedToken.usedAt && Date.now() - storedToken.usedAt.getTime() > REFRESH_REUSE_GRACE_MS) {
     logger.warn("Refresh token reused, session revoked", { userId: String(storedToken.userId), family: storedToken.family });
     await refreshTokenModel.deleteMany({ family: storedToken.family });
-    clearAuthCookies(res);
-    ApiResponse.error(res, 401, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
-    return null;
+    return rejectSession(res, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
   }
 
   let payload: ReturnType<typeof verifyRefreshToken>;
@@ -116,23 +120,18 @@ async function resolveUserFromRefreshToken(req: Request, res: Response) {
   } catch {
     // Refresh token expired or tampered — drop it and require a new login.
     await refreshTokenModel.deleteOne({ _id: storedToken._id });
-    res.clearCookie("refreshToken");
-    ApiResponse.error(res, 401, "Refresh token expired. Please log in again.", AuthErrorCode.RefreshExpired);
-    return null;
+    return rejectSession(res, "Refresh token expired. Please log in again.", AuthErrorCode.RefreshExpired);
   }
 
   const user = await userModel.findById(payload.userId).select("+tokenVersion");
 
   if (!user) {
-    ApiResponse.error(res, 401, "User no longer exists.", "Unauthorized");
-    return null;
+    return rejectSession(res, "User no longer exists.", "Unauthorized");
   }
 
   if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
     await refreshTokenModel.deleteOne({ _id: storedToken._id });
-    clearAuthCookies(res);
-    ApiResponse.error(res, 401, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
-    return null;
+    return rejectSession(res, "Your session has ended. Please log in again.", AuthErrorCode.RefreshInvalid);
   }
 
   // Rotate: only the request that marks the token used issues its replacement. A parallel
@@ -295,7 +294,7 @@ async function handleVerifyToken(req: Request, res: Response) {
       const user = await userModel.findById(payload.userId).select("+tokenVersion");
 
       if (!user) {
-        return ApiResponse.error(res, 401, "User no longer exists.", "Unauthorized");
+        return rejectSession(res, "User no longer exists.", "Unauthorized");
       }
 
       if ((payload.tv ?? 0) === (user.tokenVersion ?? 0)) {
@@ -306,7 +305,7 @@ async function handleVerifyToken(req: Request, res: Response) {
       // Revoked token: fall through. The refresh check below fails for the same reason.
     } catch (error) {
       if (!(error instanceof jwt.TokenExpiredError)) {
-        return ApiResponse.error(res, 401, "Invalid access token.", AuthErrorCode.TokenInvalid);
+        return rejectSession(res, "Invalid access token.", AuthErrorCode.TokenInvalid);
       }
     }
   }
