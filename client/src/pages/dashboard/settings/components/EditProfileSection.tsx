@@ -15,6 +15,7 @@ import { useUpdateProfile } from "../core/hooks/use-update-profile";
 import { useCheckUsername } from "../../../profile/core/hooks/useCheckUsername";
 import { updateProfileSchema } from "../core/_schemas";
 import { getApiErrorMessage } from "../../../../lib/axios";
+import { IMAGE_ACCEPT_ATTRIBUTE, validateImageFile } from "../../../../lib/imageValidation";
 import toast from "react-hot-toast";
 
 export default function EditProfileSection() {
@@ -42,6 +43,15 @@ export default function EditProfileSection() {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
+
+        // Same rules as the server, so a wrong type or an oversized file never leaves the browser.
+        const validationError = validateImageFile(file);
+        if (validationError) {
+            toast.error(validationError);
+            // Reset so picking the same file again still fires a change event.
+            event.target.value = "";
+            return;
+        }
 
         const formData = new FormData();
         formData.append("avatar", file);
@@ -92,7 +102,7 @@ export default function EditProfileSection() {
             <div className="mb-8 flex items-center gap-4">
                 <input
                     type="file"
-                    accept="image/*"
+                    accept={IMAGE_ACCEPT_ATTRIBUTE}
                     className="hidden"
                     ref={fileInputRef}
                     onChange={handleFileChange}

@@ -72,3 +72,6 @@ export const billingLimiter = createLimiter({ windowMinutes: 10, limit: 10, by: 
 
 /** Free prompt improvements per signed-in user, since they cost no credits. */
 export const improvePromptLimiter = createLimiter({ windowMinutes: 10, limit: 10, by: "user" });
+
+/** Avatar uploads per signed-in user. Each one is a Cloudinary upload and delete. Mounted before multer. */
+export const avatarUploadLimiter = createLimiter({ windowMinutes: 60, limit: 10, by: "user" });
