@@ -1,6 +1,6 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 
-let _transport: nodemailer.Transporter | null = null;
+let _transport: Transporter | null = null;
 
 function getTransport() {
   if (_transport) return _transport;
