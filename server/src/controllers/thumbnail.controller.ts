@@ -548,7 +548,7 @@ const softDeleteThumbnail = async (req: Request, res: Response) => {
       deletedAt: null,
     },
     {
-      $set: { deletedAt: new Date(), published: false, publishedAt: null },
+      $set: { deletedAt: new Date(), published: false },
     },
     { new: true }
   );
@@ -771,15 +771,10 @@ const publishThumbnailToCommunity = async (req: Request, res: Response) => {
       userId,
       deletedAt: null,
     },
-    {
-      $set: {
-        published,
-        publishedAt: published ? new Date() : null,
-      },
-    },
-    {
-      new: true,
-    }
+    // publishedAt keeps the first publish date through unpublishing, so republishing an old
+    // thumbnail can't restart its age in the trending score.
+    [{ $set: { published, publishedAt: published ? { $ifNull: ["$publishedAt", "$$NOW"] } : "$publishedAt" } }],
+    { returnDocument: "after", updatePipeline: true },
   );
 
   if (!thumbnail) {
