@@ -6,7 +6,20 @@ import logger from "./src/utils/logger.js";
 
 const PORT = Number(process.env.PORT) || 5000;
 
+// Without these, tokens would be signed with an empty or shared key. Names only, never values.
+const REQUIRED_ENV = ["SECRET", "REFRESH_SECRET", "MONGO_DB_URL"];
+
 const startServer = async () => {
+  const missing = REQUIRED_ENV.filter((name) => !process.env[name]);
+  if (missing.length) {
+    logger.error("Missing required environment variables", { missing });
+    process.exit(1);
+  }
+  if (process.env.SECRET === process.env.REFRESH_SECRET) {
+    logger.error("REFRESH_SECRET must be different from SECRET");
+    process.exit(1);
+  }
+
   try {
     await connectMongoose();
 
