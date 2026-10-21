@@ -9,7 +9,7 @@ import {
 import { getThumbnailSchema } from "../validations/thumbnail.validation.js";
 import validate from "../middlewares/validate.js";
 import { optionalAuthentication } from "../middlewares/auth.middleware.js";
-import { viewLimiter } from "../middlewares/rate-limit.middleware.js";
+import { publicIpLimiter, viewLimiter } from "../middlewares/rate-limit.middleware.js";
 
 const router = express.Router();
 
@@ -17,8 +17,8 @@ const router = express.Router();
 const idsOnly: RequestHandler = (req, _res, next) =>
   mongoose.isObjectIdOrHexString(req.params.id) ? next() : next("router");
 
-router.get("/community", optionalAuthentication, validate(getThumbnailSchema, "query"), getCommunityThumbnails);
-router.get("/:id", idsOnly, optionalAuthentication, getThumbnailById);
+router.get("/community", publicIpLimiter, optionalAuthentication, validate(getThumbnailSchema, "query"), getCommunityThumbnails);
+router.get("/:id", idsOnly, publicIpLimiter, optionalAuthentication, getThumbnailById);
 router.get("/:id/share", getThumbnailSharePage);
 router.post("/:id/view", viewLimiter, optionalAuthentication, recordThumbnailView);
 
