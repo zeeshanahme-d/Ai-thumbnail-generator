@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import type { SubscriptionNotification, TransactionNotification } from "@paddle/paddle-node-sdk";
+import paddle from "../config/paddle.js";
 import userModel from "../models/user.model.js";
 import { SubscriptionStatus, UserPlan } from "../constants/enums.js";
 import { nextPaidRefill, resetDueCredits } from "./credits.js";
@@ -50,9 +51,21 @@ async function findBillingUser(customData: unknown, subscriptionId: string): Pro
 }
 
 // Another subscription that is still live owns the account, so events from this one are ignored.
-// Checkout refuses accounts with a live plan, so a real second subscription only starts after the first ended.
+// Checkout refuses accounts with a live plan, so a real second subscription only starts after the
+// first ended, or when two checkouts were paid at once (two tabs).
 const ownedByOtherSubscription = (user: BillingUser, subscriptionId: string) =>
   Boolean(user.subscriptionId && user.subscriptionId !== subscriptionId && isLiveSubscription(user.subscriptionStatus));
+
+// The account keeps the subscription it already has, so Paddle must stop billing the duplicate.
+// Paddle's current state decides, so a late or repeated event never cancels twice. The duplicate's
+// first payment is refunded by hand from the Paddle dashboard.
+async function cancelDuplicateSubscription(subscriptionId: string, userId: string) {
+  const current = await paddle().subscriptions.get(subscriptionId);
+  if (!isLiveSubscription(current.status)) return;
+
+  await paddle().subscriptions.cancel(subscriptionId, { effectiveFrom: "immediately" });
+  logger.warn("Duplicate subscription canceled, refund its first payment in Paddle", { userId, subscriptionId });
+}
 
 /** subscription.* events: mirrors the plan and status. Credits come from paid transactions. */
 export async function syncSubscription(subscription: SubscriptionNotification): Promise<void> {
@@ -66,6 +79,9 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
   const userId = String(user._id);
   if (ownedByOtherSubscription(user, subscription.id)) {
     logger.warn("Subscription event ignored: another live subscription owns the account", { ...context, userId, currentSubscriptionId: user.subscriptionId });
+    if (isLiveSubscription(subscription.status)) {
+      await cancelDuplicateSubscription(subscription.id, userId);
+    }
     return;
   }
 
