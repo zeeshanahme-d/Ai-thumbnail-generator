@@ -9,15 +9,10 @@ export async function getPublicProfileRequest(username: string) {
   return data.data as PublicProfileResponse;
 }
 
-export async function checkUsernameRequest(
-  username: string,
-  excludeUserId?: string,
-) {
+// The server treats the signed-in user's own username as available.
+export async function checkUsernameRequest(username: string) {
   const { data } = await api.get<ApiSuccess<CheckUsernameResponse>>(
     `/users/check-username/${encodeURIComponent(username)}`,
-    {
-      params: excludeUserId ? { excludeUserId } : undefined,
-    },
   );
   return data.data as CheckUsernameResponse;
 }

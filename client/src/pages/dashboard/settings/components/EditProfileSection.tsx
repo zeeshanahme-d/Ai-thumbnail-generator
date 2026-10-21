@@ -35,7 +35,6 @@ export default function EditProfileSection() {
 
     const { data: checkData, isFetching: isCheckingUsername } = useCheckUsername(
         !isUsernameUnchanged ? debouncedUsername : undefined,
-        user?._id,
     );
 
     const isUsernameTaken = !isUsernameUnchanged && checkData?.available === false;
