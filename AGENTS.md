@@ -229,7 +229,8 @@ Check these before writing anything new:
   `buttonClasses()` from `lib/buttonClasses.ts`, the same classes Button renders.
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
-  uncontrolled; includes style/aspect-ratio/color-scheme/reference-image pickers.
+  uncontrolled; includes style/aspect-ratio/color-scheme/reference-image pickers and the
+  text-on-image switch (on by default).
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
   signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
   Used by both `HeroSection` (through `HeroPrompt`, with `showTools={false}` and a
@@ -258,7 +259,8 @@ Check these before writing anything new:
   sample thumbnails (`sampleThumbnails` in `data/hero.ts`, 640px WebP copies).
 - **`FaqAccordion.tsx`** — animated accordion, one answer open at a time; questions live
   in `data/faq.ts`.
-- **`StylePicker` / `AspectRatioPicker` / `ColorSchemePicker` / `ReferenceImageUpload`**
+- **`StylePicker` / `AspectRatioPicker` / `ColorSchemePicker` / `ReferenceImageUpload` /
+  `TextOverlayToggle`**
   — controlled (`value`/`onChange`) pickers used inside `PromptCard`.
 - **`ThumbnailCard.tsx`** — the unified card for displaying thumbnails. Supports
   `showDelete`, `showLike`, `showPublish`, `showRecycleBinActions` props. Used across
@@ -368,12 +370,17 @@ you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it
 - Access token 15 min, refresh token 30 days (`helper/token-helpers.ts`). Secrets are
   read **inside** the functions — `dotenv.config()` runs *after* the module graph is
   imported, so top-level `process.env` reads are `undefined`.
+- Each token carries `typ` (`access` / `refresh`) and has its own secret (`SECRET`,
+  `REFRESH_SECRET`), so one kind never passes as the other. `server.ts` refuses to start
+  unless `SECRET`, `REFRESH_SECRET` and `MONGO_DB_URL` are set and the two secrets differ.
 - Refresh tokens are stored as SHA-256 hashes (`hashToken`) in `refreshToken.model.ts` with
   a TTL index. Every refresh (and `/verify` fallback) rotates the token within its login
   `family`; a used token replayed after `REFRESH_REUSE_GRACE_MS` (30 s) revokes the whole
   family. Parallel refreshes inside the window get an access token only. Logout deletes the family.
 - `/verify` is deliberately **not** behind `authenticationToken`: it must inspect an
   already-expired access token and fall back to the refresh cookie.
+- Every failed refresh or session restore clears both cookies (`rejectSession`), so a dead
+  cookie can't keep sending public requests into a refresh that fails.
 - Tokens are set as **httpOnly cookies** (not returned in the body to the client).
 
 ### Thumbnail endpoints (`/thumbnail`)
@@ -419,7 +426,8 @@ through but checks anyone with a session cookie, so signed-in users get `isLiked
   The user's likes are taken off other thumbnails' counts, and likes on their thumbnails
   are deleted. A live Paddle subscription is cancelled immediately first; if that fails,
   nothing is deleted.
-- `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary)
+- `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary); 10 per hour
+  per user (`avatarUploadLimiter`)
 
 `uploadSingleImage` keeps the file in memory (`req.file.buffer`, never on disk) and checks
 its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
@@ -442,12 +450,15 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   Paddle limits the quantity to 5–500 too). Subscribers can buy packs as well.
 - `POST /billing/portal` (auth) — Paddle customer portal link: cancel, card, invoices.
 - `POST /billing/webhook` (public, signed) — mounted in `app.ts` **before** `express.json`
-  with `express.text`, because the signature covers the raw bytes. Any error returns 500 so
-  Paddle retries. Logic in `utils/billing.ts`:
+  with `express.text`, because the signature covers the raw bytes. A missing or wrong
+  `PADDLE_WEBHOOK_SECRET` (it must start with `pdl_ntfset_`) returns 500 before verifying, as
+  does any error, so Paddle retries. Logic in `utils/billing.ts`:
   - `subscription.*` events own `plan`, `subscriptionStatus`, `subscriptionId`,
     `subscriptionRenewsAt` (null while a cancel is scheduled) and `paddleCustomerId`. An older
     event (`subscriptionUpdatedAt`) or one from a different subscription while the stored one
-    is still live is ignored. `canceled`/`paused` move the account to Free and refill 20.
+    is still live is ignored. If that other subscription is live too (two checkouts paid at
+    once), it is cancelled at Paddle immediately; its first payment is refunded by hand.
+    `canceled`/`paused` move the account to Free and refill 20.
   - `transaction.completed` owns the credits: a paid billing period sets `totalcredits` to
     `credits_per_month`, clears usage and records `subscriptionPeriodStart/End`, once per
     period. Payment-method-change transactions never refill. Renewal credits come from the
@@ -464,7 +475,8 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 ### AI Generation flow
 
 1. Client sends `POST /thumbnail` with `title`, `prompt`, `style`, `aspect_ratio`,
-   `color_scheme`, `text_overlay` (parsed with `z.stringbool()`, so `"false"` is false),
+   `color_scheme`, `text_overlay` (parsed with `z.stringbool()`, so `"false"` is false; on
+   by default),
    and optional `referenceImage` file
 2. Server applies a due monthly refill, then reserves credits atomically
    (`CREDIT_COST.GENERATE_COST = 5`)
@@ -501,7 +513,7 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   at once. Unverified users are told to verify (dashboard alert, `EMAIL_NOT_VERIFIED` on
   generate).
 
-Env: `PORT`, `SECRET`, `REFRESH_SECRET` (falls back to `SECRET`), `CLIENT_URL`,
+Env: `PORT`, `SECRET`, `REFRESH_SECRET` (required, must differ from `SECRET`), `CLIENT_URL`,
 `CLIENT_ID`, `GEMINI_API_KEY`, `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `CLOUDINARY_NAME`, `SMTP_HOST`, `SMTP_USER`,
 `SMTP_PASSWORD`, `SMTP_TLS_PORT`, `MONGO_DB_URL`, `TRUST_PROXY` (number of reverse proxies,
@@ -530,7 +542,8 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
   Invoices has no in-app list, it points to Paddle's receipts and the portal
 - Paid Pro/Ultra plans through Paddle (see Billing above); `PricingCard` opens checkout
 - Monthly free-credit refill, stuck-generation cleanup, the 30-day recycle-bin purge and the
-  trending score (likes and views decayed by age, `TRENDING_*` in `constants.ts`)
+  trending score (likes and views decayed by the age since first publish, `TRENDING_*` in
+  `constants.ts`; `publishedAt` is kept through unpublishing so it can't be reset)
   (`utils/scheduled-jobs.ts`); permanent deletes all go through `deleteThumbnailsForever`
 - `/thumbnail/:id` fetches by id (`useThumbnail`, router state is only a placeholder), counts a
   view on open, and Share copies the server's `/share` link so previews show the image
@@ -547,4 +560,4 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - `likeDislik.modal.ts` — filename should be `.model.ts`; `unique: true` is set at
   schema level instead of as a compound index on `{ userId, thumbnailId }`.
 - `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.
-- `.env.example` is incomplete (missing SMTP, REFRESH_SECRET, MONGO_URI vars).
+- `.env.example` is incomplete (missing SMTP, MONGO_URI vars).
