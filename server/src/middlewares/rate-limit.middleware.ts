@@ -75,3 +75,9 @@ export const improvePromptLimiter = createLimiter({ windowMinutes: 10, limit: 10
 
 /** Avatar uploads per signed-in user. Each one is a Cloudinary upload and delete. Mounted before multer. */
 export const avatarUploadLimiter = createLimiter({ windowMinutes: 60, limit: 10, by: "user" });
+
+/**
+ * Public reads per IP, shared by session restore, refresh, community, thumbnail detail and
+ * profiles. Generous enough for browsing; it stops scripts hammering the unindexed search.
+ */
+export const publicIpLimiter = createLimiter({ windowMinutes: 15, limit: 300, by: "ip" });

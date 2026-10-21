@@ -1,6 +1,6 @@
 import express from "express";
 import authenticationToken from "../middlewares/auth.middleware.js";
-import { passwordCheckLimiter } from "../middlewares/rate-limit.middleware.js";
+import { passwordCheckLimiter, publicIpLimiter } from "../middlewares/rate-limit.middleware.js";
 import {
   handleUpdateUserProfile,
   handleCheckUsername,
@@ -13,7 +13,7 @@ import { deleteAccountSchema, updateProfileSchema } from "../validations/auth.va
 const router = express.Router();
 
 router.get("/check-username/:username", authenticationToken, handleCheckUsername);
-router.get("/:username/profile", handleGetPublicProfile);
+router.get("/:username/profile", publicIpLimiter, handleGetPublicProfile);
 
 // Protected routes
 router.patch("/profile", authenticationToken, validate(updateProfileSchema), handleUpdateUserProfile);

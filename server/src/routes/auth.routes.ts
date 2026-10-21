@@ -6,6 +6,7 @@ import {
   emailSendLimiter,
   loginEmailLimiter,
   passwordCheckLimiter,
+  publicIpLimiter,
   signupIpLimiter,
 } from "../middlewares/rate-limit.middleware.js";
 import {
@@ -38,8 +39,8 @@ const router = express.Router();
 // Limiters run before validation so malformed requests count too.
 router.post("/login", authIpLimiter, loginEmailLimiter, validate(loginSchema), handleLoginUser);
 router.post("/signup", authIpLimiter, signupIpLimiter, validate(signupSchema), handleSignupUser);
-router.post("/refresh", handleRefreshToken);
-router.post("/verify", handleVerifyToken);
+router.post("/refresh", publicIpLimiter, handleRefreshToken);
+router.post("/verify", publicIpLimiter, handleVerifyToken);
 router.post("/logout", handleLogoutUser);
 router.get("/me", authenticationToken, handleGetMe);
 router.post("/forgot-password", authIpLimiter, emailSendLimiter, validate(forgotPasswordSchema), handleForgotPassword);
