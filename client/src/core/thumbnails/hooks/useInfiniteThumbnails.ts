@@ -57,6 +57,9 @@ const useInfiniteThumbnails = (
     thumbnails,
     total: query.data?.pages[0]?.meta.total ?? 0,
     isPending: query.isPending,
+    // Only a failed first load: when "Load more" fails, the loaded items and its button stay.
+    loadFailed: query.isError && thumbnails.length === 0,
+    refetch: query.refetch,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,

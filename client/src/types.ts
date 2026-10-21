@@ -113,6 +113,11 @@ export interface AlertProps {
   className?: string;
 }
 
+export interface ListErrorProps {
+  onRetry: () => void;
+  className?: string;
+}
+
 export interface WrapperProps {
   children: ReactNode;
   className?: string;

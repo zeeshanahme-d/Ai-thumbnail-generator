@@ -6,6 +6,7 @@ import Wrapper from "../../components/Wrapper";
 import Button from "../../components/Button";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
+import ListError from "../../components/ListError";
 import Banner from "./components/Banner";
 import UserNotFound from "./components/UserNotFound";
 import ProfileHeader from "./components/ProfileHeader";
@@ -119,6 +120,8 @@ export default function Profile() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <ThumbnailCardSkeleton count={6} />
           </div>
+        ) : list.loadFailed ? (
+          <ListError className="py-12" onRetry={list.refetch} />
         ) : thumbnails.length > 0 ? (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
