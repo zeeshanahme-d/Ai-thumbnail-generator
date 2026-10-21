@@ -265,9 +265,8 @@ Check these before writing anything new:
 - **`PageLoader.tsx`** — centered spinner. `fullScreen` for loads before any layout shows.
   Used by `SessionProvider` and as the `Suspense` fallback for lazy pages.
 - **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),
-  **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Select.tsx`**,
-  **`Skeleton.tsx`**,
-  **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**, **`DebounceSearch.tsx`**.
+  **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Skeleton.tsx`**,
+  **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**.
 
 `lib/imageValidation.ts` owns image rules (extensions, MIME, 5 MB max) and returns a
 user-facing message; reuse it for any upload. `lib/passwordValidation.ts` owns the
@@ -293,7 +292,7 @@ server/
 ├─ server.ts                 # dotenv + connect mongo + startScheduledJobs() + app.listen(PORT)
 └─ src/
    ├─ app.ts                 # express app; cors({ origin: CLIENT_URL, credentials: true })
-   ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts, hf.ts (HuggingFace — unused)
+   ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts
    ├─ constants/             # enums.ts (all enums), constants.ts (style prompts, credit costs, sort)
    ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
    ├─ controllers/           # auth, user, thumbnail, upload-files, billing
@@ -549,7 +548,6 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
 
 ### Known bugs
-- `hf.ts` error message says "GEMINI_API_KEY is missing" (copy-paste bug).
 - `likeDislik.modal.ts` — filename should be `.model.ts`; `unique: true` is set at
   schema level instead of as a compound index on `{ userId, thumbnailId }`.
 - `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.

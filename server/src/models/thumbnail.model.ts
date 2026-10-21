@@ -27,19 +27,11 @@ const thumbnailSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    isLiked: {
-      type: Boolean,
-      default: false,
-    },
     title: {
       type: String,
       required: true,
       trim: true,
       maxlength: 200,
-    },
-    description: {
-      type: String,
-      trim: true,
     },
 
     model: {
@@ -86,7 +78,7 @@ const thumbnailSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Flipped to false once the image lands in image_url.
+    // Flipped to false once the image lands in `thumbnail`.
     isGenerating: {
       type: Boolean,
       default: true,

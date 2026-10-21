@@ -11,7 +11,6 @@ import thumbnailPublicRouter from "./routes/thumbnail-public.routes.js";
 import billingRouter from "./routes/billing.routes.js";
 import { handlePaddleWebhook } from "./controllers/billing.controller.js";
 import errorHandler from "./middlewares/error.middleware.js";
-import mongoose from "mongoose";
 
 const app = express();
 
@@ -24,7 +23,6 @@ if (trustProxy) {
 }
 
 app.use(helmet());
-mongoose.set("sanitizeFilter", true);
 
 // Paddle signs the exact request bytes, so the webhook reads the raw body before express.json parses it.
 app.post("/billing/webhook", express.text({ type: "application/json", limit: "1mb" }), handlePaddleWebhook);

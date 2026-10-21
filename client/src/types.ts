@@ -54,21 +54,6 @@ export interface ProcessTimelineProps {
   scope: React.RefObject<HTMLDivElement | null>;
 }
 
-export interface SelectOption {
-  label: string;
-  description?: string;
-  icon?: ReactNode;
-}
-
-export interface SelectProps {
-  id: string;
-  options: SelectOption[];
-  value: SelectOption;
-  onChange: (option: SelectOption) => void;
-  className?: string;
-  popoverBtnClassName?: string;
-}
-
 export interface PromptSubmission {
   prompt: string;
   style: string;
@@ -290,25 +275,6 @@ export interface EyebrowProps {
   className?: string;
 }
 
-export interface TestimonialCardProps {
-  testimonial: ITestimonial;
-  index: number;
-}
-
-export interface ITestimonial {
-  image: string;
-  name: string;
-  handle: string;
-  date: string;
-  quote: string;
-}
-
-export interface IFeature {
-  icon: string;
-  title: string;
-  description: string;
-}
-
 export interface IFooter {
   title: string;
   links: IFooterLink[];
@@ -482,7 +448,6 @@ export interface IUser {
   email: string;
   image_url: string;
   avatar: MediaAsset;
-  coverUrl: string;
   bio: string;
   website: string;
   provider: "email" | "google" | string;
@@ -498,8 +463,6 @@ export interface IUser {
   subscriptionRenewsAt: string | null;
   /** End of the last paid billing period: the plan ends here when it no longer renews. */
   subscriptionPeriodEnd: string | null;
-  generationsThisMonth: number;
-  generationsResetAt: string | null;
   followersCount: number;
   followingCount: number;
   createdAt: string;

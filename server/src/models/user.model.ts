@@ -35,11 +35,6 @@ const userSchema = new mongoose.Schema(
 
     avatar: mediaSchema,
 
-    coverUrl: {
-      type: String,
-      default: "",
-    },
-
     bio: {
       type: String,
       default: "",
@@ -181,12 +176,6 @@ const userSchema = new mongoose.Schema(
     subscriptionUpdatedAt: {
       type: Date,
       default: null,
-    },
-
-    // Usage
-    generationsThisMonth: {
-      type: Number,
-      default: 0,
     },
 
     // Next refill of the free credits. Set when the email is verified, then moved on by each refill.
