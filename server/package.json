@@ -2,10 +2,10 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch server.ts",
-    "start": "tsx server.ts",
+    "start": "node --enable-source-maps dist/server.js",
     "build": "tsc"
   },
   "keywords": [],

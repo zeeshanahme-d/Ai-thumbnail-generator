@@ -27,24 +27,17 @@ cd client && npm run lint     # eslint 9: typescript-eslint + react-hooks on all
 cd client && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
 
 # server
-cd server && npm run dev      # tsx watch server.ts (port 8000)
+cd server && npm run dev       # tsx watch server.ts (port 8000)
+cd server && npx tsc --noEmit  # type-check
+cd server && npm run build     # tsc into dist/ (gitignored)
+cd server && npm start         # node dist/server.js, so build first
 ```
 
 **`vite build` does not type-check** — always run the `tsc --noEmit` command above
 before claiming a change is clean.
 
-**Do not run `npm run build` in `server/`.** It is bare `tsc`, and because
-`tsconfig.json` sets `rootDir: "./src"` while `include` also lists `server.ts`
-(error `TS6059`), it emits a stray `server.js` + `.map` into the server root.
-To type-check the server, use a temporary config instead:
-
-```bash
-cd server && cat > tsconfig.check.json <<'EOF'
-{ "extends": "./tsconfig.json",
-  "compilerOptions": { "rootDir": ".", "noImplicitAny": false, "noEmit": true } }
-EOF
-npx tsc -p tsconfig.check.json; rm -f tsconfig.check.json
-```
+**Deploying the server**: `npm ci && npm run build && npm prune --omit=dev`, then
+`npm start`. `tsx` and `typescript` are devDependencies, so build before pruning.
 
 ## Client architecture
 
