@@ -46,11 +46,11 @@ const userSchema = new mongoose.Schema(
       maxlength: 300,
     },
 
+    // Validated as an http(s) link by updateProfileSchema.
     website: {
       type: String,
       default: "",
       trim: true,
-      url: true
     },
 
     // Auth

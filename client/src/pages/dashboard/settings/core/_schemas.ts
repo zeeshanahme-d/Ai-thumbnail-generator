@@ -9,12 +9,13 @@ export const updateProfileSchema = z.object({
         .string()
         .trim()
         .max(200, "Bio must be at most 200 characters"),
+    // Mirrors the server: http and https links only.
     website: z
         .string()
         .trim()
         .refine(
-            (val) => val === "" || z.string().url().safeParse(val).success,
-            "Enter a valid URL",
+            (val) => val === "" || z.string().url({ protocol: /^https?$/ }).safeParse(val).success,
+            "Enter a link that starts with http:// or https://",
         ),
 });
 
