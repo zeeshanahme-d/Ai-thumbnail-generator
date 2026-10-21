@@ -60,13 +60,13 @@ export default function ProfileHeader({ user, isOwnProfile, totalCount, likesCou
 
         {user?.website && (
           <a
-            href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
+            href={/^https?:\/\//i.test(user.website) ? user.website : `https://${user.website}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1.5 text-sm text-text-secondary underline-offset-4 transition-colors hover:text-text-primary hover:underline"
           >
             <Globe size={14} />
-            {user.website.replace(/^https?:\/\//, "")}
+            {user.website.replace(/^https?:\/\//i, "")}
           </a>
         )}
 

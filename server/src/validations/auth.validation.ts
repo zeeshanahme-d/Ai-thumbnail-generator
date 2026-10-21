@@ -19,10 +19,11 @@ const updateProfileSchema = z.object({
     .max(200, "Bio must be at most 200 characters")
     .optional()
     .or(z.literal("")),
+  // http and https only: javascript: and data: links would run in the visitor's browser.
   website: z
     .string()
     .trim()
-    .url("Enter a valid URL")
+    .url({ protocol: /^https?$/, message: "Enter a link that starts with http:// or https://" })
     .optional()
     .or(z.literal("")),
 });
