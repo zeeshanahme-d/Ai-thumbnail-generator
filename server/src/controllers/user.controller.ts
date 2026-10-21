@@ -35,7 +35,7 @@ async function handleUpdateUserProfile(req: Request, res: Response) {
     .findByIdAndUpdate(
       userId,
       { $set: updateFields },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     )
     .select("-password");
 

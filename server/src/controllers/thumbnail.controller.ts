@@ -560,7 +560,7 @@ const softDeleteThumbnail = async (req: Request, res: Response) => {
     {
       $set: { deletedAt: new Date(), published: false },
     },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!thumbnail) {
@@ -596,7 +596,7 @@ const restoreThumbnail = async (req: Request, res: Response) => {
     {
       $set: { deletedAt: null },
     },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!thumbnail) {
