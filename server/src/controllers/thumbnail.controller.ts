@@ -145,7 +145,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     const selectedColorDesc = colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions] || color_scheme;
 
     const promptParts: string[] = [
-      `You are an award-winning YouTube thumbnail designer. Your job is to create a thumbnail with an extremely high click-through rate (CTR), similar in quality to thumbnails from top creators like MrBeast, GreatStack, Fireship, Ali Abdaal, and MKBHD. The thumbnail should look professionally designed, modern, clean, and instantly eye-catching.`,
+      `You are an award-winning YouTube thumbnail designer. Your job is to create a thumbnail with an extremely high click-through rate (CTR), at the level of the most-clicked thumbnails on YouTube: one clear focal point, strong contrast, bold shapes and a layout that reads instantly at small sizes. The thumbnail should look professionally designed, modern, clean, and instantly eye-catching.`,
 
       `Video Title: "${title.trim()}"`,
       `Visual Style: ${selectedStylePrompt}.`,
