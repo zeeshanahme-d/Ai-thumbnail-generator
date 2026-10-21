@@ -7,6 +7,7 @@ import type { CommunityProps, CommunitySort, ThumbnailFilters } from "../../type
 import Button from "../../components/Button";
 import DashboardPage from "../../components/DashboardPage";
 import Eyebrow from "../../components/Eyebrow";
+import ListError from "../../components/ListError";
 import PageHeader from "../../components/PageHeader";
 import ThumbnailCard from "../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../components/ThumbnailCardSkeleton";
@@ -28,8 +29,9 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
     sort: "newest",
     style: initialStyle === ALL_STYLES ? undefined : initialStyle,
   });
-  const { thumbnails, total, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
+  const { thumbnails, total, isPending, loadFailed, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteThumbnails("community", filters);
+  const showTotal = !isPending && !loadFailed;
   const [sort, setSort] = useState<CommunitySort>("newest");
   const [activeStyle, setActiveStyle] = useState(initialStyle);
 
@@ -61,6 +63,8 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
           <ThumbnailCardSkeleton count={9} />
         </div>
+      ) : loadFailed ? (
+        <ListError className="mt-16" onRetry={refetch} />
       ) : thumbnails.length > 0 ? (
         <>
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
@@ -116,7 +120,7 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
               <Plus size={16} />
               Create your own
             </Link>
-            {!isPending && (
+            {showTotal && (
               <span className="font-mono text-xs uppercase tracking-[0.06em] tabular-nums text-text-muted">
                 {total} published
               </span>
@@ -134,7 +138,7 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
       eyebrow="Community"
       title="Community gallery"
       description="Thumbnails people made with Thumblify and chose to publish. Open any of them to see the prompt behind it."
-      actions={!isPending && <Eyebrow className="tabular-nums">{total} published</Eyebrow>}
+      actions={showTotal && <Eyebrow className="tabular-nums">{total} published</Eyebrow>}
     >
       {gallery}
     </DashboardPage>

@@ -9,6 +9,7 @@ import useEmptyRecycleBin from "../../../core/thumbnails/hooks/use-empty-recycle
 import Button from "../../../components/Button";
 import DashboardPage from "../../../components/DashboardPage";
 import Eyebrow from "../../../components/Eyebrow";
+import ListError from "../../../components/ListError";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
@@ -24,6 +25,8 @@ export default function RecycleBin() {
     thumbnails: deletedThumbnails,
     total,
     isPending: isLoading,
+    loadFailed,
+    refetch,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -94,7 +97,7 @@ export default function RecycleBin() {
       description={`Restore a thumbnail or delete it for good. Anything left here is deleted forever ${RECYCLE_BIN_RETENTION_DAYS} days after it was moved.`}
       actions={
         <>
-          {!isLoading && <Eyebrow className="tabular-nums">{total} in the bin</Eyebrow>}
+          {!isLoading && !loadFailed && <Eyebrow className="tabular-nums">{total} in the bin</Eyebrow>}
           {total > 0 && (
             <div className="flex gap-3">
               <Button
@@ -132,6 +135,8 @@ export default function RecycleBin() {
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
             <ThumbnailCardSkeleton count={6} showRecycleBinActions />
           </div>
+        ) : loadFailed ? (
+          <ListError className="mt-16" onRetry={refetch} />
         ) : deletedThumbnails.length === 0 ? (
           <div className="mt-16 flex flex-col items-center gap-4 text-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-background-surface-2">

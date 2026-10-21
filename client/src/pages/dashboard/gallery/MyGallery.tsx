@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import DashboardPage from "../../../components/DashboardPage";
 import Eyebrow from "../../../components/Eyebrow";
+import ListError from "../../../components/ListError";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
@@ -23,7 +24,7 @@ export default function MyGallery() {
     limit: PAGE_SIZE,
     sort: "newest",
   });
-  const { thumbnails, total, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
+  const { thumbnails, total, isPending, loadFailed, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteThumbnails("mine", filters);
   const { mutate: deleteMutate, isPending: isDeleting } = useDeleteThumbnail();
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export default function MyGallery() {
       description="Every thumbnail you've generated. Filter them, publish them to the community, or move them to the recycle bin."
       actions={
         <>
-          {!isPending && <Eyebrow className="tabular-nums">{total} thumbnails</Eyebrow>}
+          {!isPending && !loadFailed && <Eyebrow className="tabular-nums">{total} thumbnails</Eyebrow>}
           <Link to="/dashboard/generate" className={buttonClasses({ size: "sm", rounded: "lg", fullWidth: false })}>
             <Plus size={16} />
             New thumbnail
@@ -89,6 +90,8 @@ export default function MyGallery() {
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
             <ThumbnailCardSkeleton count={8} />
           </div>
+        ) : loadFailed ? (
+          <ListError className="mt-16" onRetry={refetch} />
         ) : thumbnails.length > 0 ? (
           <>
             <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
