@@ -77,7 +77,13 @@ async function handleGetPublicProfile(req: Request, res: Response) {
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
   }
 
-  return ApiResponse.success(res, 200, "Public profile fetched.", { user });
+  // Likes across everything they have published, not just the cards a page has loaded.
+  const [likes] = await thumbnailModel.aggregate<{ total: number }>([
+    { $match: { userId: user._id, published: true, deletedAt: null } },
+    { $group: { _id: null, total: { $sum: "$likesCount" } } },
+  ]);
+
+  return ApiResponse.success(res, 200, "Public profile fetched.", { user, likesCount: likes?.total ?? 0 });
 }
 
 async function handleDeleteAccount(req: Request, res: Response) {

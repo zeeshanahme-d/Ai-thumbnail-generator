@@ -30,7 +30,7 @@ import { useResendVerification } from "../../../core/auth/hooks";
 import { useSession } from "../../../store/useSessionStore";
 
 export default function DashboardGenerate() {
-  const { data: generations = [], isPending: isLoading } = useGetMyThumbnails({
+  const { data: generations = [], pagination, isPending: isLoading } = useGetMyThumbnails({
     limit: 8,
     page: 1,
     sort: "newest",
@@ -193,7 +193,8 @@ export default function DashboardGenerate() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-baseline gap-2.5 text-xl font-medium tracking-[-0.015em] text-text-primary">
             Recent thumbnails
-            <span className="font-mono text-sm tabular-nums text-text-muted">{generations.length}</span>
+            {/* All of them, not just the latest few shown below */}
+            <span className="font-mono text-sm tabular-nums text-text-muted">{pagination?.total ?? 0}</span>
           </h2>
           <Link
             to="/dashboard/gallery"

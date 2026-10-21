@@ -49,14 +49,17 @@ export default function BillingSection() {
                 <div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <h3 className="text-lg font-medium tracking-[-0.015em] text-text-primary">{planName}</h3>
-                        <span
-                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.06em] ${
-                                isPastDue ? "border-warning/30 text-warning" : "border-success/30 text-success"
-                            }`}
-                        >
-                            <span aria-hidden="true" className={`size-1.5 rounded-full ${isPastDue ? "bg-warning" : "bg-success"}`} />
-                            {statusText}
-                        </span>
+                        {/* A status only means something for a paid subscription */}
+                        {isSubscribed && (
+                            <span
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.06em] ${
+                                    isPastDue ? "border-warning/30 text-warning" : "border-success/30 text-success"
+                                }`}
+                            >
+                                <span aria-hidden="true" className={`size-1.5 rounded-full ${isPastDue ? "bg-warning" : "bg-success"}`} />
+                                {statusText}
+                            </span>
+                        )}
                     </div>
                     <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-secondary">
                         {isPastDue ? (

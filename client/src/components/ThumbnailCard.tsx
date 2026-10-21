@@ -244,7 +244,8 @@ export default function ThumbnailCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={13} />
-                {getShortTimeAgo(thumbnail.createdAt)}
+                {/* The community feed dates a card by when it was shared, elsewhere by when it was made */}
+                {getShortTimeAgo((source === "community" && thumbnail.publishedAt) || thumbnail.createdAt)}
               </span>
             </div>
           )}
