@@ -99,7 +99,7 @@ export default function DashboardGenerate() {
       style: submission.style,
       aspect_ratio: submission.aspectRatio,
       color_scheme: submission.colorScheme,
-      text_overlay: true,
+      text_overlay: submission.textOverlay,
       referenceImage: submission.referenceImage,
     };
     setLastSubmissionPayload(payload);

@@ -13,6 +13,7 @@ import Button from "../Button";
 import PopoverPanel from "../PopoverPanel";
 import AspectRatioPicker from "./AspectRatioPicker";
 import ReferenceImageUpload from "./ReferenceImageUpload";
+import TextOverlayToggle from "./TextOverlayToggle";
 import {
   ASPECT_RATIOS,
   PROMPT_TEMPLATES,
@@ -54,6 +55,7 @@ const PromptCard = ({
     THUMBNAIL_STYLES_COLORS[0].label,
   );
   const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0].value);
+  const [textOverlay, setTextOverlay] = useState(true);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [openPanelId, setOpenPanelId] = useState<string | null>(null);
   // Improving calls a signed-in endpoint, so guests only get the templates.
@@ -108,6 +110,7 @@ const PromptCard = ({
       style,
       aspectRatio,
       colorScheme,
+      textOverlay,
       referenceImage,
     });
   };
@@ -148,6 +151,13 @@ const PromptCard = ({
                 Aspect ratio:{" "}
                 <span className="font-medium text-text-secondary">
                   {aspectRatio}
+                </span>
+              </span>
+              <span className="h-3 w-px bg-border" />
+              <span>
+                Text:{" "}
+                <span className="font-medium text-text-secondary">
+                  {textOverlay ? "On" : "Off"}
                 </span>
               </span>
               {hasReference && (
@@ -328,6 +338,9 @@ const PromptCard = ({
             onOpenChange={trackPanel(FORMAT_PANEL_ID)}
           >
             <AspectRatioPicker value={aspectRatio} onChange={setAspectRatio} />
+            <div className="mt-6">
+              <TextOverlayToggle value={textOverlay} onChange={setTextOverlay} />
+            </div>
           </PopoverPanel>
 
           <PopoverPanel

@@ -24,8 +24,8 @@ const generateThumbnailSchema = z.object({
   style: z.enum(thumbnailStyleValues),
   aspect_ratio: z.enum(aspectRatioValues).optional().default(AspectRatio.Widescreen),
   color_scheme: z.enum(colorSchemeValues).optional().default(ColorScheme.Vibrant),
-  // Multipart fields arrive as strings; stringbool reads "false" as false, unlike coerce.
-  text_overlay: z.stringbool().optional().default(false),
+  // Multipart fields arrive as strings; stringbool reads "false" as false, unlike coerce, and
+  text_overlay: z.stringbool().optional().default(true),
 });
 
 const improvePromptSchema = z.object({

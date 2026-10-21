@@ -39,6 +39,7 @@ export default function GenerationPreviewModal({
     { label: "Style", value: thumbnail.style },
     { label: "Size", value: thumbnail.aspect_ratio || "16:9" },
     { label: "Color", value: thumbnail.color_scheme },
+    { label: "Text", value: thumbnail.text_overlay ? "On" : "Off" },
   ].filter((detail) => detail.value);
 
   return (
