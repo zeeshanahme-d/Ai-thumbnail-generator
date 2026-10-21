@@ -98,7 +98,6 @@ const thumbnailSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // Private until the user shares it to the community gallery.
     published: {
       type: Boolean,
       default: false,
