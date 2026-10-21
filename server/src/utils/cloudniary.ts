@@ -10,18 +10,15 @@ const configureCloudinary = () => {
 };
 
 // Streams an in-memory image to Cloudinary. Resolves to null when the upload fails.
+// Cloudinary picks a random public id; uploaders' filenames never end up in the public URL.
 const uploadFileOnCloudniary = (
   buffer: Buffer,
   folder = "thumbnails",
-  fileName?: string,
 ): Promise<UploadApiResponse | null> => {
   configureCloudinary();
 
   const options: UploadApiOptions = {
     folder,
-    filename_override: fileName,
-    use_filename: Boolean(fileName),
-    unique_filename: true,
     overwrite: false,
     resource_type: "image",
   };
