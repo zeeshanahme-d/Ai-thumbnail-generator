@@ -28,6 +28,8 @@ import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/
 import { getViewerKey } from "../utils/viewer.js";
 import logger from "../utils/logger.js";
 
+// Left out of public responses: how the creator paid for a generation and which model made it.
+const PUBLIC_THUMBNAIL_PROJECTION = "-packCreditsUsed -model";
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
   const likes = await likeDislikeModel
@@ -372,6 +374,7 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
   const [rawThumbnails, total, likedSet] = await Promise.all([
     thumbnailModel
       .find(query)
+      .select(PUBLIC_THUMBNAIL_PROJECTION)
       .sort(sortQuery)
       .populate("userId", "fullName username avatar")
       .lean()
@@ -401,6 +404,7 @@ const getThumbnailById = async (req: Request, res: Response) => {
 
   const thumbnail = await thumbnailModel
     .findOne({ _id: req.params.id, $or: visibleTo })
+    .select(PUBLIC_THUMBNAIL_PROJECTION)
     .populate("userId", "fullName username avatar")
     .lean();
 
