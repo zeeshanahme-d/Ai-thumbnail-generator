@@ -14,6 +14,8 @@ export interface PublicUserProfile {
 
 export interface PublicProfileResponse {
   user: PublicUserProfile;
+  /** Likes across all of the user's published thumbnails. */
+  likesCount: number;
 }
 
 export interface CheckUsernameResponse {

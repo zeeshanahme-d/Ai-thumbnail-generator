@@ -29,12 +29,12 @@ export default function Profile() {
     Boolean(currentUser?.username) &&
     urlUsername?.toLowerCase() === currentUser?.username?.toLowerCase();
 
-  // Query for another user's public profile data
+  // Public profile data. Also loaded for your own profile, for the likes total.
   const {
     data: publicProfileData,
     isPending: isPublicProfileLoading,
     isError: isPublicProfileError,
-  } = usePublicProfile(!isOwnProfile ? urlUsername : undefined);
+  } = usePublicProfile(urlUsername);
 
   const publicUser = publicProfileData?.user;
 
@@ -72,13 +72,10 @@ export default function Profile() {
 
   // Active user data & thumbnails
   const profileUser = isOwnProfile ? currentUser : publicUser;
-  const isProfileLoading = isOwnProfile ? false : isPublicProfileLoading;
+  const isProfileLoading = isPublicProfileLoading;
   const { thumbnails } = list;
   const totalCount = list.total;
-  const likesCount = thumbnails.reduce(
-    (acc, curr) => acc + (curr.likesCount || 0),
-    0
-  );
+  const likesCount = publicProfileData?.likesCount ?? 0;
 
   return (
     <main className="min-h-screen pb-(--section-y)">
