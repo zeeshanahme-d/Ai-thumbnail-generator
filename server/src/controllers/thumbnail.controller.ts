@@ -767,6 +767,11 @@ const publishThumbnailToCommunity = async (req: Request, res: Response) => {
       _id: id,
       userId,
       deletedAt: null,
+      // Only a finished image can go public; unpublishing is always allowed.
+      ...(published && {
+        isGenerating: mongoose.trusted({ $ne: true }),
+        "thumbnail.url": mongoose.trusted({ $nin: [null, ""] }),
+      }),
     },
     // publishedAt keeps the first publish date through unpublishing, so republishing an old
     // thumbnail can't restart its age in the trending score.
