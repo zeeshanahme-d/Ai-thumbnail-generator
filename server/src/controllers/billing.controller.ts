@@ -122,9 +122,11 @@ async function handlePaddleWebhook(req: Request, res: Response) {
   }
 
   const secret = process.env.PADDLE_WEBHOOK_SECRET ?? "";
-  // The destination's ID (ntfset_...) is easy to paste by mistake; every signature then fails.
+  // A missing secret would verify against an empty key, which anyone can sign with. The
+  // destination's ID (ntfset_...) is easy to paste by mistake too. 500 makes Paddle retry later.
   if (!secret.startsWith("pdl_ntfset_")) {
     logger.error("PADDLE_WEBHOOK_SECRET must be the destination's secret key (pdl_ntfset_...), not its ID");
+    return ApiResponse.error(res, 500, "Webhook processing failed.");
   }
 
   try {
