@@ -264,6 +264,8 @@ Check these before writing anything new:
   `children` for extra content such as a password input.
 - **`PageLoader.tsx`** — centered spinner. `fullScreen` for loads before any layout shows.
   Used by `SessionProvider` and as the `Suspense` fallback for lazy pages.
+- **`ListError.tsx`** — "Couldn't load" message with Try again, for a list whose first load
+  failed (`loadFailed` / `refetch` from `useInfiniteThumbnails`).
 - **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**.
@@ -291,7 +293,7 @@ which `useGenerateThumbnail` merges into the session with `updateUser`;
 server/
 ├─ server.ts                 # dotenv + connect mongo + startScheduledJobs() + app.listen(PORT)
 └─ src/
-   ├─ app.ts                 # express app; cors({ origin: CLIENT_URL, credentials: true })
+   ├─ app.ts                 # express app; cors with a fixed origin list (see Known bugs)
    ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts
    ├─ constants/             # enums.ts (all enums), constants.ts (style prompts, credit costs, sort)
    ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
@@ -354,7 +356,8 @@ you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it
   count as version 0.
 - **Rate limits** live in `middlewares/rate-limit.middleware.ts` (in-memory store, per IP,
   per email, or per user) and are mounted per route before `validate`. Behind a proxy,
-  `TRUST_PROXY` must be set or every client shares one IP.
+  `TRUST_PROXY` must be set or every client shares one IP. Public reads (`/auth/refresh`,
+  `/auth/verify`, community, thumbnail detail, profiles) share `publicIpLimiter`.
 - **Emailed codes** (reset and verification) go through `issueOtp` / `consumeOtp` in
   `auth.controller.ts`: hashed, 10-minute expiry, and 5 attempts counted atomically.
 - Token cookies must be strings: cookie-parser turns `j:{...}` cookies into objects.
@@ -378,7 +381,8 @@ you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it
 ### Thumbnail endpoints (`/thumbnail`)
 
 **Public** (via `thumbnail-public.routes.ts`, mounted first). `optionalAuthentication` lets guests
-through but checks anyone with a session cookie, so signed-in users get `isLiked`:
+through but checks anyone with a session cookie, so signed-in users get `isLiked`. Community and
+detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 - `GET /thumbnail/community` — paginated community thumbnails. Search is a case-insensitive
   substring regex (a text index only matches whole words, which breaks search-as-you-type);
   `trending` sorts by `trendingScore`
@@ -411,8 +415,10 @@ through but checks anyone with a session cookie, so signed-in users get `isLiked
 
 ### User endpoints
 
-- `GET /users/check-username/:username` — username availability (behind auth)
-- `GET /users/:username/profile` — public profile
+- `GET /users/check-username/:username` — username availability (behind auth; the caller's
+  own username counts as available)
+- `GET /users/:username/profile` — public profile, plus `likesCount` across the user's
+  published thumbnails
 - `PATCH /users/profile` — update profile (fullName, username, bio, website)
 - `DELETE /users/account` — delete account; body must include the current `password`.
   The user's likes are taken off other thumbnails' counts, and likes on their thumbnails
@@ -506,7 +512,8 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   generate).
 
 Env: `PORT`, `SECRET`, `REFRESH_SECRET` (required, must differ from `SECRET`), `CLIENT_URL`,
-`CLIENT_ID`, `GEMINI_API_KEY`, `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
+`NODE_ENV` (`production` turns on Secure cookies and hides 5xx details), `GEMINI_API_KEY`,
+`CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `CLOUDINARY_NAME`, `SMTP_HOST`, `SMTP_USER`,
 `SMTP_PASSWORD`, `SMTP_TLS_PORT`, `MONGO_DB_URL`, `TRUST_PROXY` (number of reverse proxies,
 unset when clients connect directly), `PADDLE_ENV` (`production` for live, else sandbox),
@@ -548,7 +555,7 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
 
 ### Known bugs
-- `likeDislik.modal.ts` — filename should be `.model.ts`; `unique: true` is set at
-  schema level instead of as a compound index on `{ userId, thumbnailId }`.
+- CORS doesn't read `CLIENT_URL`: `app.ts` allows a fixed list (localhost and a dev tunnel),
+  so the deployed site's origin has to be added before it can call the API.
+- `likeDislik.modal.ts` — filename should be `.model.ts`.
 - `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.
-- `.env.example` is incomplete (missing SMTP, MONGO_URI vars).
