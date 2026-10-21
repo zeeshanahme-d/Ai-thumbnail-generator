@@ -18,7 +18,7 @@ import thumbnailViewModel from "../models/thumbnailView.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode, GenerationErrorCode, UploadErrorCode } from "../constants/enums.js";
 import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
-import uploadFileOnCloudniary from "../utils/cloudniary.js";
+import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
 import { formatPaginatedResponse } from "../utils/pagination.js";
 import userModel from "../models/user.model.js";
@@ -50,6 +50,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
   let thumbnailId: string | null = null;
   let creditsReserved = false;
   let packCreditsUsed = 0;
+  let uploadedPublicId: string | null = null;
   let succeeded = false;
 
   try {
@@ -255,6 +256,7 @@ QUALITY REQUIREMENTS
     if (!finalResult) {
       return ApiResponse.error(res, 502, "Failed to upload generated image. Please try again.", UploadErrorCode.UploadFailed,);
     }
+    uploadedPublicId = finalResult.public_id;
 
     thumbnail.thumbnail = {
       url: finalResult.secure_url,
@@ -282,6 +284,10 @@ QUALITY REQUIREMENTS
         await refundCredits(userId, CREDIT_COST.GENERATE_COST, packCreditsUsed).catch((error) => {
           logger.error("Failed to refund generation credits", { userId, credits: CREDIT_COST.GENERATE_COST, error });
         });
+        // Uploaded before the save failed: with its record gone, nothing points at the image.
+        if (uploadedPublicId) {
+          await deleteFileFromCloudinary(uploadedPublicId);
+        }
       }
     }
   }
