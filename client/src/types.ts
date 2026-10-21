@@ -74,6 +74,7 @@ export interface PromptSubmission {
   style: string;
   aspectRatio: string;
   colorScheme: string;
+  textOverlay: boolean;
   referenceImage: File | null;
 }
 
