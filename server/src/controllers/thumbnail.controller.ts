@@ -715,41 +715,34 @@ const likeDislikeThumbnail = async (req: Request, res: Response) => {
     return ApiResponse.error(res, 404, "Thumbnail not found.");
   }
 
-  const existingLike = await likeDislikeModel.findOne({
-    userId,
-    thumbnailId: thumbnailId,
-  });
+  const existingLike = await likeDislikeModel.exists({ userId, thumbnailId });
 
+  // Only the request that actually removes or adds the like record changes the count, so
+  // parallel clicks can't move it twice.
   if (existingLike) {
-    await existingLike.deleteOne();
-
-    await thumbnailModel.findOneAndUpdate(
-      {
-        _id: thumbnailId,
-        likesCount: mongoose.trusted({ $gt: 0 }),
-      },
-      {
-        $inc: {
-          likesCount: -1,
-        },
-      }
-    );
+    const { deletedCount } = await likeDislikeModel.deleteOne({ _id: existingLike._id });
+    if (deletedCount === 1) {
+      await thumbnailModel.updateOne(
+        { _id: thumbnailId, likesCount: mongoose.trusted({ $gt: 0 }) },
+        { $inc: { likesCount: -1 } },
+      );
+    }
 
     return ApiResponse.success(res, 200, "Thumbnail unliked successfully.", {
       isLiked: false,
     });
   }
 
-  await likeDislikeModel.create({
-    userId,
-    thumbnailId: thumbnailId,
-  });
-
-  await thumbnailModel.findByIdAndUpdate(thumbnailId, {
-    $inc: {
-      likesCount: 1,
-    },
-  });
+  // An upsert on the unique { userId, thumbnailId } index turns a parallel like into a match
+  // instead of a duplicate-key error.
+  const { upsertedCount } = await likeDislikeModel.updateOne(
+    { userId, thumbnailId },
+    { $setOnInsert: { userId, thumbnailId } },
+    { upsert: true },
+  );
+  if (upsertedCount === 1) {
+    await thumbnailModel.updateOne({ _id: thumbnailId }, { $inc: { likesCount: 1 } });
+  }
 
   return ApiResponse.success(res, 200, "Thumbnail liked successfully.", {
     isLiked: true,
