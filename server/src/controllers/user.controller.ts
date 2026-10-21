@@ -49,22 +49,16 @@ async function handleUpdateUserProfile(req: Request, res: Response) {
 }
 
 async function handleCheckUsername(req: Request, res: Response) {
-  const excludeUserId = req.query.excludeUserId as string | undefined;
-
   const parsed = usernameSchema.safeParse(req.params.username ?? "");
   if (!parsed.success) {
     return ApiResponse.error(res, 400, parsed.error.issues[0]?.message ?? "Invalid username.");
   }
 
-  const username = parsed.data;
-
-  // Check if taken — optionally exclude the requester's own username
-  const query: Record<string, unknown> = { username };
-  if (excludeUserId) {
-    query._id = mongoose.trusted({ $ne: excludeUserId });
-  }
-
-  const existingUser = await userModel.exists(query);
+  // The requester's own username counts as available, so their current one never reads as taken.
+  const existingUser = await userModel.exists({
+    username: parsed.data,
+    _id: mongoose.trusted({ $ne: req.user!.userId }),
+  });
 
   return ApiResponse.success(res, 200, existingUser ? "Username is taken." : "Username is available.", {
     available: !existingUser,
