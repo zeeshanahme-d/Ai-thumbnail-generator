@@ -3,6 +3,18 @@ import type { Model } from "mongoose";
 import { isDisposableEmailDomain } from "disposable-email-domains-js";
 import { RESERVED_USERNAMES, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/constants.js";
 
+const DEV_ORIGINS = ["http://localhost:5173", "http://localhost:5174"];
+
+// The site's origins from CLIENT_URL (comma-separated, the first is the main one). Local dev
+// servers are added outside production. Read on each call, after dotenv has run.
+export function getClientOrigins(): string[] {
+    const origins = (process.env.CLIENT_URL ?? "")
+        .split(",")
+        .map((origin) => origin.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+    return process.env.NODE_ENV === "production" ? origins : [...origins, ...DEV_ORIGINS];
+}
+
 export function generateOtp(length: number = 6): string {
     const min = 10 ** (length - 1);
     const max = 10 ** length - 1;

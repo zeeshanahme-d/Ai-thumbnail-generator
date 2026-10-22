@@ -113,7 +113,7 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
         <PageHeader
           eyebrow="Community"
           title={["See what creators", "are making."]}
-          description="Thumbnails people made with Thumblify and chose to publish. Open any of them to see the prompt behind it."
+          description="Thumbnails people made with Eyecatch AI and chose to publish. Open any of them to see the prompt behind it."
         >
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             <Link to="/dashboard/generate" className={buttonClasses({ rounded: "lg", fullWidth: false })}>
@@ -137,7 +137,7 @@ export default function Community({ variant = "dashboard" }: CommunityProps) {
     <DashboardPage
       eyebrow="Community"
       title="Community gallery"
-      description="Thumbnails people made with Thumblify and chose to publish. Open any of them to see the prompt behind it."
+      description="Thumbnails people made with Eyecatch AI and chose to publish. Open any of them to see the prompt behind it."
       actions={showTotal && <Eyebrow className="tabular-nums">{total} published</Eyebrow>}
     >
       {gallery}

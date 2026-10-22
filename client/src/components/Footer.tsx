@@ -20,7 +20,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-border py-6 text-center text-xs text-text-muted sm:flex-row sm:text-sm">
-          <p>&copy; {new Date().getFullYear()} Thumblify. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Eyecatch AI. All rights reserved.</p>
           <p className="flex items-center gap-1.5">
             Made with <Heart size={14} className="fill-primary text-primary" /> for creators worldwide
           </p>
@@ -29,9 +29,9 @@ export default function Footer() {
 
       <p
         aria-hidden="true"
-        className="pointer-events-none mb-[-0.22em] select-none bg-linear-to-b from-text-primary/10 to-transparent bg-clip-text text-center text-[clamp(4rem,18vw,15rem)] font-bold leading-none tracking-tighter text-transparent"
+        className="pointer-events-none mb-[-0.22em] select-none bg-linear-to-b from-text-primary/10 to-transparent bg-clip-text text-center text-[clamp(3.5rem,14vw,12rem)] font-bold leading-none tracking-tighter text-transparent"
       >
-        Thumblify
+        Eyecatch AI
       </p>
     </footer>
   );
@@ -40,7 +40,7 @@ export default function Footer() {
 function FooterBrand() {
   return (
     <div className="max-w-sm">
-      <Link to="/" aria-label="Thumblify home">
+      <Link to="/" aria-label="Eyecatch AI home">
         <Logo className="h-7 w-auto" />
       </Link>
       <p className="mt-4 text-sm leading-relaxed text-text-secondary">
