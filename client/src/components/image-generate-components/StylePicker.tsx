@@ -1,5 +1,7 @@
-import { CircleCheck, Sparkles } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import Eyebrow from "../Eyebrow";
 import { THUMBNAIL_STYLES } from "../../data/generator";
+import { STYLE_DOTS } from "../../data/community";
 
 interface StylePickerProps {
   value: string;
@@ -21,23 +23,25 @@ export default function StylePicker({ value, onChange }: StylePickerProps) {
               type="button"
               onClick={() => onChange(style.label)}
               aria-pressed={isSelected}
-              className={`rounded-xl cursor-pointer border p-1.5 transition ${
+              className={`cursor-pointer rounded-xl border p-1.5 transition-colors ${
                 isSelected
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-text-muted"
+                  ? "border-text-primary bg-background-surface-2"
+                  : "border-border hover:border-border-strong"
               }`}
             >
-              <span className="relative block h-14 rounded-lg bg-linear-to-b from-slate-200 to-slate-400">
+              {/* Each style's color dot, the same one the community filters use */}
+              <span className="relative flex h-14 items-center justify-center rounded-lg bg-background-surface">
+                <span className={`size-3 rounded-full ${STYLE_DOTS[style.label] ?? "bg-text-muted"}`} />
                 {isSelected && (
                   <CircleCheck
                     size={18}
-                    className="absolute right-1.5 top-1.5 fill-primary text-white"
+                    className="absolute right-1.5 top-1.5 fill-text-primary text-background"
                   />
                 )}
               </span>
               <span
                 className={`mt-2 block truncate text-xs font-medium ${
-                  isSelected ? "text-primary" : "text-text-secondary"
+                  isSelected ? "text-text-primary" : "text-text-secondary"
                 }`}
               >
                 {style.label}
@@ -48,14 +52,9 @@ export default function StylePicker({ value, onChange }: StylePickerProps) {
       </div>
 
       {selectedStyle && (
-        <div className="mt-4 flex gap-3 rounded-xl border border-border bg-background-surface p-4">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Sparkles size={15} />
-          </span>
-          <p className="text-xs leading-relaxed text-text-secondary">
-            <span className="font-semibold text-text-primary">
-              {selectedStyle.label} Presets
-            </span>{" "}
+        <div className="mt-4 rounded-xl border border-border bg-background-surface p-4">
+          <Eyebrow>{selectedStyle.label}</Eyebrow>
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary">
             {selectedStyle.description}
           </p>
         </div>

@@ -9,42 +9,24 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import { motion } from "motion/react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { STYLE_DOTS } from "../data/community";
-import { getThumbnailAuthorName, getThumbnailImageUrl } from "../lib/thumbnail";
+import {
+  getThumbnailAuthorName,
+  getThumbnailCardImageUrl,
+  getThumbnailImageUrl,
+  getShortTimeAgo,
+} from "../lib/thumbnail";
 import type { ThumbnailCardProps } from "../types";
-import type { PreviewSource } from "../pages/thumbnail-preview/_types";
 import Button from "./Button";
-import useLikeThumbnail from "../pages/dashboard/core/hooks/useLikeThumbnail";
-import usePublishThumbnail from "../pages/dashboard/core/hooks/usePublishThumbnail";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import useLikeThumbnail from "../core/thumbnails/hooks/useLikeThumbnail";
+import usePublishThumbnail from "../core/thumbnails/hooks/usePublishThumbnail";
 import { handleDownloadFile } from "../lib/herlper-fuctions";
 import { useSession } from "../store/useSessionStore";
 
-dayjs.extend(relativeTime);
-
-const AVATAR_COLORS = [
-  "bg-red-500",
-  "bg-teal-500",
-  "bg-amber-500",
-  "bg-purple-500",
-  "bg-blue-500",
-];
-
-const avatarColor = (name: string) =>
-  AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
-
-function getTimeAgo(date: string) {
-  if (!date) return "";
-  return dayjs(date).fromNow();
-}
-
 export default function ThumbnailCard({
   thumbnail,
-  index,
   showDelete = false,
   showPublish = false,
   showLike = false,
@@ -54,7 +36,7 @@ export default function ThumbnailCard({
   onPermanentDelete,
   restoring = false,
   source = "community",
-}: ThumbnailCardProps & { source?: PreviewSource }) {
+}: ThumbnailCardProps) {
   const {
     title,
     style,
@@ -69,22 +51,15 @@ export default function ThumbnailCard({
   const dot = (style && STYLE_DOTS[style]) || "bg-gray-400";
 
   const isAuthenticated = useSession((state) => state.isAuthenticated);
-  const navigate = useNavigate();
+  const isLinked = !showRecycleBinActions && !isGenerating;
 
   const { mutate: likeMutate } = useLikeThumbnail();
   const { mutate: publishMutate, isPending: isPublishing } =
     usePublishThumbnail();
 
-  const handleCardClick = () => {
-    if (showRecycleBinActions || thumbnail.isGenerating) return;
-    navigate(`/thumbnail/${thumbnail._id}`, {
-      state: { thumbnail, source },
-    });
-  };
-
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleDownloadFile(imageUrl, thumbnail.thumbnail?.originalName || "");
+    handleDownloadFile(imageUrl, thumbnail.title);
   };
 
   const handleToggleLike = (e: React.MouseEvent) => {
@@ -119,20 +94,8 @@ export default function ThumbnailCard({
   };
 
   return (
-    <motion.div
-      className={`group overflow-hidden rounded-2xl border border-border bg-background-card transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-16px_rgba(0,0,0,0.18)] ${!showRecycleBinActions && !thumbnail.isGenerating ? "cursor-pointer" : ""
-        }`}
-      onClick={handleCardClick}
-      initial={{ y: 40, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{
-        delay: (index % 12) * 0.05,
-        type: "spring",
-        stiffness: 300,
-        damping: 70,
-        mass: 1,
-      }}
+    <div
+      className="group relative overflow-hidden rounded-2xl border border-border bg-background-card shadow-card transition-[transform,border-color] duration-200 hover:-translate-y-1 hover:border-border-strong has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-primary"
     >
       <div className="relative aspect-video overflow-hidden bg-background-surface-2">
         {isGenerating || !imageUrl ? (
@@ -142,7 +105,7 @@ export default function ThumbnailCard({
           </div>
         ) : (
           <img
-            src={imageUrl}
+            src={getThumbnailCardImageUrl(thumbnail)}
             alt={title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -150,20 +113,20 @@ export default function ThumbnailCard({
         )}
 
         {style && !isGenerating && (
-          <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
-            <span className={`size-2 rounded-full ${dot}`} />
-            {style}
+          <span className="absolute left-3 top-3 flex max-w-[calc(100%-9.5rem)] items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+            <span className={`size-2 shrink-0 rounded-full ${dot}`} />
+            <span className="truncate">{style}</span>
           </span>
         )}
 
         {showRecycleBinActions && (
-          <span className="absolute right-3 top-3 rounded-full bg-red-500/80 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+          <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             Deleted
           </span>
         )}
 
         {!isGenerating && imageUrl && !showRecycleBinActions && (
-          <div className="absolute right-3 top-3 flex gap-1">
+          <div className="absolute right-3 top-3 z-10 flex gap-1">
             {/* Download button */}
             <Button
               type="button"
@@ -212,7 +175,7 @@ export default function ThumbnailCard({
                   e.stopPropagation();
                   onDelete?.(thumbnail._id);
                 }}
-                className="bg-black/60 backdrop-blur border-none text-white hover:text-red-400"
+                className="bg-black/60 backdrop-blur border-none text-white hover:text-primary"
                 aria-label="Delete thumbnail"
               >
                 <Trash2 size={15} />
@@ -240,15 +203,25 @@ export default function ThumbnailCard({
       </div>
 
       <div className="p-4">
-        <h3 className="line-clamp-2 text-sm font-medium text-text-primary">
-          {title}
+        <h3 className="line-clamp-2 min-h-10 text-sm/5 font-medium text-text-primary">
+          {/* The link's ::after covers the whole card, so the card is one keyboard-reachable
+              link; the action buttons sit above it with z-10. */}
+          {isLinked ? (
+            <Link
+              to={`/thumbnail/${thumbnail._id}`}
+              state={{ thumbnail, source }}
+              className="outline-none after:absolute after:inset-0"
+            >
+              {title}
+            </Link>
+          ) : (
+            title
+          )}
         </h3>
 
-        <div className="flex justify-between items-center">
-          <div className="mt-3 flex items-center gap-2">
-            <span
-              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white ${avatarColor(authorName)}`}
-            >
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background-surface-2 text-[10px] font-medium text-text-primary">
               {authorName.charAt(0).toUpperCase()}
             </span>
             <span className="truncate text-xs text-text-secondary">
@@ -257,7 +230,7 @@ export default function ThumbnailCard({
           </div>
 
           {!showRecycleBinActions && (
-            <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+            <div className="flex shrink-0 items-center gap-2.5 text-xs text-text-muted">
               <span className="flex items-center gap-1">
                 <Heart
                   size={13}
@@ -271,17 +244,18 @@ export default function ThumbnailCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={13} />
-                {getTimeAgo(thumbnail.createdAt)}
+                {/* The community feed dates a card by when it was shared, elsewhere by when it was made */}
+                {getShortTimeAgo((source === "community" && thumbnail.publishedAt) || thumbnail.createdAt)}
               </span>
             </div>
           )}
         </div>
 
         {showRecycleBinActions && (
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               rounded="lg"
               size="sm"
               onClick={() => onRestore?.(thumbnail._id)}
@@ -300,14 +274,14 @@ export default function ThumbnailCard({
               rounded="lg"
               size="sm"
               onClick={() => onPermanentDelete?.(thumbnail._id)}
-              className="text-red-500 hover:text-red-400 hover:border-red-500/30"
+              className="text-primary! hover:border-primary/40"
             >
               <Trash2 size={14} />
-              Delete Forever
+              Delete
             </Button>
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

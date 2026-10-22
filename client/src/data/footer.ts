@@ -4,34 +4,27 @@ export const footerData: IFooter[] = [
     {
         title: "Product",
         links: [
-            { name: "AI Generator", href: "/generate" },
-            { name: "Recreate", href: "/generate" },
+            { name: "AI Generator", href: "/dashboard/generate" },
+            { name: "Recreate", href: "/dashboard/recreate" },
             { name: "Community", href: "/community" },
-            { name: "Pricing", href: "#pricing" },
+            { name: "Pricing", href: "/pricing" },
         ],
     },
     {
-        title: "Company",
+        title: "Resources",
         links: [
-            { name: "About", href: "#about" },
-            { name: "Blog", href: "#blog" },
-            { name: "Careers", href: "#careers" },
-        ],
-    },
-    {
-        title: "Support",
-        links: [
-            { name: "Docs", href: "#docs" },
-            { name: "FAQ", href: "#faq" },
-            { name: "Contact", href: "#contact" },
+            { name: "FAQ", href: "/#faq" },
+            { name: "YouTube Preview", href: "/youtube-style-preview" },
+            { name: "My Gallery", href: "/dashboard/gallery" },
+            { name: "Settings", href: "/dashboard/settings" },
         ],
     },
     {
         title: "Legal",
         links: [
-            { name: "Privacy Policy", href: "#privacy" },
-            { name: "Terms of Service", href: "#terms" },
-            { name: "Refund Policy", href: "#refund" },
+            { name: "Privacy Policy", href: "/privacy-policy" },
+            { name: "Terms & Conditions", href: "/terms" },
+            { name: "Refund Policy", href: "/refund-policy" },
         ],
     },
 ];

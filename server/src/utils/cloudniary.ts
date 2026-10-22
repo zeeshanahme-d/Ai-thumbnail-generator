@@ -1,5 +1,5 @@
-import { v2 as cloudinary, UploadApiOptions } from "cloudinary";
-import fs from "fs/promises";
+import { v2 as cloudinary, UploadApiOptions, UploadApiResponse } from "cloudinary";
+import logger from "./logger.js";
 
 const configureCloudinary = () => {
   cloudinary.config({
@@ -9,38 +9,30 @@ const configureCloudinary = () => {
   });
 };
 
-export const removeLocalFile = async (localPath: string) => {
-  try {
-    await fs.unlink(localPath);
-  } catch (error) {
-    console.error("Failed to remove temp upload:", error);
-  }
-};
-
-const uploadFileOnCloudniary = async (
-  localPath: string,
+// Streams an in-memory image to Cloudinary. Resolves to null when the upload fails.
+// Cloudinary picks a random public id; uploaders' filenames never end up in the public URL.
+const uploadFileOnCloudniary = (
+  buffer: Buffer,
   folder = "thumbnails",
-) => {
-  if (!localPath) return null;
-
+): Promise<UploadApiResponse | null> => {
   configureCloudinary();
 
   const options: UploadApiOptions = {
     folder,
-    use_filename: true,
-    unique_filename: true,
     overwrite: false,
     resource_type: "image",
   };
 
-  try {
-    return await cloudinary.uploader.upload(localPath, options);
-  } catch (error) {
-    console.error("Cloudinary upload failed:", error);
+  // upload_stream throws synchronously for setup errors such as missing keys, which the
+  // executor turns into a rejection, so every failure reaches the same catch.
+  return new Promise<UploadApiResponse>((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(options, (error, result) => (result ? resolve(result) : reject(error)))
+      .end(buffer);
+  }).catch((error) => {
+    logger.error("Cloudinary upload failed", { error });
     return null;
-  } finally {
-    await removeLocalFile(localPath);
-  }
+  });
 };
 
 export const deleteFileFromCloudinary = async (publicId: string) => {
@@ -49,7 +41,7 @@ export const deleteFileFromCloudinary = async (publicId: string) => {
   try {
     return await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    console.error("Cloudinary delete failed:", error);
+    logger.error("Cloudinary delete failed", { publicId, error });
     return null;
   }
 };

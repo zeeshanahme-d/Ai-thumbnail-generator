@@ -38,26 +38,6 @@ function getFileExtension(fileName: string) {
     return lastDotIndex === -1 ? "" : fileName.slice(lastDotIndex + 1).toLowerCase();
 }
 
-/** Returns a user-facing error message, or null when the URL is usable. */
-export function validateImageUrl(url: string): string | null {
-    const trimmedUrl = url.trim();
-
-    if (!trimmedUrl) return "Enter an image URL first.";
-
-    let parsedUrl: URL;
-    try {
-        parsedUrl = new URL(trimmedUrl);
-    } catch {
-        return "That doesn't look like a valid URL.";
-    }
-
-    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-        return "Image URL must start with http:// or https://";
-    }
-
-    return null;
-}
-
 /** Returns a user-facing error message, or null when the file is acceptable. */
 export function validateImageFile(file: File): string | null {
     const hasAllowedExtension = ACCEPTED_IMAGE_EXTENSIONS.includes(

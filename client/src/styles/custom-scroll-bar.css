@@ -1,0 +1,35 @@
+/* Colors come from variables.css, so they switch with data-theme. */
+
+::-webkit-scrollbar {
+  width: 0.4rem;
+  height: 0.45rem;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  border-radius: 100vh;
+  background: var(--bg-surface-2);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 100vh;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Firefox has no ::-webkit-scrollbar. Chrome would drop the rules above if it saw scrollbar-color. */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-muted) var(--bg-surface-2);
+  }
+}
+
+.custom-spin .ant-spin-dot i {
+  background-color: white;
+}

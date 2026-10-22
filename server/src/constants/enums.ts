@@ -58,11 +58,18 @@ export enum UserPlan {
   Ultra = "ultra",
 }
 
+// Mirrors Paddle's subscription statuses.
 export enum SubscriptionStatus {
   Active = "active",
   Canceled = "canceled",
   PastDue = "past_due",
+  Paused = "paused",
   Trialing = "trialing",
+}
+
+export enum BillingPeriod {
+  Monthly = "monthly",
+  Yearly = "yearly",
 }
 
 // ---------------------------------------------------------------------- auth
@@ -72,9 +79,34 @@ export enum AuthErrorCode {
   TokenMissing = "TOKEN_MISSING",
   TokenExpired = "TOKEN_EXPIRED",
   TokenInvalid = "TOKEN_INVALID",
+  TokenRevoked = "TOKEN_REVOKED",
   RefreshMissing = "REFRESH_MISSING",
   RefreshInvalid = "REFRESH_INVALID",
   RefreshExpired = "REFRESH_EXPIRED",
+  EmailNotVerified = "EMAIL_NOT_VERIFIED",
+  DisposableEmail = "DISPOSABLE_EMAIL",
+}
+
+// ------------------------------------------------------------------ requests
+
+export enum RequestErrorCode {
+  RateLimited = "RATE_LIMITED",
+  ValidationFailed = "VALIDATION_FAILED",
+}
+
+// ---------------------------------------------------------------- generation
+
+export enum GenerationErrorCode {
+  Failed = "GENERATION_FAILED",
+  Blocked = "CONTENT_BLOCKED",
+  Busy = "GENERATION_BUSY",
+  TimedOut = "GENERATION_TIMEOUT",
+}
+
+// ------------------------------------------------------------------ billing
+
+export enum BillingErrorCode {
+  AlreadySubscribed = "ALREADY_SUBSCRIBED",
 }
 
 // ------------------------------------------------------------------ uploads

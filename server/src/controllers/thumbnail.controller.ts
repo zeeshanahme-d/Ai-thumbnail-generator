@@ -1,30 +1,35 @@
 import { Request, Response } from "express";
-import path from "path";
-import fsPromises from "fs/promises";
 import { GenerateContentConfig, HarmBlockThreshold, HarmCategory, } from "@google/genai";
-import genai from "../config/genai.js";
-import { colorSchemeDescriptions, CREDIT_COST, stylePrompts, THUMBNAIL_SORT_OPTIONS, } from "../constants/constants.js";
+import { generateImage, generateText } from "../utils/gemini.js";
+import {
+  colorSchemeDescriptions,
+  CREDIT_COST,
+  GEMINI_IMAGE_MODEL,
+  GEMINI_TEXT_MODEL,
+  GENERATION_FAILURES,
+  PROMPT_IMPROVER_INSTRUCTION,
+  PROMPT_MAX_LENGTH,
+  stylePrompts,
+  THUMBNAIL_SORT_OPTIONS,
+} from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
+import thumbnailViewModel from "../models/thumbnailView.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { UploadErrorCode } from "../constants/enums.js";
-import uploadFileOnCloudniary, { removeLocalFile, deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { AuthErrorCode, GenerationErrorCode, UploadErrorCode } from "../constants/enums.js";
+import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
+import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
 import { formatPaginatedResponse } from "../utils/pagination.js";
-import { verifyAccessToken } from "../helper/token-helpers.js";
 import userModel from "../models/user.model.js";
+import mongoose from "mongoose";
+import { escapeRegex } from "../utils/helpers.js";
+import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/share-page.js";
+import { getViewerKey } from "../utils/viewer.js";
+import logger from "../utils/logger.js";
 
-const resolveUserId = (req: Request): string | undefined => {
-  if (req.user?.userId) return req.user.userId;
-  if (req.user?._id) return req.user._id.toString();
-  const accessToken = req.cookies?.accessToken || req.headers?.authorization?.split(" ")[1];
-  if (!accessToken) return undefined;
-  try {
-    const decoded = verifyAccessToken(accessToken) as { userId?: string; _id?: string };
-    return decoded?.userId ?? decoded?._id;
-  } catch {
-    return undefined;
-  }
-};
+// Left out of public responses: how the creator paid for a generation and which model made it.
+const PUBLIC_THUMBNAIL_PROJECTION = "-packCreditsUsed -model";
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
   const likes = await likeDislikeModel
@@ -41,44 +46,52 @@ const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> =>
  * Generate a new thumbnail using Gemini AI model.
  */
 const generateGminiThumbnail = async (req: Request, res: Response) => {
+  const userId = req.user!.userId as string;
   let thumbnailId: string | null = null;
-  let referenceImagePath: string | null = null;
-  let outputFilePath: string | null = null;
+  let creditsReserved = false;
+  let packCreditsUsed = 0;
+  let uploadedPublicId: string | null = null;
+  let succeeded = false;
 
   try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Authentication required. Please log in to generate thumbnails.");
-    }
-
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return ApiResponse.error(res, 404, "User account not found.");
-    }
-
-    const currentCreditsUsed = user.creditsUsed ?? 0;
-    const totalCredits = user.totalcredits ?? 20;
-
-    if (currentCreditsUsed + CREDIT_COST.GENERATE_COST > totalCredits) {
-      return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${Math.max(0, totalCredits - currentCreditsUsed)} credits.`, "INSUFFICIENT_CREDITS");
-    }
-
     const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay } = req.validated!.body;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       return ApiResponse.error(res, 400, "Please provide a thumbnail title.");
     }
 
+    // A refill that fell due since the last scheduled run applies before the balance is checked.
+    await resetDueCredits(userId);
+
+    // Take the credits before calling Gemini. The finally block refunds them if anything fails.
+    const reservation = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
+    creditsReserved = reservation !== null;
+    packCreditsUsed = reservation?.fromPack ?? 0;
+
+    if (!reservation) {
+      const user = await userModel.findById(userId);
+      if (!user) {
+        return ApiResponse.error(res, 404, "User account not found.");
+      }
+
+      // Free credits and their monthly refill need a verified email, including for
+      // accounts created before verification existed.
+      if (!user.isVerified) {
+        return ApiResponse.error(res, 403, `Verify your email to get your ${CREDIT_COST.SIGNUP_BONUS} free credits.`, AuthErrorCode.EmailNotVerified);
+      }
+
+      const available = getRemainingCredits(user);
+      return ApiResponse.error(res, 402, `You don't have enough credits to generate this thumbnail. Required: ${CREDIT_COST.GENERATE_COST} credits, Available: ${available} credits.`, "INSUFFICIENT_CREDITS");
+    }
+
     const referenceImage = req.file;
     let referenceImagePart: { inlineData: { mimeType: string; data: string } } | null = null;
 
     if (referenceImage) {
-      referenceImagePath = referenceImage.path;
-      const referenceImageBuffer = await fsPromises.readFile(referenceImage.path);
       referenceImagePart = {
         inlineData: {
           mimeType: referenceImage.mimetype,
-          data: referenceImageBuffer.toString("base64"),
+          data: referenceImage.buffer.toString("base64"),
         },
       };
     }
@@ -93,10 +106,11 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       text_overlay: Boolean(text_overlay),
       color_scheme: color_scheme || "Vibrant",
       isGenerating: true,
+      packCreditsUsed,
     });
     thumbnailId = thumbnail._id.toString();
 
-    const model = "gemini-3.1-flash-lite-image";
+    const model = GEMINI_IMAGE_MODEL;
     const generateConfig: GenerateContentConfig = {
       maxOutputTokens: 32768,
       temperature: 1,
@@ -131,7 +145,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     const selectedColorDesc = colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions] || color_scheme;
 
     const promptParts: string[] = [
-      `You are an award-winning YouTube thumbnail designer. Your job is to create a thumbnail with an extremely high click-through rate (CTR), similar in quality to thumbnails from top creators like MrBeast, GreatStack, Fireship, Ali Abdaal, and MKBHD. The thumbnail should look professionally designed, modern, clean, and instantly eye-catching.`,
+      `You are an award-winning YouTube thumbnail designer. Your job is to create a thumbnail with an extremely high click-through rate (CTR), at the level of the most-clicked thumbnails on YouTube: one clear focal point, strong contrast, bold shapes and a layout that reads instantly at small sizes. The thumbnail should look professionally designed, modern, clean, and instantly eye-catching.`,
 
       `Video Title: "${title.trim()}"`,
       `Visual Style: ${selectedStylePrompt}.`,
@@ -226,41 +240,23 @@ QUALITY REQUIREMENTS
 
     const contents = referenceImagePart ? [prompt, referenceImagePart] : [prompt];
 
-    const aiResponse = await genai()?.models.generateContent({
+    const result = await generateImage({
       model,
       contents,
       config: generateConfig,
     });
 
-    const parts = aiResponse?.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find((part) => part.inlineData);
-
-    if (!imagePart?.inlineData?.data) {
-      if (thumbnailId) {
-        await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
-        thumbnailId = null;
-      }
-      return ApiResponse.error(res, 502, "AI image generation failed. Please try again in a moment.", "GENERATION_FAILED",);
+    if (!result.ok) {
+      logger.warn("Thumbnail generation failed", { userId, code: result.code });
+      const failure = GENERATION_FAILURES[result.code];
+      return ApiResponse.error(res, failure.status, failure.message, result.code);
     }
 
-    const imageBuffer = Buffer.from(
-      imagePart.inlineData.data as string,
-      "base64",
-    );
-    const fileName = `thumbnail-output-${Date.now()}-${crypto.randomUUID()}.png`;
-    const uploadDir = path.join("public/temp/uploads");
-    await fsPromises.mkdir(uploadDir, { recursive: true });
-    outputFilePath = path.join(uploadDir, fileName);
-    await fsPromises.writeFile(outputFilePath, imageBuffer);
-
-    const finalResult = await uploadFileOnCloudniary(outputFilePath);
+    const finalResult = await uploadFileOnCloudniary(Buffer.from(result.imageBase64, "base64"));
     if (!finalResult) {
-      if (thumbnailId) {
-        await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
-        thumbnailId = null;
-      }
       return ApiResponse.error(res, 502, "Failed to upload generated image. Please try again.", UploadErrorCode.UploadFailed,);
     }
+    uploadedPublicId = finalResult.public_id;
 
     thumbnail.thumbnail = {
       url: finalResult.secure_url,
@@ -270,36 +266,29 @@ QUALITY REQUIREMENTS
       format: finalResult.format,
       bytes: finalResult.bytes,
     };
-    thumbnail.prompt_used = prompt;
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
-    await userModel.findByIdAndUpdate(
-      userId,
-      {
-        $inc: {
-          creditsUsed: CREDIT_COST.GENERATE_COST,
-        },
-      },
-      {
-        new: true,
-      }
-    );
+    succeeded = true;
+    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", { thumbnail, credits: reservation.balance });
 
-    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", thumbnail,);
-
-  } catch (error) {
-    console.error("Thumbnail generation error:", error);
-    if (thumbnailId) {
-      await thumbnailModel.findByIdAndDelete(thumbnailId).catch(() => { });
-    }
-    return ApiResponse.error(res, 500, "An unexpected error occurred while generating your thumbnail. Please try again.");
   } finally {
-    if (referenceImagePath) {
-      await removeLocalFile(referenceImagePath);
-    }
-    if (outputFilePath) {
-      await fsPromises.unlink(outputFilePath).catch(() => { });
+    if (creditsReserved && !succeeded) {
+      // Only the side that deletes the record refunds it. If this delete fails, the
+      // stuck-generation job removes the record later and refunds then.
+      const removed = thumbnailId
+        ? await thumbnailModel.deleteOne({ _id: thumbnailId }).then((r) => r.deletedCount === 1, () => false)
+        : true;
+
+      if (removed) {
+        await refundCredits(userId, CREDIT_COST.GENERATE_COST, packCreditsUsed).catch((error) => {
+          logger.error("Failed to refund generation credits", { userId, credits: CREDIT_COST.GENERATE_COST, error });
+        });
+        // Uploaded before the save failed: with its record gone, nothing points at the image.
+        if (uploadedPublicId) {
+          await deleteFileFromCloudinary(uploadedPublicId);
+        }
+      }
     }
   }
 };
@@ -309,56 +298,52 @@ QUALITY REQUIREMENTS
  * Fetch active thumbnails owned by the currently authenticated user.
  */
 const getMyThumbnails = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
 
-    const { page, limit, search, style, sort } = req.validated!.query;
-    const skip = (page - 1) * limit;
-
-    const query: Record<string, any> = {
-      userId,
-      deletedAt: null,
-    };
-
-    if (style && typeof style === "string") {
-      query.style = style;
-    }
-    if (search && typeof search === "string") {
-      query.title = {
-        $regex: search,
-        $options: "i",
-      };
-    }
-
-    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
-
-    const [rawThumbnails, total, likedSet] = await Promise.all([
-      thumbnailModel
-        .find(query)
-        .sort(sortQuery)
-        .populate("userId", "fullName avatar")
-        .lean()
-        .skip(skip)
-        .limit(limit),
-      thumbnailModel.countDocuments(query),
-      getUserLikedThumbnailIds(userId),
-    ]);
-
-    const thumbnails = rawThumbnails.map((thumbnail) => ({
-      ...thumbnail,
-      isLiked: likedSet.has(thumbnail._id.toString()),
-    }));
-
-    const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
-
-    return ApiResponse.success(res, 200, "User thumbnails fetched.", paginatedData);
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!userId) {
+    return ApiResponse.error(res, 401, "Unauthorized.");
   }
+
+  const { page, limit, search, style, sort } = req.validated!.query;
+  const skip = (page - 1) * limit;
+
+  const query: Record<string, any> = {
+    userId,
+    deletedAt: null,
+  };
+
+  if (style && typeof style === "string") {
+    query.style = style;
+  }
+  if (search && typeof search === "string") {
+    query.title = mongoose.trusted({
+      $regex: escapeRegex(search.trim()),
+      $options: "i",
+    });
+  }
+
+  const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
+  const [rawThumbnails, total, likedSet] = await Promise.all([
+    thumbnailModel
+      .find(query)
+      .sort(sortQuery)
+      .populate("userId", "fullName username avatar")
+      .lean()
+      .skip(skip)
+      .limit(limit),
+    thumbnailModel.countDocuments(query),
+    getUserLikedThumbnailIds(userId),
+  ]);
+
+  const thumbnails = rawThumbnails.map((thumbnail) => ({
+    ...thumbnail,
+    isLiked: likedSet.has(thumbnail._id.toString()),
+  }));
+
+  const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
+
+  return ApiResponse.success(res, 200, "User thumbnails fetched.", paginatedData);
 };
 
 /**
@@ -366,52 +351,147 @@ const getMyThumbnails = async (req: Request, res: Response) => {
  * Fetch all published community thumbnails (available publicly or for logged-in user).
  */
 const getCommunityThumbnails = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    const { page, limit, search, style, sort } = req.validated!.query;
-    const skip = (page - 1) * limit;
+  const userId = req.user?.userId;
+  const { page, limit, search, style, sort, userId: filterUserId } = req.validated!.query;
+  const skip = (page - 1) * limit;
 
-    const query: Record<string, any> = {
-      published: true,
-      deletedAt: null,
-    };
+  const query: Record<string, any> = {
+    published: true,
+    deletedAt: null,
+  };
 
-    if (style && typeof style === "string") {
-      query.style = style;
-    }
-    if (search && typeof search === "string") {
-      query.title = {
-        $regex: search,
-        $options: "i",
-      };
-    }
-
-    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
-
-    const [rawThumbnails, total, likedSet] = await Promise.all([
-      thumbnailModel
-        .find(query)
-        .sort(sortQuery)
-        .populate("userId", "fullName avatar")
-        .lean()
-        .skip(skip)
-        .limit(limit),
-      thumbnailModel.countDocuments(query),
-      userId ? getUserLikedThumbnailIds(userId) : Promise.resolve(new Set<string>()),
-    ]);
-
-    const thumbnails = rawThumbnails.map((thumbnail) => ({
-      ...thumbnail,
-      isLiked: likedSet.has(thumbnail._id.toString()),
-    }));
-
-    const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
-
-    return ApiResponse.success(res, 200, "Community thumbnails fetched.", paginatedData);
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (filterUserId && typeof filterUserId === "string") {
+    query.userId = filterUserId;
   }
+  if (style && typeof style === "string") {
+    query.style = style;
+  }
+  // Substring match so the search box works while typing; a text index only matches whole words.
+  // ponytail: scans every published title; move to Atlas Search autocomplete if the community grows large.
+  if (search && typeof search === "string") {
+    query.title = mongoose.trusted({
+      $regex: escapeRegex(search.trim()),
+      $options: "i",
+    });
+  }
+
+  const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
+  const [rawThumbnails, total, likedSet] = await Promise.all([
+    thumbnailModel
+      .find(query)
+      .select(PUBLIC_THUMBNAIL_PROJECTION)
+      .sort(sortQuery)
+      .populate("userId", "fullName username avatar")
+      .lean()
+      .skip(skip)
+      .limit(limit),
+    thumbnailModel.countDocuments(query),
+    userId ? getUserLikedThumbnailIds(userId) : Promise.resolve(new Set<string>()),
+  ]);
+
+  const thumbnails = rawThumbnails.map((thumbnail) => ({
+    ...thumbnail,
+    isLiked: likedSet.has(thumbnail._id.toString()),
+  }));
+
+  const paginatedData = formatPaginatedResponse(thumbnails, total, page, limit);
+
+  return ApiResponse.success(res, 200, "Community thumbnails fetched.", paginatedData);
+};
+
+/**
+ * GET /thumbnails/:id
+ * One thumbnail for its detail page: published ones for anyone, and any of their own for the owner.
+ */
+const getThumbnailById = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const visibleTo = [{ published: true, deletedAt: null }, ...(userId ? [{ userId }] : [])];
+
+  const thumbnail = await thumbnailModel
+    .findOne({ _id: req.params.id, $or: visibleTo })
+    .select(PUBLIC_THUMBNAIL_PROJECTION)
+    .populate("userId", "fullName username avatar")
+    .lean();
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  const isLiked = userId ? Boolean(await likeDislikeModel.exists({ userId, thumbnailId: thumbnail._id })) : false;
+
+  return ApiResponse.success(res, 200, "Thumbnail fetched.", { ...thumbnail, isLiked });
+};
+
+/**
+ * POST /thumbnails/:id/view
+ * Count a view of a published thumbnail once per viewer, signed in or guest. The owner's own
+ * views are not counted.
+ */
+const recordThumbnailView = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
+  }
+
+  const thumbnail = await thumbnailModel
+    .findOne({ _id: id, published: true, deletedAt: null })
+    .select("userId")
+    .lean();
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  if (thumbnail.userId.toString() === req.user?.userId) {
+    return ApiResponse.success(res, 200, "Views of your own thumbnail are not counted.", { counted: false });
+  }
+
+  // The unique index lets only the viewer's first view insert, even when requests arrive together.
+  const { upsertedCount } = await thumbnailViewModel.updateOne(
+    { thumbnailId: thumbnail._id, viewerKey: getViewerKey(req, res) },
+    {},
+    { upsert: true },
+  );
+
+  const counted = upsertedCount === 1;
+  if (counted) {
+    await thumbnailModel.updateOne({ _id: thumbnail._id }, { $inc: { viewsCount: 1 } });
+  }
+
+  return ApiResponse.success(res, 200, counted ? "View recorded." : "View already counted.", { counted });
+};
+
+/**
+ * GET /thumbnails/:id/share
+ * The link people share: an HTML page with the thumbnail's Open Graph tags for link previews,
+ * which sends visitors on to the app. Unpublished thumbnails go straight to the app.
+ */
+const getThumbnailSharePage = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
+  }
+
+  const pageUrl = getThumbnailPageUrl(String(id));
+  const thumbnail = await thumbnailModel
+    .findOne({ _id: id, published: true, deletedAt: null })
+    .populate<{ userId: { fullName?: string } | null }>("userId", "fullName")
+    .lean();
+
+  if (!thumbnail?.thumbnail?.url) {
+    return res.redirect(pageUrl);
+  }
+
+  const author = thumbnail.userId?.fullName ?? "a Thumblify creator";
+  return res.type("html").send(buildSharePage({
+    title: thumbnail.title,
+    description: `${thumbnail.style} thumbnail by ${author}, made with Thumblify's AI thumbnail generator.`,
+    imageUrl: getShareImageUrl(thumbnail.thumbnail.url),
+    pageUrl,
+  }));
 };
 
 /**
@@ -419,91 +499,80 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
  * Fetch soft-deleted thumbnails owned by the currently authenticated user.
  */
 const getRecycleBinThumbnails = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
 
-    const { page, limit, search, style, sort } = req.validated!.query;
-    const skip = (page - 1) * limit;
+  const { page, limit, search, style, sort } = req.validated!.query;
+  const skip = (page - 1) * limit;
 
-    const query: Record<string, any> = {
-      userId,
-      deletedAt: { $ne: null },
-    };
+  const query: Record<string, any> = {
+    userId,
+    deletedAt: mongoose.trusted({ $ne: null }),
+  };
 
-    if (style && typeof style === "string") {
-      query.style = style;
-    }
-    if (search && typeof search === "string") {
-      query.title = {
-        $regex: search,
-        $options: "i",
-      };
-    }
-
-    const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
-
-    const [rawThumbnails, total] = await Promise.all([
-      thumbnailModel
-        .find(query)
-        .sort(sortQuery)
-        .populate("userId", "fullName avatar")
-        .lean()
-        .skip(skip)
-        .limit(limit),
-      thumbnailModel.countDocuments(query),
-    ]);
-
-    const paginatedData = formatPaginatedResponse(rawThumbnails, total, page, limit);
-
-    return ApiResponse.success(res, 200, "Recycle bin thumbnails fetched.", paginatedData);
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (style && typeof style === "string") {
+    query.style = style;
   }
+  if (search && typeof search === "string") {
+    query.title = mongoose.trusted({
+      $regex: escapeRegex(search.trim()),
+      $options: "i",
+    });
+  }
+
+  const sortQuery = THUMBNAIL_SORT_OPTIONS[String(sort)] ?? THUMBNAIL_SORT_OPTIONS.newest;
+
+  const [rawThumbnails, total] = await Promise.all([
+    thumbnailModel
+      .find(query)
+      .sort(sortQuery)
+      .populate("userId", "fullName username avatar")
+      .lean()
+      .skip(skip)
+      .limit(limit),
+    thumbnailModel.countDocuments(query),
+  ]);
+
+  const paginatedData = formatPaginatedResponse(rawThumbnails, total, page, limit);
+
+  return ApiResponse.success(res, 200, "Recycle bin thumbnails fetched.", paginatedData);
 };
+
 
 /**
  * DELETE /thumbnails/:id
  * Soft delete a thumbnail by setting deletedAt to current timestamp.
+ * It is also unpublished, so restoring it never puts it back in the community feed on its own.
  */
 const softDeleteThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-
-    const thumbnail = await thumbnailModel.findOneAndUpdate(
-      {
-        _id: id,
-        userId,
-        deletedAt: null,
-      },
-      {
-        $set: { deletedAt: new Date() },
-      },
-      { new: true }
-    );
-
-    if (!thumbnail) {
-      return ApiResponse.error(res, 404, "Thumbnail not found.");
-    }
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail moved to recycle bin.",
-      thumbnail,
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+
+  const thumbnail = await thumbnailModel.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+      deletedAt: null,
+    },
+    {
+      $set: { deletedAt: new Date(), published: false },
+    },
+    { returnDocument: "after" }
+  );
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Thumbnail moved to recycle bin.",
+    thumbnail,
+  );
 };
 
 /**
@@ -511,40 +580,35 @@ const softDeleteThumbnail = async (req: Request, res: Response) => {
  * Restore a soft-deleted thumbnail.
  */
 const restoreThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-
-    const thumbnail = await thumbnailModel.findOneAndUpdate(
-      {
-        _id: id,
-        userId,
-        deletedAt: { $ne: null },
-      },
-      {
-        $set: { deletedAt: null },
-      },
-      { new: true }
-    );
-
-    if (!thumbnail) {
-      return ApiResponse.error(res, 404, "Thumbnail not found in recycle bin.");
-    }
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail restored successfully.",
-      thumbnail,
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+
+  const thumbnail = await thumbnailModel.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+      deletedAt: mongoose.trusted({ $ne: null }),
+    },
+    {
+      $set: { deletedAt: null },
+    },
+    { returnDocument: "after" }
+  );
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found in recycle bin.");
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Thumbnail restored successfully.",
+    thumbnail,
+  );
 };
 
 /**
@@ -552,43 +616,84 @@ const restoreThumbnail = async (req: Request, res: Response) => {
  * Permanently delete a thumbnail asset from Cloudinary and database.
  */
 const permanentDeleteThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-
-    const thumbnail = await thumbnailModel.findOne({
-      _id: id,
-      userId,
-      deletedAt: { $ne: null },
-    });
-
-    if (!thumbnail) {
-      return ApiResponse.error(
-        res,
-        404,
-        "Thumbnail not found in recycle bin.",
-      );
-    }
-
-    if (thumbnail.thumbnail?.publicId) {
-      await deleteFileFromCloudinary(thumbnail.thumbnail.publicId);
-    }
-
-    await thumbnailModel.findByIdAndDelete(id);
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail permanently deleted.",
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+
+  const deletedCount = await deleteThumbnailsForever({
+    _id: id,
+    userId,
+    deletedAt: mongoose.trusted({ $ne: null }),
+  });
+
+  if (!deletedCount) {
+    return ApiResponse.error(
+      res,
+      404,
+      "Thumbnail not found in recycle bin.",
+    );
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    "Thumbnail permanently deleted.",
+  );
+};
+
+/**
+ * DELETE /thumbnails/recycle-bin
+ * Permanently delete everything in the user's recycle bin.
+ */
+const emptyRecycleBin = async (req: Request, res: Response) => {
+  const deletedCount = await deleteThumbnailsForever({
+    userId: req.user!.userId,
+    deletedAt: mongoose.trusted({ $ne: null }),
+  });
+
+  return ApiResponse.success(res, 200, "Recycle bin emptied.", { deletedCount });
+};
+
+/**
+ * PATCH /thumbnails/recycle-bin/restore
+ * Restore everything in the user's recycle bin. Restored thumbnails stay unpublished.
+ */
+const restoreAllThumbnails = async (req: Request, res: Response) => {
+  const { modifiedCount } = await thumbnailModel.updateMany(
+    { userId: req.user!.userId, deletedAt: mongoose.trusted({ $ne: null }) },
+    { $set: { deletedAt: null } },
+  );
+
+  return ApiResponse.success(res, 200, "Thumbnails restored.", { restoredCount: modifiedCount });
+};
+
+/**
+ * POST /thumbnails/improve-prompt
+ * Rewrite the user's idea into a more detailed image prompt. Free, but rate limited.
+ */
+const improvePrompt = async (req: Request, res: Response) => {
+  const { prompt } = req.validated!.body;
+
+  const result = await generateText({
+    model: GEMINI_TEXT_MODEL,
+    contents: prompt,
+    config: { systemInstruction: PROMPT_IMPROVER_INSTRUCTION, temperature: 0.8 },
+  });
+
+  if (!result.ok) {
+    const failure = GENERATION_FAILURES[result.code];
+    const message = result.code === GenerationErrorCode.Blocked
+      ? failure.message
+      : "Couldn't improve your prompt right now. Please try again in a moment.";
+    return ApiResponse.error(res, failure.status, message, result.code);
+  }
+
+  return ApiResponse.success(res, 200, "Prompt improved.", {
+    prompt: result.text.slice(0, PROMPT_MAX_LENGTH),
+  });
 };
 
 /**
@@ -596,51 +701,58 @@ const permanentDeleteThumbnail = async (req: Request, res: Response) => {
  * Toggle like/unlike status for a thumbnail atomically.
  */
 const likeDislikeThumbnail = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
 
-    const id = req.params.id as string;
+  const { id } = req.params;
 
-    const existingLike = await likeDislikeModel.findOne({
-      userId,
-      thumbnailId: id,
-    });
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
+  }
 
-    if (existingLike) {
-      await existingLike.deleteOne();
-      await thumbnailModel.findByIdAndUpdate(id, {
-        $inc: { likesCount: -1 },
-      });
-      return ApiResponse.success(
-        res,
-        200,
-        "Thumbnail unliked successfully.",
-        { isLiked: false }
+  const thumbnailId = new mongoose.Types.ObjectId(id as string);
+
+  const isLikeable = await thumbnailModel.exists({
+    _id: thumbnailId,
+    published: true,
+    deletedAt: null,
+  });
+
+  if (!isLikeable) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  const existingLike = await likeDislikeModel.exists({ userId, thumbnailId });
+
+  // Only the request that actually removes or adds the like record changes the count, so
+  // parallel clicks can't move it twice.
+  if (existingLike) {
+    const { deletedCount } = await likeDislikeModel.deleteOne({ _id: existingLike._id });
+    if (deletedCount === 1) {
+      await thumbnailModel.updateOne(
+        { _id: thumbnailId, likesCount: mongoose.trusted({ $gt: 0 }) },
+        { $inc: { likesCount: -1 } },
       );
     }
 
-    await likeDislikeModel.create({
-      userId,
-      thumbnailId: id,
+    return ApiResponse.success(res, 200, "Thumbnail unliked successfully.", {
+      isLiked: false,
     });
-
-    await thumbnailModel.findByIdAndUpdate(id, {
-      $inc: { likesCount: 1 },
-    });
-
-    return ApiResponse.success(
-      res,
-      200,
-      "Thumbnail liked successfully.",
-      { isLiked: true }
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
   }
+
+  // An upsert on the unique { userId, thumbnailId } index turns a parallel like into a match
+  // instead of a duplicate-key error.
+  const { upsertedCount } = await likeDislikeModel.updateOne(
+    { userId, thumbnailId },
+    { $setOnInsert: { userId, thumbnailId } },
+    { upsert: true },
+  );
+  if (upsertedCount === 1) {
+    await thumbnailModel.updateOne({ _id: thumbnailId }, { $inc: { likesCount: 1 } });
+  }
+
+  return ApiResponse.success(res, 200, "Thumbnail liked successfully.", {
+    isLiked: true,
+  });
 };
 
 /**
@@ -648,58 +760,60 @@ const likeDislikeThumbnail = async (req: Request, res: Response) => {
  * Publish or unpublish a thumbnail to the community feed.
  */
 const publishThumbnailToCommunity = async (req: Request, res: Response) => {
-  try {
-    const userId = resolveUserId(req);
-    if (!userId) {
-      return ApiResponse.error(res, 401, "Unauthorized.");
-    }
+  const userId = req.user!.userId;
+  const { id } = req.params;
 
-    const { id } = req.params;
-    const { published } = req.validated!.body;
-
-    const thumbnail = await thumbnailModel.findOneAndUpdate(
-      {
-        _id: id,
-        userId,
-        deletedAt: null,
-      },
-      {
-        $set: {
-          published,
-          publishedAt: published ? new Date() : null,
-        },
-      },
-      {
-        new: true,
-      }
-    );
-
-    if (!thumbnail) {
-      return ApiResponse.error(res, 404, "Thumbnail not found.");
-    }
-
-    return ApiResponse.success(
-      res,
-      200,
-      published
-        ? "Thumbnail published successfully."
-        : "Thumbnail unpublished successfully.",
-      thumbnail
-    );
-  } catch (error) {
-    console.error(error);
-    return ApiResponse.error(res, 500, "Something went wrong.");
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
   }
+  const { published } = req.validated!.body;
+
+  const thumbnail = await thumbnailModel.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+      deletedAt: null,
+      // Only a finished image can go public; unpublishing is always allowed.
+      ...(published && {
+        isGenerating: mongoose.trusted({ $ne: true }),
+        "thumbnail.url": mongoose.trusted({ $nin: [null, ""] }),
+      }),
+    },
+    // publishedAt keeps the first publish date through unpublishing, so republishing an old
+    // thumbnail can't restart its age in the trending score.
+    [{ $set: { published, publishedAt: published ? { $ifNull: ["$publishedAt", "$$NOW"] } : "$publishedAt" } }],
+    { returnDocument: "after", updatePipeline: true },
+  );
+
+  if (!thumbnail) {
+    return ApiResponse.error(res, 404, "Thumbnail not found.");
+  }
+
+  return ApiResponse.success(
+    res,
+    200,
+    published
+      ? "Thumbnail published successfully."
+      : "Thumbnail unpublished successfully.",
+    thumbnail
+  );
 };
+
 
 export {
   generateGminiThumbnail,
   getMyThumbnails,
   getCommunityThumbnails,
+  getThumbnailById,
+  recordThumbnailView,
+  getThumbnailSharePage,
   getRecycleBinThumbnails,
   softDeleteThumbnail,
   restoreThumbnail,
   permanentDeleteThumbnail,
+  emptyRecycleBin,
+  restoreAllThumbnails,
+  improvePrompt,
   likeDislikeThumbnail,
   publishThumbnailToCommunity,
 };

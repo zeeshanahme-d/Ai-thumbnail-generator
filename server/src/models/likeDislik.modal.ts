@@ -13,6 +13,11 @@ const likeDislikeSchema = new mongoose.Schema({
         required: true
     },
 
-}, { timestamps: true, unique: true });
+}, { timestamps: true });
+
+likeDislikeSchema.index(
+    { userId: 1, thumbnailId: 1 },
+    { unique: true }
+);
 
 export default mongoose.model("LikeDislike", likeDislikeSchema);

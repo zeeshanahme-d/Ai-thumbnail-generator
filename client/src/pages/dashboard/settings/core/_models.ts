@@ -1,6 +1,9 @@
-import type { IUser } from "../../../auth/core/_models";
+import type { ChangePasswordPayload, IUser } from "../../../../types";
+
+export type { ChangePasswordPayload };
 
 export interface UploadAvatarResponse {
+
     user: IUser;
 }
 
@@ -13,4 +16,8 @@ export interface UpdateProfilePayload {
 
 export interface UpdateProfileResponse {
     user: IUser;
+}
+
+export interface DeleteAccountPayload {
+    password: string;
 }

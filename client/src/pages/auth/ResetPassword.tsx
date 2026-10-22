@@ -1,58 +1,119 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
+import { useForm } from "@tanstack/react-form";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
-import BackButton from "./components/BackButton";
+import BackButton from "../../components/BackButton";
 import Input from "../../components/Input";
-import Alert from "../../components/Alert";
+import FieldError from "./components/FieldError";
+import { useResetPassword } from "../../core/auth/hooks";
+import { resetPasswordSchema } from "./core/_schemas";
+import { getApiErrorMessage } from "../../lib/axios";
+import { PASSWORD_MIN_LENGTH } from "../../lib/passwordValidation";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ newPassword: "", confirmPassword: "" });
-  const [error, setError] = useState("");
+  const [email] = useState(() => sessionStorage.getItem("tg_reset_email") || "");
+  const [otp] = useState(() => sessionStorage.getItem("tg_reset_otp") || "");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  const { mutateAsync: resetPasswordMutate, isPending } = useResetPassword();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (form.newPassword !== form.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+  useEffect(() => {
+    if (!email || !otp) {
+      navigate("/forgot-password", { replace: true });
     }
-    navigate("/login");
-  };
+  }, [email, otp, navigate]);
+
+  const form = useForm({
+    defaultValues: { newPassword: "", confirmPassword: "" },
+    validators: { onChange: resetPasswordSchema, onSubmit: resetPasswordSchema },
+    onSubmit: async ({ value }) => {
+      try {
+        const response = await resetPasswordMutate({
+          email,
+          otp,
+          newPassword: value.newPassword,
+        });
+        sessionStorage.removeItem("tg_reset_email");
+        sessionStorage.removeItem("tg_reset_otp");
+        toast.success(response.message || "Password reset successful! Please log in.");
+        navigate("/login", { replace: true });
+      } catch (err) {
+        toast.error(getApiErrorMessage(err));
+      }
+    },
+  });
 
   return (
     <AuthLayout
       title="Reset password"
-      subtitle="Choose a new password for your account"
+      subtitle="Choose a new password for your account."
       topSlot={<BackButton />}
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Input
-          icon={Lock}
-          type="password"
-          name="newPassword"
-          placeholder="New password"
-          required
-          value={form.newPassword}
-          onChange={handleChange}
-        />
-        <Input
-          icon={Lock}
-          type="password"
-          name="confirmPassword"
-          placeholder="Confirm password"
-          required
-          value={form.confirmPassword}
-          onChange={handleChange}
-        />
-        {error && <Alert variant="error">{error}</Alert>}
-        <Button type="submit" variant="primary">Reset password</Button>
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+        className="space-y-6.5"
+      >
+        <form.Field name="newPassword">
+          {(field) => (
+            <div>
+              <Input
+                icon={Lock}
+                type="password"
+                name={field.name}
+                label="New password"
+                placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
+                autoComplete="new-password"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              <FieldError meta={field.state.meta} />
+            </div>
+          )}
+        </form.Field>
+
+        <form.Field name="confirmPassword">
+          {(field) => (
+            <div>
+              <Input
+                icon={Lock}
+                type="password"
+                name={field.name}
+                label="Confirm password"
+                placeholder="Repeat your new password"
+                autoComplete="new-password"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+              <FieldError meta={field.state.meta} />
+            </div>
+          )}
+        </form.Field>
+
+        <div className="pt-2">
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                rounded="lg"
+                disabled={isSubmitting || isPending}
+              >
+                {isSubmitting || isPending ? "Resetting password..." : "Reset password"}
+              </Button>
+            )}
+          </form.Subscribe>
+        </div>
       </form>
     </AuthLayout>
   );

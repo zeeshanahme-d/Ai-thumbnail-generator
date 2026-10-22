@@ -17,7 +17,6 @@ export const SORT_TABS: { label: string; value: CommunitySort }[] = [
     { label: "Trending", value: "trending" },
     { label: "Newest", value: "newest" },
     { label: "Most Liked", value: "most-liked" },
-    { label: "Featured", value: "featured" },
 ];
 
 // Mock data has no likes/views — derive stable numbers from the id so sorting is deterministic.

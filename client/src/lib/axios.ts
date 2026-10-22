@@ -9,16 +9,19 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// Queue requests that 401 while a refresh is already in flight.
+let refreshInFlight: Promise<void> | null = null;
 
-const refreshAccessToken = async () => {
-    const { data } = await axios.post(
-        `${BASE_URL}/auth/refresh`,
-        {},
-        { withCredentials: true },
-    );
-    const { user } = data.data;
-    useSession.getState().setSession(user);
+// Requests that 401 together share one refresh call instead of each starting their own.
+const refreshAccessToken = () => {
+    refreshInFlight ??= axios
+        .post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+        .then(({ data }) => {
+            useSession.getState().setSession(data.data.user);
+        })
+        .finally(() => {
+            refreshInFlight = null;
+        });
+    return refreshInFlight;
 };
 
 api.interceptors.response.use(
@@ -28,8 +31,12 @@ api.interceptors.response.use(
             _retry?: boolean;
         };
         const code = error.response?.data?.error;
-        const isExpired = error.response?.status === 401 && code === "TOKEN_EXPIRED" || code === "TOKEN_MISSING";
-
+        // Sessions were ended elsewhere (password changed or reset): sign out here too.
+        if (error.response?.status === 401 && code === "TOKEN_REVOKED") {
+            useSession.getState().clearSession();
+            return Promise.reject(error);
+        }
+        const isExpired = error.response?.status === 401 && (code === "TOKEN_EXPIRED" || code === "TOKEN_MISSING");
         if (!isExpired || original?._retry) {
             return Promise.reject(error);
         }

@@ -1,15 +1,39 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import app from "./src/app.js";
 import connectMongoose from "./src/db/connection.js";
+import { startScheduledJobs } from "./src/utils/scheduled-jobs.js";
+import logger from "./src/utils/logger.js";
 
-dotenv.config();
+const PORT = Number(process.env.PORT) || 5000;
 
-const PORT = process.env.PORT;
+// Without these, tokens would be signed with an empty or shared key. Names only, never values.
+const REQUIRED_ENV = ["SECRET", "REFRESH_SECRET", "MONGO_DB_URL"];
 
-connectMongoose()
-  .then(() => console.log("Mongoose connected"))
-  .catch((err) => console.log("mongoose Err:", err));
+const startServer = async () => {
+  const missing = REQUIRED_ENV.filter((name) => !process.env[name]);
+  if (missing.length) {
+    logger.error("Missing required environment variables", { missing });
+    process.exit(1);
+  }
+  if (process.env.SECRET === process.env.REFRESH_SECRET) {
+    logger.error("REFRESH_SECRET must be different from SECRET");
+    process.exit(1);
+  }
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+  try {
+    await connectMongoose();
+
+    logger.info("MongoDB connected");
+
+    startScheduledJobs();
+
+    app.listen(PORT, () => {
+      logger.info("Server running", { port: PORT });
+    });
+  } catch (error) {
+    logger.error("Failed to start server", { error });
+    process.exit(1);
+  }
+};
+
+startServer();

@@ -1,9 +1,10 @@
 import { useRef, useState, type ToggleEvent } from "react";
-import { ArrowRight, LogIn, LogOut, MenuIcon, User, XIcon } from "lucide-react";
+import { ArrowRight, LogIn, LogOut, MenuIcon, Settings, User, XIcon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
-import { useLogout } from "../pages/auth/core/hooks";
+import { useLogout } from "../core/auth/hooks";
 import { navlinks } from "../data/navlinks";
+import Button from "./Button";
 
 const MENU_ID = "mobile-nav-menu";
 
@@ -11,6 +12,7 @@ const ITEM_CLASSES =
     "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-text-secondary transition hover:bg-background-surface-2 hover:text-text-primary";
 
 export default function MobileNav() {
+    const user = useSession((state) => state.user);
     const isAuthenticated = useSession((state) => state.isAuthenticated);
     const { mutate: logout } = useLogout();
     const { pathname } = useLocation();
@@ -26,13 +28,16 @@ export default function MobileNav() {
 
     return (
         <>
-            <button
+            <Button
+                type="button"
+                variant="secondary"
+                size="icon"
                 popoverTarget={MENU_ID}
                 aria-label={isOpen ? "Close menu" : "Open menu"}
-                className="flex size-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:bg-background-surface-2 active:scale-90 md:hidden"
+                className="md:hidden!"
             >
                 {isOpen ? <XIcon size={18} /> : <MenuIcon size={18} />}
-            </button>
+            </Button>
 
             {/* Native Popover API — light-dismiss and Esc come for free */}
             <div
@@ -52,7 +57,7 @@ export default function MobileNav() {
                                 to={link.href}
                                 onClick={closeMenu}
                                 className={`rounded-xl px-4 py-3 text-sm font-medium transition ${pathname === link.href
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-background-surface-2 text-text-primary"
                                     : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
                                     }`}
                             >
@@ -63,10 +68,17 @@ export default function MobileNav() {
 
                     <hr className="my-3 border-border" />
 
-                    <Link to="/dashboard/profile" onClick={closeMenu} className={ITEM_CLASSES}>
+                    <Link to={user?.username ? `/profile/${user.username}` : "/profile"} onClick={closeMenu} className={ITEM_CLASSES}>
                         <User size={16} />
                         Profile
                     </Link>
+
+                    {isAuthenticated && (
+                        <Link to="/dashboard/settings" onClick={closeMenu} className={ITEM_CLASSES}>
+                            <Settings size={16} />
+                            Settings
+                        </Link>
+                    )}
 
                     {isAuthenticated ? (
                         <button onClick={handleLogout} className={`w-full ${ITEM_CLASSES}`}>

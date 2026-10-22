@@ -1,27 +1,36 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 //Components
 import Alert from "../../../components/Alert";
 import Button from "../../../components/Button";
+import DashboardPage from "../../../components/DashboardPage";
+import Eyebrow from "../../../components/Eyebrow";
 import PromptCard from "../../../components/image-generate-components/PromptCard";
 import ThumbnailCard from "../../../components/ThumbnailCard";
 import ThumbnailCardSkeleton from "../../../components/ThumbnailCardSkeleton";
 import ConfirmDialog from "../../../components/modals/confirmation-dialog/ConfirmDialog";
+import GenerationSkeleton from "./components/GenerationSkeleton";
+import GenerationResultCard from "./components/GenerationResultCard";
 //Libs
 import { getApiErrorMessage } from "../../../lib/axios";
+import { buttonClasses } from "../../../lib/buttonClasses";
 import { buildThumbnailTitle } from "../../../lib/thumbnail";
+import { clearPendingPrompt, readPendingPrompt } from "../../../lib/pendingPrompt";
+import { GENERATION_CREDIT_COST, getRemainingCredits } from "../../../lib/credits";
 //Types
-import type { PromptSubmission } from "../../../types";
+import type { PromptSubmission, Thumbnail } from "../../../types";
+import type { GenerateThumbnailPayload } from "../../../core/thumbnails/_models";
 //Hooks
-import useGenerateThumbnail from "../core/hooks/use-generate-thumbnail";
-import { useDeleteThumbnail } from "../core/hooks/use-delete-thumbnail";
-import useGetMyThumbnails from "../core/hooks/useGetMyThumbnails";
+import useGenerateThumbnail from "../../../core/thumbnails/hooks/use-generate-thumbnail";
+import { useDeleteThumbnail } from "../../../core/thumbnails/hooks/use-delete-thumbnail";
+import useGetMyThumbnails from "../../../core/thumbnails/hooks/useGetMyThumbnails";
+import { useResendVerification } from "../../../core/auth/hooks";
+import { useSession } from "../../../store/useSessionStore";
 
 export default function DashboardGenerate() {
-  const { data: generations = [], isPending: isLoading } = useGetMyThumbnails({
+  const { data: generations = [], pagination, isPending: isLoading } = useGetMyThumbnails({
     limit: 8,
     page: 1,
     sort: "newest",
@@ -31,30 +40,82 @@ export default function DashboardGenerate() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [homepagePrompt, setHomepagePrompt] = useState(readPendingPrompt);
+  useEffect(() => {
+    clearPendingPrompt();
+  }, []);
 
-  const handleSubmit = async (submission: PromptSubmission) => {
+  const [lastGeneratedThumbnail, setLastGeneratedThumbnail] =
+    useState<Thumbnail | null>(null);
+  const [lastSubmissionPayload, setLastSubmissionPayload] =
+    useState<GenerateThumbnailPayload | null>(null);
+
+  const navigate = useNavigate();
+  const user = useSession((state) => state.user);
+  const { mutate: sendVerificationCode, isPending: isSendingCode } =
+    useResendVerification();
+  // New accounts start with no credits until the email is verified.
+  // Free credits and their monthly refill need a verified email, also for older accounts.
+  const needsVerification = Boolean(user && !user.isVerified);
+  const remainingCredits = getRemainingCredits(user);
+  const hasEnoughCredits = remainingCredits >= GENERATION_CREDIT_COST;
+
+  const handleVerifyEmail = () => {
+    if (!user?.email) return;
+    sendVerificationCode(
+      { email: user.email },
+      {
+        onSuccess: () => {
+          sessionStorage.setItem("tg_verify_email", user.email);
+          navigate("/verify-email");
+        },
+        onError: (err) => {
+          toast.error(getApiErrorMessage(err, "Couldn't send the code. Try again shortly."));
+        },
+      },
+    );
+  };
+
+  const executeGeneration = (payload: GenerateThumbnailPayload) => {
     setError(null);
     setSuccess(null);
 
-    console.log("Submitting prompt:", submission);
-
-    const payload = {
-      title: buildThumbnailTitle(submission.prompt),
-      prompt: submission.prompt,
-      style: submission.style,
-      aspect_ratio: submission.aspectRatio,
-      color_scheme: submission.colorScheme,
-      text_overlay: true,
-      referenceImage: submission.referenceImage,
-    };
     generateThumbnailMutate(payload, {
-      onSuccess: () => {
+      onSuccess: ({ thumbnail }) => {
         setSuccess("Your thumbnail was generated successfully.");
+        setLastGeneratedThumbnail(thumbnail);
       },
       onError: (err) => {
         setError(getApiErrorMessage(err, "Failed to generate thumbnail."));
       },
     });
+  };
+
+  const handleSubmit = async (submission: PromptSubmission) => {
+    setHomepagePrompt("");
+    const payload: GenerateThumbnailPayload = {
+      title: buildThumbnailTitle(submission.prompt),
+      prompt: submission.prompt,
+      style: submission.style,
+      aspect_ratio: submission.aspectRatio,
+      color_scheme: submission.colorScheme,
+      text_overlay: submission.textOverlay,
+      referenceImage: submission.referenceImage,
+    };
+    setLastSubmissionPayload(payload);
+    executeGeneration(payload);
+  };
+
+  const handleRegenerate = () => {
+    if (lastSubmissionPayload) {
+      executeGeneration(lastSubmissionPayload);
+    }
+  };
+
+  const handleNewPrompt = () => {
+    setLastGeneratedThumbnail(null);
+    setError(null);
+    setSuccess(null);
   };
 
   const handleDeleteConfirm = () => {
@@ -63,6 +124,9 @@ export default function DashboardGenerate() {
     deleteMutation.mutate(deleteTarget, {
       onSuccess: () => {
         toast.success("Thumbnail moved to recycle bin.");
+        if (lastGeneratedThumbnail?._id === deleteTarget) {
+          setLastGeneratedThumbnail(null);
+        }
         setDeleteTarget(null);
       },
       onError: (err) => {
@@ -73,71 +137,88 @@ export default function DashboardGenerate() {
   };
 
   return (
-    <div className="px-6 py-10">
-      <motion.div
-        className="mx-auto max-w-3xl text-center"
-        initial={{ y: 24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 70, mass: 1 }}
-      >
-        <span className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-text-on-primary">
-          <Sparkles size={12} />
-          Powered by top-tier AI.
-        </span>
-        <h1 className="mt-5 text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.03em] text-text-primary">
-          AI <span className="text-primary">Thumbnail</span> Generator
-        </h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Describe your vision, pick a style, and let the AI do the rest.
-        </p>
-      </motion.div>
-
-      <div className="mx-auto mt-10 max-w-5xl space-y-4">
+    <DashboardPage
+      eyebrow="Generate"
+      title="Make a thumbnail"
+      description={`Describe the video, then set the style, size and colors. Each thumbnail costs ${GENERATION_CREDIT_COST} credits.`}
+      actions={<Eyebrow className="tabular-nums">{remainingCredits} credits left</Eyebrow>}
+    >
+      <div className="max-w-4xl space-y-4">
+        {needsVerification && (
+          <Alert variant="warning">
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              Verify your email to get your free credits, refilled every 30 days.
+              <Button
+                type="button"
+                variant="secondary"
+                size="xs"
+                fullWidth={false}
+                onClick={handleVerifyEmail}
+                disabled={isSendingCode}
+              >
+                {isSendingCode ? "Sending code..." : "Verify email"}
+              </Button>
+            </span>
+          </Alert>
+        )}
+        {!needsVerification && !hasEnoughCredits && (
+          <Alert variant="warning">
+            You don't have enough credits for another thumbnail.
+          </Alert>
+        )}
         {error && <Alert variant="error">{error}</Alert>}
-        {success && <Alert variant="success">{success}</Alert>}
+        {success && !isPending && <Alert variant="success">{success}</Alert>}
 
-        <PromptCard
-          label="Your prompt"
-          disabled={isPending}
-          submitLabel={isPending ? "Generating..." : "Generate Thumbnail"}
-          onSubmit={handleSubmit}
-        />
+        {isPending ? (
+          <GenerationSkeleton />
+        ) : lastGeneratedThumbnail ? (
+          <GenerationResultCard
+            thumbnail={lastGeneratedThumbnail}
+            onRegenerate={handleRegenerate}
+            onNewPrompt={handleNewPrompt}
+            isRegenerating={isPending}
+          />
+        ) : (
+          <PromptCard
+            label="Your prompt"
+            defaultValue={homepagePrompt}
+            disabled={isPending || !hasEnoughCredits}
+            submitLabel="Generate thumbnail"
+            onSubmit={handleSubmit}
+          />
+        )}
       </div>
 
-      <hr className="mx-auto my-12 max-w-6xl border-border" />
-
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-text-primary">
-              Recently Generated Thumbnails
-            </h2>
-            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-text-secondary">
-              {generations.length}
-            </span>
-          </div>
-          <Link to="/dashboard/gallery">
-            <Button variant="secondary" size="sm" fullWidth={false}>
-              View All
-            </Button>
+      <section className="mt-14 border-t border-border pt-10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-baseline gap-2.5 text-xl font-medium tracking-[-0.015em] text-text-primary">
+            Recent thumbnails
+            {/* All of them, not just the latest few shown below */}
+            <span className="font-mono text-sm tabular-nums text-text-muted">{pagination?.total ?? 0}</span>
+          </h2>
+          <Link
+            to="/dashboard/gallery"
+            className={buttonClasses({ variant: "secondary", size: "sm", fullWidth: false })}
+          >
+            View all
+            <ArrowRight size={14} />
           </Link>
         </div>
 
         {isLoading ? (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            <ThumbnailCardSkeleton count={6} />
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+            <ThumbnailCardSkeleton count={8} />
           </div>
         ) : generations.length === 0 ? (
           <p className="mt-6 text-sm text-text-muted">
             No thumbnails yet. Generate your first one above.
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {generations?.map((thumbnail, index) => (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+            {generations?.map((thumbnail) => (
               <ThumbnailCard
                 key={thumbnail._id}
                 thumbnail={thumbnail}
-                index={index}
                 showDelete
                 source="generate"
                 onDelete={(id) => setDeleteTarget(id)}
@@ -146,18 +227,18 @@ export default function DashboardGenerate() {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Thumbnail?"
+        title="Delete this thumbnail?"
         description="This thumbnail will be moved to the recycle bin. You can restore it later."
-        confirmLabel="Move to Bin"
+        confirmLabel="Move to bin"
         variant="danger"
         loading={deleteMutation.isPending}
       />
-    </div>
+    </DashboardPage>
   );
 }

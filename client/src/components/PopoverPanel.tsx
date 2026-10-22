@@ -1,5 +1,6 @@
 import { useRef, type ReactNode, type ToggleEvent } from "react";
 import Button from "./Button";
+import Eyebrow from "./Eyebrow";
 
 interface PopoverPanelProps {
   id: string;
@@ -26,18 +27,18 @@ export default function PopoverPanel({
       }
       className="prompt-popover"
     >
-      <div className="w-[min(40rem,calc(100vw-2rem))] rounded-2xl border border-border bg-background-card p-5 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.35)]">
+      <div className="w-[min(40rem,calc(100vw-2rem))] rounded-2xl border border-border bg-background-card p-5 shadow-card">
         <div className="flex items-center justify-between gap-4 border-b border-border pb-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-            {title}
+          <h3>
+            <Eyebrow>{title}</Eyebrow>
           </h3>
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="xs"
+            rounded="lg"
             fullWidth={false}
             onClick={() => panelRef.current?.hidePopover()}
-            className="uppercase tracking-wide"
           >
             Done
           </Button>

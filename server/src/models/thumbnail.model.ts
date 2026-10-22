@@ -22,19 +22,16 @@ const thumbnailSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    isLiked: {
-      type: Boolean,
-      default: false,
+    // Recomputed for published thumbnails by the scheduled jobs.
+    trendingScore: {
+      type: Number,
+      default: 0,
     },
     title: {
       type: String,
       required: true,
       trim: true,
       maxlength: 200,
-    },
-    description: {
-      type: String,
-      trim: true,
     },
 
     model: {
@@ -81,13 +78,18 @@ const thumbnailSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Flipped to false once the image lands in image_url.
+    // Flipped to false once the image lands in `thumbnail`.
     isGenerating: {
       type: Boolean,
       default: true,
     },
 
-    // Private until the user shares it to the community gallery.
+    // Pack credits this generation spent, so a failed one gives them back to the pack.
+    packCreditsUsed: {
+      type: Number,
+      default: 0,
+    },
+
     published: {
       type: Boolean,
       default: false,
@@ -108,8 +110,15 @@ const thumbnailSchema = new mongoose.Schema(
   },
 );
 
-// Community feed (newest published first) and a user's own gallery.
+// Community feed, one per sort (newest and oldest share the first), and a user's own gallery.
 thumbnailSchema.index({ published: 1, createdAt: -1 });
+thumbnailSchema.index({ published: 1, likesCount: -1, createdAt: -1 });
+thumbnailSchema.index({ published: 1, viewsCount: -1, createdAt: -1 });
+thumbnailSchema.index({ published: 1, trendingScore: -1, createdAt: -1 });
 thumbnailSchema.index({ userId: 1, deletedAt: 1, createdAt: -1 });
+// Recycle-bin items across all users, for the 30-day purge.
+thumbnailSchema.index({ deletedAt: 1 });
+// Generations still running, for the stuck-generation cleanup.
+thumbnailSchema.index({ createdAt: 1 }, { partialFilterExpression: { isGenerating: true } });
 
 export default mongoose.model("Thumbnail", thumbnailSchema);

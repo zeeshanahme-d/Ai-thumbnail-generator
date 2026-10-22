@@ -2,7 +2,15 @@ import mongoose from "mongoose";
 
 const refreshTokenSchema = new mongoose.Schema(
   {
-    token: {
+    // SHA-256 of the token (see hashToken); the token itself only lives in the cookie.
+    tokenHash: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    // Shared by every token rotated from the same login, so a reused token revokes them all.
+    family: {
       type: String,
       required: true,
       index: true,
@@ -12,6 +20,13 @@ const refreshTokenSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    // Set when the token is exchanged for a new one. It is kept until it expires so a
+    // replay can be detected.
+    usedAt: {
+      type: Date,
+      default: null,
     },
 
     expiresAt: {

@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type ClipboardEvent,
@@ -6,19 +7,90 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import Button from "../../components/Button";
-import BackButton from "./components/BackButton";
+import BackButton from "../../components/BackButton";
+import {
+  useForgotPassword,
+  useResendVerification,
+  useVerifyEmail,
+  useVerifyOtp,
+} from "../../core/auth/hooks";
+import { getApiErrorMessage } from "../../lib/axios";
+import { useSession } from "../../store/useSessionStore";
+import type { VerifyOtpMode, VerifyOtpProps } from "../../types";
 
 const LENGTH = 6;
 
-export default function VerifyOtp() {
+const MODES: Record<
+  VerifyOtpMode,
+  { storageKey: string; missingEmailPath: string; title: string; subtitle: (email: string) => string }
+> = {
+  "reset-password": {
+    storageKey: "tg_reset_email",
+    missingEmailPath: "/forgot-password",
+    title: "Enter your code",
+    subtitle: (email) =>
+      email ? `Enter the 6-digit code sent to ${email}` : "Enter the 6-digit code we sent to your email",
+  },
+  "verify-email": {
+    storageKey: "tg_verify_email",
+    missingEmailPath: "/login",
+    title: "Verify your email",
+    subtitle: (email) => `Enter the 6-digit code sent to ${email} to unlock your free credits.`,
+  },
+};
+
+export default function VerifyOtp({ mode = "reset-password" }: VerifyOtpProps) {
+  const config = MODES[mode];
+  const isResetMode = mode === "reset-password";
   const navigate = useNavigate();
+  const isAuthenticated = useSession((state) => state.isAuthenticated);
+  const sessionEmail = useSession((state) => state.user?.email);
+  const [email] = useState(
+    () => sessionStorage.getItem(config.storageKey) || (isResetMode ? "" : sessionEmail) || "",
+  );
   const [otp, setOtp] = useState<string[]>(new Array(LENGTH).fill(""));
+  const [timer, setTimer] = useState(60);
+
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const { mutateAsync: forgotPasswordMutate, isPending: isResendingReset } = useForgotPassword();
+  const { mutateAsync: resendVerificationMutate, isPending: isResendingVerification } =
+    useResendVerification();
+  const { mutateAsync: verifyOtpMutate, isPending: isVerifyingReset } = useVerifyOtp();
+  const { mutateAsync: verifyEmailMutate, isPending: isVerifyingEmail } = useVerifyEmail();
+
+  const isResending = isResetMode ? isResendingReset : isResendingVerification;
+  const isVerifying = isResetMode ? isVerifyingReset : isVerifyingEmail;
+
+  useEffect(() => {
+    if (!email) {
+      navigate(config.missingEmailPath, { replace: true });
+    }
+  }, [email, navigate, config.missingEmailPath]);
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  // Fills the boxes from the first one, for a pasted or autofilled code.
+  const fillCode = (digits: string) => {
+    const chars = digits.split("");
+    const next = [...otp];
+    chars.forEach((char, i) => (next[i] = char));
+    setOtp(next);
+    inputRefs.current[Math.min(chars.length - 1, LENGTH - 1)]?.focus();
+  };
 
   const handleChange = (index: number, value: string) => {
-    if (Number.isNaN(Number(value))) return;
+    if (!/^\d*$/.test(value)) return;
+    // The first box accepts the whole code, which is how one-time-code autofill delivers it.
+    if (value.length === LENGTH) return fillCode(value);
     const next = [...otp];
     next[index] = value.slice(-1);
     setOtp(next);
@@ -33,23 +105,56 @@ export default function VerifyOtp() {
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const chars = e.clipboardData.getData("text").slice(0, LENGTH).split("");
-    if (!chars.every((char) => !Number.isNaN(Number(char)))) return;
-    const next = [...otp];
-    chars.forEach((char, i) => (next[i] = char));
-    setOtp(next);
-    inputRefs.current[Math.min(chars.length - 1, LENGTH - 1)]?.focus();
+    const digits = e.clipboardData.getData("text").replace(/\s/g, "").slice(0, LENGTH);
+    if (!/^\d+$/.test(digits)) return;
+    fillCode(digits);
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleResendOtp = async () => {
+    if (!email || timer > 0 || isResending) return;
+    try {
+      if (isResetMode) {
+        await forgotPasswordMutate({ email });
+      } else {
+        await resendVerificationMutate({ email });
+      }
+      toast.success("A new 6-digit code has been sent to your email.");
+      setTimer(60);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to resend code."));
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    navigate("/reset-password");
+    const otpCode = otp.join("");
+    if (otpCode.length < LENGTH || !/^\d{6}$/.test(otpCode)) {
+      toast.error("Please enter a valid 6-digit verification code.");
+      return;
+    }
+
+    try {
+      if (isResetMode) {
+        await verifyOtpMutate({ email, otp: otpCode });
+        sessionStorage.setItem("tg_reset_otp", otpCode);
+        toast.success("OTP verified successfully.");
+        navigate("/reset-password");
+        return;
+      }
+
+      const response = await verifyEmailMutate({ email, otp: otpCode });
+      sessionStorage.removeItem(config.storageKey);
+      toast.success(response.message || "Email verified.");
+      navigate(isAuthenticated ? "/dashboard/generate" : "/login", { replace: true });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    }
   };
 
   return (
     <AuthLayout
-      title="Verify OTP"
-      subtitle="Enter the 6-digit code we sent to your email"
+      title={config.title}
+      subtitle={config.subtitle(email)}
       topSlot={<BackButton />}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -62,17 +167,42 @@ export default function VerifyOtp() {
               }}
               type="text"
               inputMode="numeric"
-              maxLength={1}
+              autoComplete={index === 0 ? "one-time-code" : "off"}
+              maxLength={index === 0 ? LENGTH : 1}
+              aria-label={`Digit ${index + 1} of ${LENGTH}`}
               required
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={handlePaste}
-              className="h-14 w-11 rounded-lg border border-border bg-background-surface text-center text-lg text-text-primary outline-none transition-colors focus:border-primary sm:w-14"
+              className="h-14 w-11 rounded-lg border border-border bg-background-surface text-center font-mono text-xl tabular-nums text-text-primary outline-none transition-colors focus:border-primary sm:w-14"
             />
           ))}
         </div>
-        <Button type="submit" variant="primary">Verify</Button>
+
+        <Button type="submit" variant="primary" size="lg" rounded="lg" disabled={isVerifying}>
+          {isVerifying ? "Verifying..." : "Verify code"}
+        </Button>
+
+        <div className="text-center pt-2">
+          <p className="text-sm text-text-secondary">
+            Didn't receive the code?{" "}
+            {timer > 0 ? (
+              <span className="text-text-muted">
+                Resend in <span className="font-mono tabular-nums text-text-primary">{timer}s</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isResending}
+                className="cursor-pointer font-medium text-text-primary underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isResending ? "Sending..." : "Resend code"}
+              </button>
+            )}
+          </p>
+        </div>
       </form>
     </AuthLayout>
   );

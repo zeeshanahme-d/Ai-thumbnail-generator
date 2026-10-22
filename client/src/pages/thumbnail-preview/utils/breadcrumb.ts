@@ -1,4 +1,4 @@
-import type { PreviewSource } from "../_types";
+import type { PreviewSource } from "../../../types";
 
 interface BreadcrumbItem {
   label: string;

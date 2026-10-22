@@ -1,54 +1,32 @@
-import Marquee from "react-fast-marquee";
-import { useTheme } from "../store/useTheme";
-import { Sparkles } from "lucide-react";
 import type { ThumbnailScrollerProps } from "../types";
 
-// Lives in client/public/assets, so these are served from the site root.
-const THUMBNAILS = Array.from(
-  { length: 7 },
-  (_, i) => `/assets/thumb_${i + 1}.jpg`,
-);
-
-const ThumbnailScroller = ({
-  images = THUMBNAILS,
-  direction = "left",
-  speed = 25,
-  pauseOnHover = true,
-  className = "",
-}: ThumbnailScrollerProps) => {
-  const { theme } = useTheme();
-  const gradientColor = theme === "dark" ? "#000" : "#fff";
-  return (
-    <Marquee
-      className={className}
-      direction={direction}
-      speed={speed}
-      gradient={true}
-      gradientWidth={300}
-      gradientColor={gradientColor}
-      pauseOnHover={pauseOnHover}
-      autoFill
+// A row of thumbnails sliding sideways forever, in pure CSS (animate-marquee in globals.css).
+// The track holds the list twice and slides by one copy, so the loop has no seam.
+// Hover pauses it; with reduced motion on it stands still.
+const ThumbnailScroller = ({ items, direction = "left", duration = 60, className = "" }: ThumbnailScrollerProps) => (
+  <div className={`marquee-fade overflow-hidden ${className}`}>
+    <div
+      className="flex w-max animate-marquee hover:[animation-play-state:paused] motion-reduce:animate-none"
+      style={{ animationDuration: `${duration}s`, animationDirection: direction === "right" ? "reverse" : "normal" }}
     >
-      {images.map((src, index) => (
-        <div
-          key={`${src}-${index}`}
-          className="group relative mx-2 w-65 md:w-75 shrink-0 overflow-hidden rounded-xl border border-border shadow-[0_2px_16px_-4px_rgba(0,0,0,0.15)]"
-        >
+      {[...items, ...items].map((item, index) => {
+        const isCopy = index >= items.length;
+
+        return (
           <img
-            src={src}
-            alt="AI generated thumbnail"
-            loading="lazy"
+            key={`${item.src}-${index}`}
+            src={item.src}
+            alt={isCopy ? "" : item.alt}
+            aria-hidden={isCopy || undefined}
+            width={item.width}
+            height={item.height}
             decoding="async"
-            className="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+            className="mr-3 h-36 w-auto shrink-0 rounded-xl border border-border object-cover sm:h-44 md:mr-4 lg:h-52"
           />
-          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[0.5rem] text-white backdrop-blur-sm">
-            <Sparkles size={10} className="text-primary" />
-            AI Generated
-          </span>
-        </div>
-      ))}
-    </Marquee>
-  );
-};
+        );
+      })}
+    </div>
+  </div>
+);
 
 export default ThumbnailScroller;

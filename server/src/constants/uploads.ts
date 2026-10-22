@@ -20,5 +20,3 @@ export const ACCEPTED_IMAGE_LABEL = ACCEPTED_IMAGE_EXTENSIONS.map((extension) =>
 export const MAX_IMAGE_SIZE_MB = 5;
 
 export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
-
-export const UPLOAD_TEMP_DIR = "public/temp/uploads";

@@ -6,6 +6,9 @@ import { Search } from "lucide-react";
 import type { CommunityFiltersProps } from "../../../types";
 import { SORT_TABS, STYLE_DOTS, STYLE_FILTERS } from "../../../data/community";
 
+// A selected filter chip is neutral ink; red is kept for each page's main action.
+const SELECTED_CHIP = "border-text-primary! bg-text-primary! text-background!";
+
 export default function CommunityFilters({
   setParams,
   search: externalSearch,
@@ -21,7 +24,7 @@ export default function CommunityFilters({
   const debouncedSetParams = useMemo(() =>
     debounce((value: string) => {
       if (setParams) {
-        setParams((prev) => ({ ...prev, search: value, page: 1 }));
+        setParams((prev) => ({ ...prev, search: value || undefined }));
       }
       if (onSearchChange) {
         onSearchChange(value);
@@ -57,8 +60,10 @@ export default function CommunityFilters({
               onClick={() => onSortChange(tab.value)}
               fullWidth={false}
               variant="secondary"
-              className={`flex items-center gap-2 py-1.5! ${sort === tab.value
-                ? "border-primary! bg-primary! text-text-on-primary!"
+              size="sm"
+              aria-pressed={sort === tab.value}
+              className={`${sort === tab.value
+                ? SELECTED_CHIP
                 : "border-border! text-text-secondary! hover:text-text-primary!"
                 }`}
             >
@@ -68,7 +73,8 @@ export default function CommunityFilters({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      {/* One swipeable row on phones, wrapping chips from sm up */}
+      <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
         {STYLE_FILTERS.map((style) => {
           const isActive = activeStyle === style;
           const dot = STYLE_DOTS[style];
@@ -78,10 +84,12 @@ export default function CommunityFilters({
               type="button"
               fullWidth={false}
               variant="secondary"
+              size="sm"
+              aria-pressed={isActive}
               onClick={() => onStyleChange(style)}
-              className={`flex items-center gap-2 py-1.5! ${isActive
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border text-text-secondary hover:text-text-primary"
+              className={`shrink-0 px-4! ${isActive
+                ? SELECTED_CHIP
+                : "text-text-secondary hover:text-text-primary"
                 }`}
             >
               {dot && <span className={`size-2 rounded-full ${dot}`} />}
