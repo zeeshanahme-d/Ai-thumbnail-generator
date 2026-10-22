@@ -15,13 +15,13 @@ const privacyPolicy: ILegalDocument = {
             id: "overview",
             title: "Overview",
             paragraphs: [
-                "This policy explains how Thumblify (\"we\", \"us\") handles your information when you use our website and AI thumbnail generator. We only collect what we need to run the service, and we never sell your personal information.",
+                "This policy explains how Eyecatch AI (\"we\", \"us\") handles your information when you use our website and AI thumbnail generator. We only collect what we need to run the service, and we never sell your personal information.",
             ],
         },
         {
             id: "information-we-collect",
             title: "Information we collect",
-            paragraphs: ["We collect the following information when you use Thumblify:"],
+            paragraphs: ["We collect the following information when you use Eyecatch AI:"],
             list: [
                 "Account details: your full name, email address, username and password. Passwords are stored as one-way hashes, never as plain text.",
                 "Profile details you choose to add: bio, website and profile photo.",
@@ -55,7 +55,7 @@ const privacyPolicy: ILegalDocument = {
             id: "service-providers",
             title: "Service providers",
             paragraphs: [
-                "We share data only with the providers we need to run Thumblify. We don't use advertising networks or third-party analytics.",
+                "We share data only with the providers we need to run Eyecatch AI. We don't use advertising networks or third-party analytics.",
             ],
             list: [
                 "Google Gemini, which generates thumbnails and improves prompts.",
@@ -114,14 +114,14 @@ const privacyPolicy: ILegalDocument = {
             id: "children",
             title: "Children",
             paragraphs: [
-                "Thumblify is not intended for children under 13, or under the minimum age required in your country. We don't knowingly collect their information.",
+                "Eyecatch AI is not intended for children under 13, or under the minimum age required in your country. We don't knowingly collect their information.",
             ],
         },
         {
             id: "changes",
             title: "Changes to this policy",
             paragraphs: [
-                "We may update this policy as Thumblify changes. The date at the top shows the latest version, and we'll let you know about significant changes.",
+                "We may update this policy as Eyecatch AI changes. The date at the top shows the latest version, and we'll let you know about significant changes.",
             ],
         },
         {
@@ -136,21 +136,21 @@ const termsAndConditions: ILegalDocument = {
     id: "terms",
     title: "Terms & Conditions",
     path: "/terms",
-    summary: "The rules for using Thumblify, your account, credits and the thumbnails you create.",
+    summary: "The rules for using Eyecatch AI, your account, credits and the thumbnails you create.",
     updatedAt: UPDATED_AT,
     sections: [
         {
             id: "acceptance",
             title: "Acceptance of these terms",
             paragraphs: [
-                "By creating an account or using Thumblify, you agree to these Terms & Conditions and our Privacy Policy. If you don't agree, please don't use the service.",
+                "By creating an account or using Eyecatch AI, you agree to these Terms & Conditions and our Privacy Policy. If you don't agree, please don't use the service.",
             ],
         },
         {
             id: "your-account",
             title: "Your account",
             paragraphs: [
-                "You must be at least 13 years old, or the minimum age in your country, to use Thumblify. Give accurate information, verify your email address and keep your password secure. You are responsible for everything that happens under your account.",
+                "You must be at least 13 years old, or the minimum age in your country, to use Eyecatch AI. Give accurate information, verify your email address and keep your password secure. You are responsible for everything that happens under your account.",
             ],
         },
         {
@@ -178,7 +178,7 @@ const termsAndConditions: ILegalDocument = {
         {
             id: "acceptable-use",
             title: "Acceptable use",
-            paragraphs: ["You agree not to use Thumblify to:"],
+            paragraphs: ["You agree not to use Eyecatch AI to:"],
             list: [
                 "Create illegal, hateful, harassing, sexually explicit or violent content.",
                 "Infringe anyone's copyright, trademark or likeness, for example by uploading reference images you have no right to use.",
@@ -214,7 +214,7 @@ const termsAndConditions: ILegalDocument = {
             id: "availability",
             title: "Service availability",
             paragraphs: [
-                "We work to keep Thumblify running smoothly, but the service is provided \"as is\" and may sometimes be unavailable. We may change, pause or remove features at any time.",
+                "We work to keep Eyecatch AI running smoothly, but the service is provided \"as is\" and may sometimes be unavailable. We may change, pause or remove features at any time.",
             ],
         },
         {
@@ -228,14 +228,14 @@ const termsAndConditions: ILegalDocument = {
             id: "liability",
             title: "Limitation of liability",
             paragraphs: [
-                "To the extent the law allows, Thumblify is not liable for indirect or consequential losses, or for losses caused by how you use generated content. Nothing in these terms limits rights you have under consumer protection law.",
+                "To the extent the law allows, Eyecatch AI is not liable for indirect or consequential losses, or for losses caused by how you use generated content. Nothing in these terms limits rights you have under consumer protection law.",
             ],
         },
         {
             id: "changes",
             title: "Changes to these terms",
             paragraphs: [
-                "We may update these terms. The date at the top shows the latest version. If you keep using Thumblify after a change, you accept the updated terms.",
+                "We may update these terms. The date at the top shows the latest version. If you keep using Eyecatch AI after a change, you accept the updated terms.",
             ],
         },
         {
@@ -257,7 +257,7 @@ const refundPolicy: ILegalDocument = {
             id: "overview",
             title: "Overview",
             paragraphs: [
-                `Thumblify runs on credits. Each thumbnail costs ${GENERATION_CREDIT_COST} credits, and we only want you to spend them on thumbnails you actually receive.`,
+                `Eyecatch AI runs on credits. Each thumbnail costs ${GENERATION_CREDIT_COST} credits, and we only want you to spend them on thumbnails you actually receive.`,
             ],
         },
         {

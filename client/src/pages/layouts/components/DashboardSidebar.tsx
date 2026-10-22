@@ -34,7 +34,7 @@ export default function DashboardSidebar({
     >
       <div className={`flex h-16 items-center px-4 ${isCollapsed ? "justify-center" : "justify-between gap-2"}`}>
         {!isCollapsed && (
-          <Link to="/" aria-label="Thumblify home">
+          <Link to="/" aria-label="Eyecatch AI home">
             <Logo className="h-7 w-auto" />
           </Link>
         )}

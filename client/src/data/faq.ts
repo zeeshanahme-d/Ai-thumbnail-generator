@@ -10,12 +10,12 @@ const aspectRatioList = new Intl.ListFormat("en", { type: "conjunction" }).forma
 
 export const generalFaqs: IFaq[] = [
     {
-        question: "What is Thumblify?",
+        question: "What is Eyecatch AI?",
         answer:
-            "Thumblify turns a short description of your video into a ready-to-use thumbnail. Pick a style, aspect ratio and color scheme, optionally add a reference image, and Google's Gemini AI generates it in seconds.",
+            "Eyecatch AI turns a short description of your video into a ready-to-use thumbnail. Pick a style, aspect ratio and color scheme, optionally add a reference image, and Google's Gemini AI generates it in seconds.",
     },
     {
-        question: "Is Thumblify free?",
+        question: "Is Eyecatch AI free?",
         answer: `Yes. Verify your email and you get ${FREE_MONTHLY_CREDITS} free credits, topped back up every 30 days. Each thumbnail costs ${GENERATION_CREDIT_COST} credits and no credit card is needed.`,
     },
     {

@@ -30,7 +30,7 @@ export default function CreditPackCard() {
             <div className="p-6 sm:p-8 lg:p-10">
                 <Eyebrow dot>Pay as you go</Eyebrow>
                 <h2 className="mt-4 text-[clamp(1.75rem,1.4rem+1.5vw,2.5rem)] font-medium leading-tight tracking-[-0.03em] text-text-primary">
-                    Thumblify Credits
+                    Eyecatch AI Credits
                 </h2>
                 <p className="mt-1 text-sm text-text-secondary">Only pay for what you use.</p>
 
