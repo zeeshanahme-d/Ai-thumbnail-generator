@@ -162,6 +162,8 @@ export const RESERVED_USERNAMES = new Set([
   "security",
   "billing",
   "thumblify",
+  "eyecatch",
+  "eyecatchai",
   "api",
   "settings",
   "dashboard",

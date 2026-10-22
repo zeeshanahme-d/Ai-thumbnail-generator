@@ -41,8 +41,8 @@ export async function sendOtpEmail(to: string, otp: string, purpose: "reset-pass
   const isReset = purpose === "reset-password";
   const title = isReset ? "Reset Your Password" : "Verify Your Email";
   const description = isReset
-    ? "You requested a password reset for your Thumblify account. Use the code below to set a new password."
-    : "Welcome to Thumblify! Use the code below to verify your email address.";
+    ? "You requested a password reset for your Eyecatch AI account. Use the code below to set a new password."
+    : "Welcome to Eyecatch AI! Use the code below to verify your email address.";
 
   const html = `
     <div style="font-family:'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#fafafa;border-radius:12px">
@@ -55,9 +55,9 @@ export async function sendOtpEmail(to: string, otp: string, purpose: "reset-pass
         This code expires in <strong>10 minutes</strong>. If you didn't request this, you can safely ignore this email.
       </p>
       <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb" />
-      <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center">Thumblify &mdash; AI Thumbnail Generator</p>
+      <p style="margin:0;font-size:11px;color:#9ca3af;text-align:center">Eyecatch AI &mdash; AI Thumbnail Generator</p>
     </div>
   `;
 
-  return sendEmail({ to, subject: `${title} — Thumblify`, html });
+  return sendEmail({ to, subject: `${title} — Eyecatch AI`, html });
 }

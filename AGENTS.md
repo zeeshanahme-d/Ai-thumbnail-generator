@@ -4,7 +4,7 @@ Guidance for Codex when working in this repository.
 
 ## Project
 
-AI Thumbnail Generator ("Thumblify") — a web app where a user describes a thumbnail,
+AI Thumbnail Generator ("Eyecatch AI") — a web app where a user describes a thumbnail,
 picks a style, aspect ratio, color scheme, and optional reference image, and the app
 generates a YouTube/social thumbnail using **Gemini AI** (`gemini-3.1-flash-lite-image`).
 
@@ -293,7 +293,7 @@ which `useGenerateThumbnail` merges into the session with `updateUser`;
 server/
 ├─ server.ts                 # dotenv + connect mongo + startScheduledJobs() + app.listen(PORT)
 └─ src/
-   ├─ app.ts                 # express app; cors with a fixed origin list (see Known bugs)
+   ├─ app.ts                 # express app; CORS + write-origin check from CLIENT_URL (getClientOrigins)
    ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts
    ├─ constants/             # enums.ts (all enums), constants.ts (style prompts, credit costs, sort)
    ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
@@ -333,7 +333,7 @@ ApiResponse.error(res, 401, "Invalid email or password.", "Unauthorized");
 The 4th `error` argument doubles as a **machine-readable code** the client branches
 on: `TOKEN_EXPIRED`, `TOKEN_INVALID`, `TOKEN_MISSING`, `REFRESH_EXPIRED`,
 `REFRESH_INVALID`, `REFRESH_MISSING`, `TOKEN_REVOKED`, `EMAIL_NOT_VERIFIED`,
-`DISPOSABLE_EMAIL`, `RATE_LIMITED`, `VALIDATION_FAILED`, `INSUFFICIENT_CREDITS`,
+`DISPOSABLE_EMAIL`, `RATE_LIMITED`, `VALIDATION_FAILED`, `ORIGIN_NOT_ALLOWED`, `INSUFFICIENT_CREDITS`,
 `GENERATION_FAILED`, `CONTENT_BLOCKED`, `GENERATION_BUSY`, `GENERATION_TIMEOUT`.
 Validation errors carry the first message at the top level and per-field messages in
 `error.fields`.
@@ -511,16 +511,34 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   at once. Unverified users are told to verify (dashboard alert, `EMAIL_NOT_VERIFIED` on
   generate).
 
-Env: `PORT`, `SECRET`, `REFRESH_SECRET` (required, must differ from `SECRET`), `CLIENT_URL`,
+Env: `PORT`, `SECRET`, `REFRESH_SECRET` (required, must differ from `SECRET`), `CLIENT_URL`
+(the site origin, comma-separated for several, required in production; see Domains),
 `NODE_ENV` (`production` turns on Secure cookies and hides 5xx details), `GEMINI_API_KEY`,
 `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `CLOUDINARY_NAME`, `SMTP_HOST`, `SMTP_USER`,
 `SMTP_PASSWORD`, `SMTP_TLS_PORT`, `MONGO_DB_URL`, `TRUST_PROXY` (number of reverse proxies,
-unset when clients connect directly), `PADDLE_ENV` (`production` for live, else sandbox),
+unset when clients connect directly; production logs a warning when unset), `PADDLE_ENV` (`production` for live, else sandbox),
 `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_{PRO,ULTRA}_{MONTHLY,YEARLY}`.
 Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`), `VITE_SITE_URL` (the
 site's public origin, filled into the Open Graph tags in `index.html`; set it for production),
-`VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_ENV`.
+`VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_ENV`. `client/.env.production` holds the two public
+production URLs; env vars set on the client's host override it.
+
+### Domains
+
+Site `https://eyecatch.zeeshanahmed.dev` (Vercel), API `https://api.eyecatch.zeeshanahmed.dev`
+(one Node process on an Oracle Ampere instance behind a reverse proxy, so `TRUST_PROXY=1`).
+The proxy must allow bodies over 5 MB (reference images, avatars) and wait longer than a
+generation (up to ~3 Gemini attempts of 60 s), e.g. Nginx `client_max_body_size 6m` and
+`proxy_read_timeout 300s`.
+- `getClientOrigins()` (`utils/helpers.ts`) reads `CLIENT_URL`; outside production it adds
+  `localhost:5173`/`5174`. Only those origins pass CORS, and any POST/PUT/PATCH/DELETE carrying
+  another `Origin` is refused with `ORIGIN_NOT_ALLOWED` (CORS alone would still run a
+  cross-site form post). Share links redirect to the first origin.
+- Auth cookies are host-only and `SameSite=Strict`, so the site and the API must stay on one
+  registrable domain (`zeeshanahmed.dev`); two `*.vercel.app` hosts would never get cookies.
+- `client/vercel.json` sends `frame-ancestors none` / `X-Frame-Options`, `nosniff`, a referrer
+  policy and a permissions policy on every page.
 
 ## Current state / gotchas
 
@@ -555,7 +573,7 @@ site's public origin, filled into the Open Graph tags in `index.html`; set it fo
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
 
 ### Known bugs
-- CORS doesn't read `CLIENT_URL`: `app.ts` allows a fixed list (localhost and a dev tunnel),
-  so the deployed site's origin has to be added before it can call the API.
+- Rate-limit counters are in memory: a restart resets them, and running several processes
+  (pm2 cluster mode) would give each its own count; that needs a shared store such as Redis.
 - `likeDislik.modal.ts` — filename should be `.model.ts`.
 - `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.

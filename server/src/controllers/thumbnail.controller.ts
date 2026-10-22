@@ -485,10 +485,10 @@ const getThumbnailSharePage = async (req: Request, res: Response) => {
     return res.redirect(pageUrl);
   }
 
-  const author = thumbnail.userId?.fullName ?? "a Thumblify creator";
+  const author = thumbnail.userId?.fullName ?? "an Eyecatch AI creator";
   return res.type("html").send(buildSharePage({
     title: thumbnail.title,
-    description: `${thumbnail.style} thumbnail by ${author}, made with Thumblify's AI thumbnail generator.`,
+    description: `${thumbnail.style} thumbnail by ${author}, made with Eyecatch AI's AI thumbnail generator.`,
     imageUrl: getShareImageUrl(thumbnail.thumbnail.url),
     pageUrl,
   }));

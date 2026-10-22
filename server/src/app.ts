@@ -1,4 +1,4 @@
-import express, { NextFunction } from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
@@ -11,6 +11,9 @@ import thumbnailPublicRouter from "./routes/thumbnail-public.routes.js";
 import billingRouter from "./routes/billing.routes.js";
 import { handlePaddleWebhook } from "./controllers/billing.controller.js";
 import errorHandler from "./middlewares/error.middleware.js";
+import { ApiResponse } from "./utils/apiResponse.js";
+import { getClientOrigins } from "./utils/helpers.js";
+import { RequestErrorCode } from "./constants/enums.js";
 
 const app = express();
 
@@ -30,12 +33,25 @@ app.post("/billing/webhook", express.text({ type: "application/json", limit: "1m
 app.use(express.json({
   limit: "2mb",
 }));
+const isAllowedOrigin = (origin: string) => getClientOrigins().includes(origin);
+
 app.use(
   cors({
-    origin: [ "http://localhost:5173" , "http://localhost:5174" ,'https://th49h67r-5174.inc1.devtunnels.ms' ],
+    origin: (origin, callback) => callback(null, !origin || isAllowedOrigin(origin)),
     credentials: true,
   }),
 );
+
+// CORS only hides the response; a form posted from another site still runs. Browsers send
+// Origin on such writes, so refuse any write that comes from a site not in CLIENT_URL.
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.get("origin");
+  if (origin && !SAFE_METHODS.has(req.method) && !isAllowedOrigin(origin)) {
+    return ApiResponse.error(res, 403, "This origin is not allowed.", RequestErrorCode.OriginNotAllowed);
+  }
+  next();
+});
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
