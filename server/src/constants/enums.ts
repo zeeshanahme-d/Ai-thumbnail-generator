@@ -92,6 +92,7 @@ export enum AuthErrorCode {
 export enum RequestErrorCode {
   RateLimited = "RATE_LIMITED",
   ValidationFailed = "VALIDATION_FAILED",
+  OriginNotAllowed = "ORIGIN_NOT_ALLOWED",
 }
 
 // ---------------------------------------------------------------- generation
