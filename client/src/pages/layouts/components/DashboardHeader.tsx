@@ -22,7 +22,7 @@ export default function DashboardHeader({ setIsMobileOpen }: DashboardHeaderProp
         >
           <Menu size={18} />
         </Button>
-        <Link to="/" aria-label="Thumblify home">
+        <Link to="/" aria-label="Eyecatch AI home">
           <Logo className="h-6 w-auto" />
         </Link>
       </div>

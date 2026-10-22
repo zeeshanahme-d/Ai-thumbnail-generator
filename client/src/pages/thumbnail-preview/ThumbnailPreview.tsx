@@ -169,7 +169,7 @@ export default function ThumbnailPreview() {
             <section className="mt-12 border-t border-border pt-8">
               <Eyebrow>About this thumbnail</Eyebrow>
               <p className="mt-3 max-w-[68ch] text-[0.9375rem] leading-relaxed text-text-secondary">
-                <span className="text-text-primary">{thumbnail.title}</span> was generated with Thumblify
+                <span className="text-text-primary">{thumbnail.title}</span> was generated with Eyecatch AI
                 {thumbnail.style ? ` in the ${thumbnail.style} style` : ""} and{" "}
                 {thumbnail.published ? "published" : "created"} by {authorName} on {date}.
               </p>

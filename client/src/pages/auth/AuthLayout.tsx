@@ -13,7 +13,7 @@ export default function AuthLayout({ title, subtitle, children, topSlot }: AuthL
         <div aria-hidden="true" className="backdrop-grid pointer-events-none absolute inset-x-0 top-0 h-128" />
 
         <header className="relative flex h-16 items-center justify-between gap-4">
-          <Link to="/" aria-label="Thumblify home">
+          <Link to="/" aria-label="Eyecatch AI home">
             <Logo className="h-7 w-auto" />
           </Link>
           <div className="flex items-center gap-3">
@@ -40,7 +40,7 @@ export default function AuthLayout({ title, subtitle, children, topSlot }: AuthL
         </div>
 
         <footer className="relative flex flex-wrap items-center justify-between gap-2 py-6 text-xs text-text-muted">
-          <span>&copy; {new Date().getFullYear()} Thumblify</span>
+          <span>&copy; {new Date().getFullYear()} Eyecatch AI</span>
           <nav aria-label="Legal" className="flex gap-4">
             <Link to="/privacy-policy" className="transition-colors hover:text-text-primary">
               Privacy
