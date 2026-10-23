@@ -1,1 +1,1 @@
-export const SUPPORT_EMAIL = "support@thumblify.app";
+export const SUPPORT_EMAIL = "support@eyecatch.zeeshanahmed.dev";

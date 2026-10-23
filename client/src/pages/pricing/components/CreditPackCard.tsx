@@ -4,6 +4,7 @@ import { Check, Loader2, Minus, Plus } from "lucide-react";
 import Button from "../../../components/Button";
 import Eyebrow from "../../../components/Eyebrow";
 import AnimatedValue from "../../../components/AnimatedValue";
+import TestCheckoutDialog from "../../../components/modals/TestCheckoutDialog";
 import { CREDIT_PACK, creditPackFeatures } from "../../../data/pricing";
 import { GENERATION_CREDIT_COST } from "../../../lib/credits";
 import { useCheckout } from "../../../core/billing/hooks/use-checkout";
@@ -17,9 +18,16 @@ export default function CreditPackCard() {
     const navigate = useNavigate();
     const isAuthenticated = useSession((state) => state.isAuthenticated);
     const { startCheckout, isPending } = useCheckout();
+    const [confirmOpen, setConfirmOpen] = useState(false);
+
+    const handleBuy = () => (isAuthenticated ? setConfirmOpen(true) : navigate("/signup"));
 
     // The server checks the amount again and the webhook grants what Paddle reports as paid.
-    const handleBuy = () => (isAuthenticated ? startCheckout({ credits }) : navigate("/signup"));
+    // The dialog closes first so it never sits above Paddle's overlay.
+    const handleProceed = () => {
+        setConfirmOpen(false);
+        startCheckout({ credits });
+    };
 
     const price = usd.format((credits / CREDIT_PACK.step) * CREDIT_PACK.stepPriceCents / 100);
     const thumbnails = credits / GENERATION_CREDIT_COST;
@@ -115,6 +123,8 @@ export default function CreditPackCard() {
                 </Button>
                 <p className="mt-3 text-center text-xs text-text-muted">One-time purchase. No monthly fees.</p>
             </div>
+
+            <TestCheckoutDialog open={confirmOpen} onClose={() => setConfirmOpen(false)} onProceed={handleProceed} />
         </div>
     );
 }

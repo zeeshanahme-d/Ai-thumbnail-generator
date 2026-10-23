@@ -357,12 +357,7 @@ async function handleSignupUser(req: Request, res: Response) {
   const { fullName, email, password } = req.validated?.body ?? req.body;
 
   if (isDisposableEmail(email)) {
-    return ApiResponse.error(
-      res,
-      400,
-      "Temporary email addresses can't be used. Sign up with an email you keep.",
-      AuthErrorCode.DisposableEmail,
-    );
+    return ApiResponse.error(res, 400, "Temporary email addresses can't be used. Sign up with an email you keep.", AuthErrorCode.DisposableEmail,);
   }
 
   const existingUser = await userModel.findOne({ email });
@@ -386,18 +381,10 @@ async function handleSignupUser(req: Request, res: Response) {
     await issueOtp(user._id, email, "verify-email");
   } catch (error) {
     logger.error("Failed to send verification email", { userId: String(user._id), error });
-    return ApiResponse.success(
-      res,
-      201,
-      "Account created, but we couldn't send the verification email. Use Resend code on the next screen.",
-    );
+    return ApiResponse.success(res, 201, "Account created, but we couldn't send the verification email. Use Resend code on the next screen.",);
   }
 
-  return ApiResponse.success(
-    res,
-    201,
-    `Account created. Enter the 6-digit code we emailed you to get your ${CREDIT_COST.SIGNUP_BONUS} free credits.`,
-  );
+  return ApiResponse.success(res, 201, `Account created. Enter the 6-digit code we emailed you to get your ${CREDIT_COST.SIGNUP_BONUS} free credits.`,);
 }
 
 // ────────────────────────────────────────────── Verify Email

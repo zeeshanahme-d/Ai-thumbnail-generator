@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { createCheckout, createCreditPackCheckout } from "../_requests";
 import { useSyncSessionUser } from "../../auth/hooks";
 import { getApiErrorMessage } from "../../../lib/axios";
+import { PAID_CREDITS_SPENDABLE } from "../../../lib/credits";
 import { openPaddleCheckout } from "../../../lib/paddle";
 import { useSession } from "../../../store/useSessionStore";
 import type { CheckoutPayload, CreditPackCheckoutPayload, IUser } from "../../../types";
@@ -38,7 +39,9 @@ export function useCheckout() {
                 await openPaddleCheckout(transactionId, () =>
                     void waitFor(
                         (user) => (user.packCredits ?? 0) > packBefore,
-                        `${payload.credits.toLocaleString("en-US")} credits added to your account.`,
+                        PAID_CREDITS_SPENDABLE
+                            ? `${payload.credits.toLocaleString("en-US")} credits added to your account.`
+                            : `${payload.credits.toLocaleString("en-US")} test credits added. You can see them in Settings.`,
                         "Payment received. Your credits will appear in a minute.",
                     ),
                 );
@@ -47,7 +50,13 @@ export function useCheckout() {
 
             const transactionId = await createCheckout(payload);
             await openPaddleCheckout(transactionId, () =>
-                void waitFor(isPaidUp, "Your plan is active. Your new credits are ready.", "Payment received. Your plan will appear in a minute."),
+                void waitFor(
+                    isPaidUp,
+                    PAID_CREDITS_SPENDABLE
+                        ? "Your plan is active. Your new credits are ready."
+                        : "Your test plan is active. You can see it in Settings.",
+                    "Payment received. Your plan will appear in a minute.",
+                ),
             );
         },
         onError: (error) =>
