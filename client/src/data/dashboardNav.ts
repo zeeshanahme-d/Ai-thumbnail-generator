@@ -1,4 +1,5 @@
-import { ImagePlus, RefreshCw, Settings, Trash2, User, Users } from "lucide-react";
+// RefreshCw goes back in with the Recreate item.
+import { ImagePlus, /* RefreshCw, */ Settings, Trash2, User, Users } from "lucide-react";
 import type { IDashboardNavSection } from "../types";
 
 export const dashboardNav: IDashboardNavSection[] = [
@@ -11,12 +12,13 @@ export const dashboardNav: IDashboardNavSection[] = [
                 label: "Generate",
                 description: "Create a new thumbnail",
             },
-            {
-                to: "/dashboard/recreate",
-                icon: RefreshCw,
-                label: "Recreate",
-                description: "Generate from a reference image",
-            },
+            // Recreate is hidden until it's built.
+            // {
+            //     to: "/dashboard/recreate",
+            //     icon: RefreshCw,
+            //     label: "Recreate",
+            //     description: "Generate from a reference image",
+            // },
         ],
     },
     {
