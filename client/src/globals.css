@@ -79,15 +79,9 @@
   /* 1600px */
 }
 
-/* Arial scaled to Geist's metrics (measured at weight 500, the headline weight), so swapping
-   in the web font doesn't move the text. */
-@font-face {
-  font-family: "Geist Fallback";
-  src: local("Arial");
-  size-adjust: 104.76%;
-  ascent-override: 96.4%;
-  descent-override: 28.6%;
-  line-gap-override: 0%;
+
+html {
+  scrollbar-gutter: stable both-edges;
 }
 
 body {

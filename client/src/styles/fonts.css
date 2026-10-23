@@ -4,3 +4,12 @@
     font-weight: 500;
     font-style: normal;
 }
+
+@font-face {
+    font-family: "Geist Fallback";
+    src: local("Arial");
+    size-adjust: 104.76%;
+    ascent-override: 96.4%;
+    descent-override: 28.6%;
+    line-gap-override: 0%;
+}
