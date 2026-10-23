@@ -422,6 +422,10 @@ detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 
 `uploadSingleImage` keeps the file in memory (`req.file.buffer`, never on disk) and checks
 its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
+`schemas/media.schema.ts` (avatar and thumbnail image) sends only `url` to the client: the other
+fields are `select: false` plus a `toJSON` transform. Read `publicId` with `+avatar.publicId` (or
+name `thumbnail.publicId`), and select `avatar.url`, never the whole `avatar`, in an inclusive
+select or populate, which would bring every field back. Check: `npx tsx src/schemas/media.check.ts`.
 With `NODE_ENV=production` the error handler replaces 5xx messages with a generic one.
 
 ### Billing (Paddle)

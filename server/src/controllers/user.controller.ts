@@ -69,7 +69,7 @@ async function handleGetPublicProfile(req: Request, res: Response) {
 
   const user = await userModel
     .findOne({ username })
-    .select("fullName username avatar bio website followersCount followingCount createdAt");
+    .select("fullName username avatar.url bio website followersCount followingCount createdAt");
 
   if (!user) {
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
@@ -92,7 +92,7 @@ async function handleDeleteAccount(req: Request, res: Response) {
 
   const { password } = req.validated!.body;
 
-  const user = await userModel.findById(userId).select("+password");
+  const user = await userModel.findById(userId).select("+password +avatar.publicId");
   if (!user) {
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
   }
