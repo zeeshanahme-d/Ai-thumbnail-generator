@@ -6,6 +6,7 @@ import HomePage from '../pages/home/HomePage';
 import MainLayout from '../pages/layouts/MainLayout';
 import ErrorBoundary from '../components/ErrorBoundary';
 import PageLoader from '../components/PageLoader';
+import ThumbnailPreviewSkeleton from '../pages/thumbnail-preview/components/ThumbnailPreviewSkeleton';
 
 // The homepage loads up front; every other page downloads the first time it is visited.
 const DashboardLayout = lazy(() => import('../pages/layouts/DashboardLayout'));
@@ -65,7 +66,7 @@ function AppRoutes() {
                             <Route path="/profile/:username" element={<PublicProfile />} />
                             <Route path="/profile" element={<PublicProfile />} />
                             {/* Thumbnail preview — public, shareable */}
-                            <Route path="/thumbnail/:id" element={<ThumbnailPreview />} />
+                            <Route path="/thumbnail/:id" element={<Suspense fallback={<ThumbnailPreviewSkeleton />}><ThumbnailPreview /></Suspense>} />
                             <Route path="/pricing" element={<Pricing />} />
                             <Route path="/privacy-policy" element={<LegalPage documentId="privacy" />} />
                             <Route path="/terms" element={<LegalPage documentId="terms" />} />
