@@ -143,7 +143,7 @@ export default function DashboardGenerate() {
       description={`Describe the video, then set the style, size and colors. Each thumbnail costs ${GENERATION_CREDIT_COST} credits.`}
       actions={<Eyebrow className="tabular-nums">{remainingCredits} credits left</Eyebrow>}
     >
-      <div className="max-w-4xl space-y-4 mx-auto">
+      <div className="max-w-5xl space-y-4 mx-auto">
         {needsVerification && (
           <Alert variant="warning">
             <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
