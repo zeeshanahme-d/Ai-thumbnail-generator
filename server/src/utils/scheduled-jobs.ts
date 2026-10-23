@@ -7,7 +7,6 @@ import {
   STUCK_GENERATION_MS,
   TRENDING_AGE_OFFSET_HOURS,
   TRENDING_GRAVITY,
-  TRENDING_LIKE_WEIGHT,
 } from "../constants/constants.js";
 import { refundCredits, resetDueCredits } from "./credits.js";
 import { deleteThumbnailsForever } from "./delete-thumbnails.js";
@@ -40,7 +39,7 @@ const purgeRecycleBins = () =>
     deletedAt: mongoose.trusted({ $lt: new Date(Date.now() - RECYCLE_BIN_RETENTION_MS) }),
   });
 
-// Scores published thumbnails for the trending sort: likes and views, discounted by age.
+// Scores published thumbnails for the trending sort: likes, discounted by age.
 // ponytail: rewrites every published thumbnail each run; score only recent ones if that grows slow.
 const updateTrendingScores = () =>
   thumbnailModel.updateMany(
@@ -50,7 +49,7 @@ const updateTrendingScores = () =>
         $set: {
           trendingScore: {
             $divide: [
-              { $add: [{ $multiply: ["$likesCount", TRENDING_LIKE_WEIGHT] }, "$viewsCount"] },
+              { $ifNull: ["$likesCount", 0] },
               {
                 $pow: [
                   {

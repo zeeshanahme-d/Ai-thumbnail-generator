@@ -2,21 +2,19 @@ import { Request, Response } from "express";
 import { GenerateContentConfig, HarmBlockThreshold, HarmCategory, } from "@google/genai";
 import { generateImage, generateText } from "../utils/gemini.js";
 import {
-  colorSchemeDescriptions,
   CREDIT_COST,
   GEMINI_IMAGE_MODEL,
   GEMINI_TEXT_MODEL,
   GENERATION_FAILURES,
   PROMPT_IMPROVER_INSTRUCTION,
   PROMPT_MAX_LENGTH,
-  stylePrompts,
   THUMBNAIL_SORT_OPTIONS,
 } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
-import thumbnailViewModel from "../models/thumbnailView.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { AuthErrorCode, GenerationErrorCode, UploadErrorCode } from "../constants/enums.js";
+import { AuthErrorCode, ColorScheme, GenerationErrorCode, ThumbnailStyle, UploadErrorCode } from "../constants/enums.js";
+import { buildThumbnailPrompt } from "../utils/thumbnail-prompt.js";
 import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
 import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
@@ -25,7 +23,6 @@ import userModel from "../models/user.model.js";
 import mongoose from "mongoose";
 import { escapeRegex } from "../utils/helpers.js";
 import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/share-page.js";
-import { getViewerKey } from "../utils/viewer.js";
 import logger from "../utils/logger.js";
 
 // Left out of public responses: how the creator paid for a generation and which model made it.
@@ -140,103 +137,15 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       ],
     };
 
-    // Craft high-quality prompt for maximum visual impact & high CTR
-    const selectedStylePrompt = stylePrompts[style as keyof typeof stylePrompts];
-    const selectedColorDesc = colorSchemeDescriptions[color_scheme as keyof typeof colorSchemeDescriptions] || color_scheme;
-
-    const promptParts: string[] = [
-      `You are an award-winning YouTube thumbnail designer. Your job is to create a thumbnail with an extremely high click-through rate (CTR), at the level of the most-clicked thumbnails on YouTube: one clear focal point, strong contrast, bold shapes and a layout that reads instantly at small sizes. The thumbnail should look professionally designed, modern, clean, and instantly eye-catching.`,
-
-      `Video Title: "${title.trim()}"`,
-      `Visual Style: ${selectedStylePrompt}.`,
-      `Color Palette:${selectedColorDesc}.`,
-    ];
-
-    if (text_overlay) {
-      promptParts.push(`
-TEXT OVERLAY: Generate professional thumbnail text.
-
-Rules:
-
-• NEVER place the full video title on the thumbnail.
-• Rewrite the title into a short marketing headline.
-• Maximum 3–8 words.
-• Use only the strongest keywords.
-• Arrange text in 2–4 lines.
-• Large bold typography.
-• High contrast.
-• Easy to read on mobile.
-• Highlight important words using accent colors.
-• Leave enough breathing room around the text.
-• Make it look like a real YouTube thumbnail.
-
-Bad Example:"Build a Full Stack AI Website Builder with MERN Stack | Complete AI SaaS Project Step by Step"
-
-Good Examples:
-• AI WEBSITE BUILDER
-• BUILD AI SAAS
-• FULL STACK AI
-• MERN AI PROJECT
-• BUILD AI FAST
-`);
-    } else {
-      promptParts.push(`Do not include any text, captions, logos, typography, or written words. Only visuals.`);
-    }
-
-    if (user_prompt?.trim()) {
-      promptParts.push(`User Requirements: ${user_prompt.trim()}`);
-    }
-
-    if (referenceImagePart) {
-      promptParts.push(`
-REFERENCE IMAGE: Use the uploaded reference image ONLY as the source for the provided asset.
-
-The reference image may contain:
-• Person
-• Face
-• Logo
-• Product
-• Mascot
-• Object
-
-Requirements:
-• Preserve identity.
-• Preserve facial features.
-• Preserve hairstyle.
-• Preserve clothing when appropriate.
-• Blend naturally into the new composition.
-• Match lighting and perspective.
-• Do NOT recreate the original background.
-• Do NOT copy the original layout.
-• Do NOT imitate the original thumbnail.
-`);
-    }
-
-    promptParts.push(`
-QUALITY REQUIREMENTS
-
-• ${aspect_ratio} aspect ratio
-• Ultra high quality
-• Professional lighting
-• Cinematic depth of field
-• Dramatic shadows
-• High contrast
-• Vibrant colors
-• Strong focal subject
-• Clean composition
-• Balanced spacing
-• No watermark
-• No logo unless requested
-• No border
-• No cropped face
-• Sharp focus
-• Realistic proportions
-• Professional YouTube thumbnail
-• Optimized for maximum CTR
-• 4K quality
-`);
-
-    const prompt = promptParts.join(" ");
+    const prompt = buildThumbnailPrompt({
+      title,
+      prompt: user_prompt,
+      style: style as ThumbnailStyle,
+      colorScheme: color_scheme as ColorScheme,
+      aspectRatio: aspect_ratio,
+      textOverlay: Boolean(text_overlay),
+      hasReferenceImage: Boolean(referenceImagePart),
+    });
 
     const contents = referenceImagePart ? [prompt, referenceImagePart] : [prompt];
 
@@ -421,46 +330,6 @@ const getThumbnailById = async (req: Request, res: Response) => {
   const isLiked = userId ? Boolean(await likeDislikeModel.exists({ userId, thumbnailId: thumbnail._id })) : false;
 
   return ApiResponse.success(res, 200, "Thumbnail fetched.", { ...thumbnail, isLiked });
-};
-
-/**
- * POST /thumbnails/:id/view
- * Count a view of a published thumbnail once per viewer, signed in or guest. The owner's own
- * views are not counted.
- */
-const recordThumbnailView = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  if (!mongoose.isObjectIdOrHexString(id)) {
-    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
-  }
-
-  const thumbnail = await thumbnailModel
-    .findOne({ _id: id, published: true, deletedAt: null })
-    .select("userId")
-    .lean();
-
-  if (!thumbnail) {
-    return ApiResponse.error(res, 404, "Thumbnail not found.");
-  }
-
-  if (thumbnail.userId.toString() === req.user?.userId) {
-    return ApiResponse.success(res, 200, "Views of your own thumbnail are not counted.", { counted: false });
-  }
-
-  // The unique index lets only the viewer's first view insert, even when requests arrive together.
-  const { upsertedCount } = await thumbnailViewModel.updateOne(
-    { thumbnailId: thumbnail._id, viewerKey: getViewerKey(req, res) },
-    {},
-    { upsert: true },
-  );
-
-  const counted = upsertedCount === 1;
-  if (counted) {
-    await thumbnailModel.updateOne({ _id: thumbnail._id }, { $inc: { viewsCount: 1 } });
-  }
-
-  return ApiResponse.success(res, 200, counted ? "View recorded." : "View already counted.", { counted });
 };
 
 /**
@@ -805,7 +674,6 @@ export {
   getMyThumbnails,
   getCommunityThumbnails,
   getThumbnailById,
-  recordThumbnailView,
   getThumbnailSharePage,
   getRecycleBinThumbnails,
   softDeleteThumbnail,

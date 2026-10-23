@@ -4,12 +4,11 @@ import {
   getCommunityThumbnails,
   getThumbnailById,
   getThumbnailSharePage,
-  recordThumbnailView,
 } from "../controllers/thumbnail.controller.js";
 import { getThumbnailSchema } from "../validations/thumbnail.validation.js";
 import validate from "../middlewares/validate.js";
 import { optionalAuthentication } from "../middlewares/auth.middleware.js";
-import { publicIpLimiter, viewLimiter } from "../middlewares/rate-limit.middleware.js";
+import { publicIpLimiter } from "../middlewares/rate-limit.middleware.js";
 
 const router = express.Router();
 
@@ -20,6 +19,5 @@ const idsOnly: RequestHandler = (req, _res, next) =>
 router.get("/community", publicIpLimiter, optionalAuthentication, validate(getThumbnailSchema, "query"), getCommunityThumbnails);
 router.get("/:id", idsOnly, publicIpLimiter, optionalAuthentication, getThumbnailById);
 router.get("/:id/share", getThumbnailSharePage);
-router.post("/:id/view", viewLimiter, optionalAuthentication, recordThumbnailView);
 
 export default router;

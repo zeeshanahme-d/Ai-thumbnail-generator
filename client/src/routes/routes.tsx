@@ -17,7 +17,8 @@ const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
 const VerifyOtp = lazy(() => import('../pages/auth/VerifyOtp'));
 const ResetPassword = lazy(() => import('../pages/auth/ResetPassword'));
 const DashboardGenerate = lazy(() => import('../pages/dashboard/generate/DashboardGenerate'));
-const Recreate = lazy(() => import('../pages/dashboard/recreate/Recreate'));
+// Recreate is hidden until it's built.
+// const Recreate = lazy(() => import('../pages/dashboard/recreate/Recreate'));
 const Settings = lazy(() => import('../pages/dashboard/settings/Settings'));
 const RecycleBin = lazy(() => import('../pages/dashboard/recycle-bin/RecycleBin'));
 const PublicProfile = lazy(() => import('../pages/profile/Profile'));
@@ -49,7 +50,7 @@ function AppRoutes() {
                         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                             <Route index element={<Navigate to="/dashboard/generate" replace />} />
                             <Route path="generate" element={<DashboardGenerate />} />
-                            <Route path="recreate" element={<Recreate />} />
+                            {/* <Route path="recreate" element={<Recreate />} /> */}
                             <Route path="community" element={<Community />} />
                             <Route path="gallery" element={<MyGallery />} />
                             <Route path="settings" element={<Settings />} />

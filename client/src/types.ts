@@ -308,6 +308,12 @@ export interface CreditPackCheckoutPayload {
   credits: number;
 }
 
+export interface TestCheckoutDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onProceed: () => void;
+}
+
 export interface IPricingPlan {
   /** Matches UserPlan on the server. */
   id: PlanId;
@@ -491,7 +497,6 @@ export interface Thumbnail {
   user_prompt?: string;
   deletedAt?: string | null;
   likesCount?: number;
-  viewsCount?: number;
   isLiked?: boolean;
   __v?: number;
 }

@@ -1,10 +1,16 @@
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import Alert from "../../../../components/Alert";
 import Button from "../../../../components/Button";
 import Eyebrow from "../../../../components/Eyebrow";
 import SettingsSection from "./SettingsSection";
 import { buttonClasses } from "../../../../lib/buttonClasses";
-import { getAllowanceLeft } from "../../../../lib/credits";
+import {
+    FREE_MONTHLY_CREDITS,
+    PAID_CREDITS_SPENDABLE,
+    PLAN_MONTHLY_CREDITS,
+    getAllowanceLeft,
+} from "../../../../lib/credits";
 import { hasLiveSubscription } from "../../../../lib/paddle";
 import { useBillingPortal } from "../../../../core/billing/hooks/use-billing-portal";
 import { useSession } from "../../../../store/useSessionStore";
@@ -34,10 +40,17 @@ export default function BillingSection() {
                 ? `Ends on ${formatDate(user.subscriptionPeriodEnd)}, then you move to the Free plan.`
                 : null;
 
-    const totalCredits = user?.totalcredits ?? 0;
-    const creditsUsed = user?.creditsUsed ?? 0;
+    // In test mode only the free credits spend, so the bar shows those even on a paid plan.
+    const totalCredits = PAID_CREDITS_SPENDABLE
+        ? user?.totalcredits ?? 0
+        : Math.min(user?.totalcredits ?? 0, FREE_MONTHLY_CREDITS);
+    const creditsUsed = Math.min(user?.creditsUsed ?? 0, totalCredits);
     const allowanceLeft = getAllowanceLeft(user);
     const packCredits = user?.packCredits ?? 0;
+    const planCredits = isSubscribed
+        ? PLAN_MONTHLY_CREDITS[user?.plan as keyof typeof PLAN_MONTHLY_CREDITS] ?? 0
+        : 0;
+    const showTestCredits = !PAID_CREDITS_SPENDABLE && (planCredits > 0 || packCredits > 0);
     const usagePercentage = totalCredits > 0 ? Math.min(100, Math.max(0, (creditsUsed / totalCredits) * 100)) : 0;
 
     // Unverified accounts have no refill date yet, so the line stays hidden for them.
@@ -74,8 +87,10 @@ export default function BillingSection() {
                             </>
                         ) : (
                             <>
-                                You're on the <span className="font-medium text-text-primary">Free plan</span>. Upgrade
-                                to Pro or Ultra for more credits every month.
+                                You're on the <span className="font-medium text-text-primary">Free plan</span>.{" "}
+                                {PAID_CREDITS_SPENDABLE
+                                    ? "Upgrade to Pro or Ultra for more credits every month."
+                                    : "You can try Pro, Ultra or a credit pack with a test card."}
                             </>
                         )}
                     </p>
@@ -105,9 +120,17 @@ export default function BillingSection() {
                 )}
             </div>
 
+            {!PAID_CREDITS_SPENDABLE && (
+                <Alert variant="info" className="mt-6">
+                    Payments run in Paddle test mode because Eyecatch AI is a portfolio project, so no real money is
+                    charged. Credits from plans and credit packs are shown here but can't be spent. Thumbnails always
+                    use your {FREE_MONTHLY_CREDITS} free monthly credits.
+                </Alert>
+            )}
+
             <div className="mt-6 border-t border-border pt-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                    <Eyebrow>Monthly credits</Eyebrow>
+                    <Eyebrow>{PAID_CREDITS_SPENDABLE ? "Monthly credits" : "Free credits"}</Eyebrow>
                     <span className="font-mono text-sm tabular-nums text-text-secondary">
                         <span className="text-text-primary">{creditsUsed}</span> / {totalCredits} used
                     </span>
@@ -115,7 +138,7 @@ export default function BillingSection() {
 
                 <div
                     role="progressbar"
-                    aria-label="Monthly credits used"
+                    aria-label={PAID_CREDITS_SPENDABLE ? "Monthly credits used" : "Free credits used"}
                     aria-valuenow={Math.round(usagePercentage)}
                     className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-background-surface-2"
                 >
@@ -130,7 +153,7 @@ export default function BillingSection() {
                     {formattedResetDate && <span>Refills on {formattedResetDate}</span>}
                 </div>
 
-                {packCredits > 0 && (
+                {PAID_CREDITS_SPENDABLE && packCredits > 0 && (
                     <p className="mt-4 text-sm text-text-secondary">
                         <span className="font-mono tabular-nums text-text-primary">
                             +{packCredits.toLocaleString("en-US")}
@@ -139,6 +162,36 @@ export default function BillingSection() {
                     </p>
                 )}
             </div>
+
+            {showTestCredits && (
+                <div className="mt-6 border-t border-border pt-6">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <Eyebrow>Test mode credits</Eyebrow>
+                        <span className="font-mono text-xs uppercase tracking-[0.06em] text-text-muted">Can't be spent</span>
+                    </div>
+                    <dl className="mt-3 space-y-2 text-sm">
+                        {planCredits > 0 && (
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-text-secondary">{planName} credits</dt>
+                                <dd className="font-mono tabular-nums text-text-primary">
+                                    {planCredits.toLocaleString("en-US")} / month
+                                </dd>
+                            </div>
+                        )}
+                        {packCredits > 0 && (
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-text-secondary">Purchased credits</dt>
+                                <dd className="font-mono tabular-nums text-text-primary">
+                                    {packCredits.toLocaleString("en-US")}
+                                </dd>
+                            </div>
+                        )}
+                    </dl>
+                    <p className="mt-3 text-xs leading-relaxed text-text-muted">
+                        Bought with a test card, so they're shown but locked.
+                    </p>
+                </div>
+            )}
         </SettingsSection>
     );
 }

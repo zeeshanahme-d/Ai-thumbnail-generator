@@ -23,10 +23,9 @@ function SingleSkeleton({ showRecycleBinActions = false }: { showRecycleBinActio
             <Skeleton className="h-3 w-20" />
           </div>
 
-          {/* Stats row (likes / views / time) — hidden when recycle bin */}
+          {/* Stats row (likes / time) — hidden when recycle bin */}
           {!showRecycleBinActions && (
             <div className="flex items-center gap-3">
-              <Skeleton className="h-3 w-8" />
               <Skeleton className="h-3 w-8" />
               <Skeleton className="h-3 w-10" />
             </div>

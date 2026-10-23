@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Heart, Loader2 } from "lucide-react";
 import dayjs from "dayjs";
@@ -10,7 +9,6 @@ import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../../lib/credits"
 import useGetCommunityThumbnails from "../../core/thumbnails/hooks/useGetCommunityThumbnails";
 import useLikeThumbnail from "../../core/thumbnails/hooks/useLikeThumbnail";
 import useThumbnail from "../../core/thumbnails/hooks/use-thumbnail";
-import { recordThumbnailView } from "../../core/thumbnails/_requests";
 import { useSession } from "../../store/useSessionStore";
 import Button from "../../components/Button";
 import Eyebrow from "../../components/Eyebrow";
@@ -46,10 +44,6 @@ export default function ThumbnailPreview() {
     { enabled: Boolean(thumbnail) },
   );
   const { mutate: likeMutate, isPending: isLiking } = useLikeThumbnail();
-
-  useEffect(() => {
-    recordThumbnailView(id).catch(() => {});
-  }, [id]);
 
   if (isPending) {
     return <PageLoader />;

@@ -1,4 +1,4 @@
-import { Eye, Heart, Calendar } from "lucide-react";
+import { Heart, Calendar } from "lucide-react";
 import dayjs from "dayjs";
 import type { Thumbnail } from "../../../types";
 
@@ -8,7 +8,7 @@ interface PreviewStatsProps {
 }
 
 export default function PreviewStats({ thumbnail, isLiked }: PreviewStatsProps) {
-  const { likesCount = 0, viewsCount = 0, publishedAt, createdAt } = thumbnail;
+  const { likesCount = 0, publishedAt, createdAt } = thumbnail;
   const displayDate = publishedAt ?? createdAt;
 
   return (
@@ -20,12 +20,6 @@ export default function PreviewStats({ thumbnail, isLiked }: PreviewStatsProps) 
         />
         <span className="font-medium text-text-primary">{likesCount}</span>
         <span>likes</span>
-      </span>
-
-      <span className="flex items-center gap-1.5">
-        <Eye size={16} className="text-text-muted" />
-        <span className="font-medium text-text-primary">{viewsCount}</span>
-        <span>views</span>
       </span>
 
       <span className="flex items-center gap-1.5">

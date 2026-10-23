@@ -1,7 +1,6 @@
 import {
   Clock,
   Download,
-  Eye,
   Globe,
   GlobeLock,
   Heart,
@@ -42,7 +41,6 @@ export default function ThumbnailCard({
     style,
     isGenerating,
     likesCount,
-    viewsCount,
     published,
     isLiked,
   } = thumbnail;
@@ -237,10 +235,6 @@ export default function ThumbnailCard({
                   className={isLiked ? "fill-primary text-primary" : ""}
                 />
                 {likesCount || 0}
-              </span>
-              <span className="flex items-center gap-1">
-                <Eye size={13} />
-                {viewsCount || 0}
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={13} />
