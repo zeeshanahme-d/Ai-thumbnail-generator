@@ -3,6 +3,7 @@ import type { SubscriptionNotification, TransactionNotification } from "@paddle/
 import paddle from "../config/paddle.js";
 import userModel from "../models/user.model.js";
 import { SubscriptionStatus, UserPlan } from "../constants/enums.js";
+import { PAID_CREDITS_SPENDABLE } from "../constants/constants.js";
 import { nextPaidRefill, resetDueCredits } from "./credits.js";
 import logger from "./logger.js";
 
@@ -102,7 +103,10 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
     subscriptionUpdatedAt: updatedAt,
   };
   // Back on the free plan: the refill below replaces the paid credits with the free allowance.
-  if (!live) set.creditsResetAt = new Date();
+  // Without spendable paid credits the free cycle never changed, so cancelling must not refill it
+  // (a subscribe-and-cancel loop with test cards would otherwise hand out free credits).
+  const refillOnEnd = !live && PAID_CREDITS_SPENDABLE;
+  if (refillOnEnd) set.creditsResetAt = new Date();
 
   const { modifiedCount } = await userModel.updateOne(
     {
@@ -122,7 +126,7 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
   }
 
   logger.info("Subscription synced", { ...context, userId, plan: set.plan });
-  if (!live) {
+  if (refillOnEnd) {
     await resetDueCredits(userId);
   }
 }
@@ -159,21 +163,20 @@ export async function grantPaidPeriod(transaction: TransactionNotification): Pro
   const periodStart = new Date(billingPeriod.startsAt);
   const periodEnd = new Date(billingPeriod.endsAt);
 
+  // The period is always recorded (Settings shows it). Its credits only replace the free cycle
+  // while paid credits are spendable; otherwise the plan's credits are shown from the plan alone.
+  const set: Record<string, unknown> = { subscriptionPeriodStart: periodStart, subscriptionPeriodEnd: periodEnd };
+  if (PAID_CREDITS_SPENDABLE) {
+    Object.assign(set, { totalcredits: grant.credits, creditsUsed: 0, creditsResetAt: nextPaidRefill(periodStart, periodEnd) });
+  }
+
   // Retries and duplicate events find the period already granted and change nothing.
   const { modifiedCount } = await userModel.updateOne(
     {
       _id: user._id,
       $or: [{ subscriptionPeriodStart: null }, { subscriptionPeriodStart: mongoose.trusted({ $lt: periodStart }) }],
     },
-    {
-      $set: {
-        totalcredits: grant.credits,
-        creditsUsed: 0,
-        subscriptionPeriodStart: periodStart,
-        subscriptionPeriodEnd: periodEnd,
-        creditsResetAt: nextPaidRefill(periodStart, periodEnd),
-      },
-    },
+    { $set: set },
   );
 
   if (modifiedCount) {

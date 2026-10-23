@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import userModel from "../models/user.model.js";
 import { SubscriptionStatus, UserPlan } from "../constants/enums.js";
-import { CREDIT_COST, CREDIT_RESET_INTERVAL_MS } from "../constants/constants.js";
+import { CREDIT_COST, CREDIT_RESET_INTERVAL_MS, PAID_CREDITS_SPENDABLE } from "../constants/constants.js";
 
 export const nextCreditResetDate = (from = new Date()) => new Date(from.getTime() + CREDIT_RESET_INTERVAL_MS);
 
@@ -30,12 +30,17 @@ export function nextPaidRefill(periodStart: Date, periodEnd: Date, now = new Dat
 
 type CreditFields = { totalcredits?: number | null; creditsUsed?: number | null; packCredits?: number | null } | null;
 
+// The part of the allowance that can be spent: all of it, or only the free credits while paid
+// credits are display-only (an account may still hold a paid plan's allowance from before).
+const spendableTotal = (total: number) => (PAID_CREDITS_SPENDABLE ? total : Math.min(total, CREDIT_COST.SIGNUP_BONUS));
+
 /** What is left of the monthly allowance, which refills and doesn't roll over. */
 export const getAllowanceLeft = (user: CreditFields) =>
-  Math.max(0, (user?.totalcredits ?? 0) - (user?.creditsUsed ?? 0));
+  Math.max(0, spendableTotal(user?.totalcredits ?? 0) - (user?.creditsUsed ?? 0));
 
+/** Everything the user can spend. Pack credits only count while paid credits are spendable. */
 export const getRemainingCredits = (user: CreditFields) =>
-  getAllowanceLeft(user) + Math.max(0, user?.packCredits ?? 0);
+  getAllowanceLeft(user) + (PAID_CREDITS_SPENDABLE ? Math.max(0, user?.packCredits ?? 0) : 0);
 
 /** Splits a charge: the allowance pays first because it expires, bought pack credits pay the rest. */
 export function splitCharge(user: CreditFields, amount: number) {
@@ -44,15 +49,25 @@ export function splitCharge(user: CreditFields, amount: number) {
 }
 
 // The same split as splitCharge, worked out inside MongoDB so the check and the charge are one write.
+const totalExpr = { $ifNull: ["$totalcredits", 0] };
 const allowanceLeftExpr = {
-  $max: [0, { $subtract: [{ $ifNull: ["$totalcredits", 0] }, { $ifNull: ["$creditsUsed", 0] }] }],
+  $max: [
+    0,
+    {
+      $subtract: [
+        PAID_CREDITS_SPENDABLE ? totalExpr : { $min: [totalExpr, CREDIT_COST.SIGNUP_BONUS] },
+        { $ifNull: ["$creditsUsed", 0] },
+      ],
+    },
+  ],
 };
+const packExpr = PAID_CREDITS_SPENDABLE ? { $ifNull: ["$packCredits", 0] } : 0;
 
 /** The condition and update reserveCredits runs, exported so the check can run them in MongoDB. */
 export function chargeExpressions(amount: number) {
   const fromAllowance = { $min: [amount, allowanceLeftExpr] };
   return {
-    enoughCredits: { $gte: [{ $add: [allowanceLeftExpr, { $ifNull: ["$packCredits", 0] }] }, amount] },
+    enoughCredits: { $gte: [{ $add: [allowanceLeftExpr, packExpr] }, amount] },
     charge: {
       creditsUsed: { $add: [{ $ifNull: ["$creditsUsed", 0] }, fromAllowance] },
       packCredits: { $subtract: [{ $ifNull: ["$packCredits", 0] }, { $subtract: [amount, fromAllowance] }] },
@@ -116,14 +131,15 @@ export async function refundCredits(userId: string, amount: number, fromPack = 0
  * Refills verified free accounts whose reset date has passed, or one user when `userId` is given.
  * Accounts verified before resets existed have no date yet and are refilled on the first run.
  * Paid plans refill inside the period they paid for; payments for new periods refill in utils/billing.ts.
+ * While paid credits aren't spendable, every verified account gets the free refill instead.
  */
 export async function resetDueCredits(userId?: string): Promise<void> {
   const now = new Date();
   const filter: Record<string, unknown> = {
-    plan: UserPlan.Free,
     isVerified: true,
     $or: [{ creditsResetAt: null }, { creditsResetAt: mongoose.trusted({ $lte: now }) }],
   };
+  if (PAID_CREDITS_SPENDABLE) filter.plan = UserPlan.Free;
   if (userId) filter._id = userId;
 
   await userModel.updateMany(filter, {
@@ -133,6 +149,8 @@ export async function resetDueCredits(userId?: string): Promise<void> {
       creditsResetAt: nextCreditResetDate(now),
     },
   });
+
+  if (!PAID_CREDITS_SPENDABLE) return;
 
   // A paid refill keeps totalcredits at the plan's allowance, so a new month only clears the usage.
   const paidFilter: Record<string, unknown> = {

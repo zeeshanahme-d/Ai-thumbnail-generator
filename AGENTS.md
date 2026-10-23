@@ -83,7 +83,7 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
 - **Guest-only** (`GuestRoute`) — `/login`, `/signup`, `/forgot-password`,
   `/verify-otp`, `/reset-password`. Signed-in users bounce to `/dashboard/generate`.
 - **Dashboard** (`ProtectedRoute` → `DashboardLayout` sidebar) — `/dashboard/*`
-  (`generate`, `recreate`, `community`, `gallery`, `settings`, `recycle-bin`).
+  (`generate`, `community`, `gallery`, `settings`, `recycle-bin`).
   `/dashboard` redirects to `/dashboard/generate`.
 - **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
   `/profile`, `/thumbnail/:id`, `/pricing`, `/privacy-policy`, `/terms` and
@@ -120,7 +120,7 @@ The auth pages share `pages/auth/AuthLayout`: the form on the left and, from `lg
 | Generate | `/dashboard/generate` | ✅ Fully wired — PromptCard → API → shows generated thumbnails |
 | Gallery | `/dashboard/gallery` | ✅ Filters, sort, pagination, delete, publish |
 | Community | `/dashboard/community` | ✅ Same Community component as `/community`, which passes `variant="public"` for its own header |
-| Recreate | `/dashboard/recreate` | ❌ Placeholder — `DashboardPage` without a body ("Coming soon") |
+| Recreate | `/dashboard/recreate` | ⏸ Commented out (page, route, sidebar and footer links) until it is built; the URL shows NotFound |
 | Settings | `/dashboard/settings` | 🔲 Profile, password and account deletion wired; Plan and credits shows the real balance, refill and renewal dates, Upgrade → `/pricing`, Manage plan → Paddle portal; Invoices only points to Paddle's receipts and the portal (no in-app list) |
 | Recycle Bin | `/dashboard/recycle-bin` | ✅ Restore + permanent delete with ConfirmDialog, Restore all, Empty bin, Load More; items purged after 30 days |
 
@@ -456,7 +456,7 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
     event (`subscriptionUpdatedAt`) or one from a different subscription while the stored one
     is still live is ignored. If that other subscription is live too (two checkouts paid at
     once), it is cancelled at Paddle immediately; its first payment is refunded by hand.
-    `canceled`/`paused` move the account to Free and refill 20.
+    `canceled`/`paused` move the account to Free and refill the free credits (`SIGNUP_BONUS`).
   - `transaction.completed` owns the credits: a paid billing period sets `totalcredits` to
     `credits_per_month`, clears usage and records `subscriptionPeriodStart/End`, once per
     period. Payment-method-change transactions never refill. Renewal credits come from the
@@ -493,7 +493,15 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 
 ### Credits system
 
-- New accounts start with 0 credits; verifying the email grants the 20-credit bonus
+- **Test mode (portfolio)**: `PAID_CREDITS_SPENDABLE = false` (`constants.ts`, mirrored in
+  client `lib/credits.ts`). Payments run in the Paddle sandbox; plans and packs are recorded
+  but only the free credits (`SIGNUP_BONUS`, 10) spend (`min(totalcredits, SIGNUP_BONUS) − creditsUsed`, pack never).
+  Every verified account, whatever its plan, gets the free 30-day refill; paid periods record
+  `subscriptionPeriodStart/End` only, and cancelling doesn't refill (no subscribe/cancel
+  farming). Settings shows plan credits (`PLAN_MONTHLY_CREDITS`) and pack credits as locked;
+  `TestCheckoutDialog` (test card, Cancel / Proceed) opens before every checkout. The rest
+  of this section and Billing describe the `true` behaviour.
+- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (10 credits)
   (`$max`, so older accounts that already have 20 are not topped up twice). Signup rejects
   disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
@@ -504,7 +512,7 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
   and returns how much came from the pack; the thumbnail stores it (`packCreditsUsed`) so a
   failed or stuck generation refunds each part to where it came from (never below 0)
 - **Monthly refill** — only **verified** free accounts refill. When `creditsResetAt` passes
-  (or is missing), the account goes back to 20 credits with 0 used and the date moves 30 days
+  (or is missing), the account goes back to `SIGNUP_BONUS` credits with 0 used and the date moves 30 days
   on (`CREDIT_RESET_INTERVAL_MS`). `resetDueCredits()` runs from `utils/scheduled-jobs.ts`
   every 10 minutes, for the one user before each generation, and on email verification. So
   verifying starts the cycle, and older accounts whose date passed while unverified refill
@@ -569,7 +577,7 @@ generation (up to ~3 Gemini attempts of 60 s), e.g. Nginx `client_max_body_size 
 - **Plan switching** — subscribers can cancel and re-subscribe, but not switch Pro ↔ Ultra
   in place.
 - **Google OAuth** — no `/auth/google` endpoint; the Google button is hidden until it exists.
-- **Recreate** — placeholder page only; no upload-and-remix flow.
+- **Recreate** — commented out for now (page, route, sidebar and footer links); no upload-and-remix flow.
 - **Follow system** — `followersCount`/`followingCount` fields exist but no endpoints or model.
 
 ### Known bugs

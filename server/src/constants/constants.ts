@@ -32,13 +32,15 @@ export const colorSchemeDescriptions = {
 };
 
 export const CREDIT_COST = {
-  SIGNUP_BONUS: 20,
+  SIGNUP_BONUS: 10,
   GENERATE_COST: 5,
   RECREATE_COST: 10,
 };
 
-// One-time credit packs. Mirrors CREDIT_PACK in client/src/data/pricing.ts and the Paddle
-// credit pack price (credits_per_unit 5, quantity 5–500), so 25 to 2,500 credits in steps of 5.
+
+export const PAID_CREDITS_SPENDABLE = false;
+
+
 export const CREDIT_PACK = {
   CREDITS_PER_UNIT: 5,
   MIN_CREDITS: 25,

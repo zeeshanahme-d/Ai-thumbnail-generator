@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Check, Loader2, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 import AnimatedValue from "./AnimatedValue";
+import TestCheckoutDialog from "./modals/TestCheckoutDialog";
 import { useSession } from "../store/useSessionStore";
 import { YEARLY_DISCOUNT } from "../data/pricing";
 import { hasLiveSubscription } from "../lib/paddle";
@@ -14,6 +16,7 @@ export default function PricingCard({ plan, billing }: PricingCardProps) {
     const isAuthenticated = useSession((state) => state.isAuthenticated);
     const user = useSession((state) => state.user);
     const { startCheckout, isPending } = useCheckout();
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     const isFree = id === "free";
     const isYearly = billing === "yearly";
@@ -27,7 +30,13 @@ export default function PricingCard({ plan, billing }: PricingCardProps) {
         if (!isAuthenticated) return navigate("/signup");
         if (isFree) return navigate("/dashboard/generate");
         if (subscribed) return navigate("/dashboard/settings");
-        startCheckout({ plan: id, billing });
+        setConfirmOpen(true);
+    };
+
+    // The dialog closes first so it never sits above Paddle's overlay.
+    const handleProceed = () => {
+        setConfirmOpen(false);
+        if (id !== "free") startCheckout({ plan: id, billing });
     };
 
     const label = isCurrentPlan ? "Current plan" : !isFree && subscribed ? "Manage plan" : cta;
@@ -82,6 +91,8 @@ export default function PricingCard({ plan, billing }: PricingCardProps) {
                     </li>
                 ))}
             </ul>
+
+            <TestCheckoutDialog open={confirmOpen} onClose={() => setConfirmOpen(false)} onProceed={handleProceed} />
         </div>
     );
 }
