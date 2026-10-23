@@ -1,34 +1,29 @@
-import { GenerationErrorCode } from "./enums.js";
+import { ColorScheme, GenerationErrorCode, ThumbnailStyle } from "./enums.js";
 
-export const stylePrompts = {
-  "Bold & Graphic":
-    "eye-catching thumbnail, bold typography, vibrant colors, expressive facial reaction, dramatic lighting, high contrast, click-worthy composition, professional style",
-  "Tech/Futuristic":
-    "futuristic thumbnail, sleek modern design, digital UI elements, glowing accents, holographic effects, cyber-tech aesthetic, sharp lighting, high-tech atmosphere",
-  Minimalist:
-    "minimalist thumbnail, clean layout, simple shapes, limited color palette, plenty of negative space, modern flat design, clear focal point",
-  Photorealistic:
-    "photorealistic thumbnail, ultra-realistic lighting, natural skin tones, candid moment, DSLR-style photography, lifestyle realism, shallow depth of field",
-  Illustrated:
-    "illustrated thumbnail, custom digital illustration, stylized characters, bold outlines, vibrant colors, creative cartoon or vector art style",
+// Style presets, written as descriptions: image models follow a described look better than a
+// keyword list. None of them asks for a facial expression; the prompt picks one from the topic.
+export const stylePrompts: Record<ThumbnailStyle, string> = {
+  [ThumbnailStyle.BoldGraphic]:
+    "Bold graphic design: one large subject cut out cleanly against a simple background, big simple shapes, strong outlines and punchy contrast, a confident layout that reads at a glance.",
+  [ThumbnailStyle.TechFuturistic]:
+    "Sleek futuristic look: dark polished surfaces, subtle interface elements and holographic details, crisp glowing accents and sharp, controlled lighting.",
+  [ThumbnailStyle.Minimalist]:
+    "Minimalist design: a clean layout with generous empty space, two or three colors, simple flat shapes and a single clear focal point.",
+  [ThumbnailStyle.Photorealistic]:
+    "Photorealistic photograph: shot like a professional DSLR photo with natural light, true-to-life skin and textures and a shallow depth of field that separates the subject from the background.",
+  [ThumbnailStyle.Illustrated]:
+    "Custom digital illustration: stylized characters and objects with bold outlines, flat or softly shaded vector-style color and a playful, hand-made feel.",
 };
 
-export const colorSchemeDescriptions = {
-  Vibrant:
-    "vibrant and energetic colors, high saturation, bold contrasts, eye-catching palette",
-  Sunset:
-    "warm sunset tones, orange pink and purple hues, soft gradients, cinematic glow",
-  Forest:
-    "natural green tones, earthy colors, calm and organic palette, fresh atmosphere",
-  Neon: "neon glow effects, electric blues and pinks, cyberpunk lighting, high contrast glow",
-  Purple:
-    "purple-dominant color palette, magenta and violet tones, modern and stylish mood",
-  Monochrome:
-    "black and white color scheme, high contrast, dramatic lighting, timeless aesthetic",
-  Ocean:
-    "cool blue and teal tones, aquatic color palette, fresh and clean atmosphere",
-  Pastel:
-    "soft pastel colors, low saturation, gentle tones, calm and friendly aesthetic",
+export const colorSchemeDescriptions: Record<ColorScheme, string> = {
+  [ColorScheme.Vibrant]: "vibrant, highly saturated colors with bold contrasts",
+  [ColorScheme.Sunset]: "warm sunset tones of orange, pink and purple with soft gradients and a cinematic glow",
+  [ColorScheme.Forest]: "natural greens and earthy tones, calm and organic",
+  [ColorScheme.Neon]: "electric neon blues and pinks glowing against darkness, cyberpunk lighting",
+  [ColorScheme.Purple]: "a purple-led palette of violet and magenta, modern and stylish",
+  [ColorScheme.Monochrome]: "black and white only, high contrast and dramatic light",
+  [ColorScheme.Ocean]: "cool blues and teals, fresh and clean",
+  [ColorScheme.Pastel]: "soft pastel colors with low saturation, gentle and friendly",
 };
 
 export const CREDIT_COST = {
@@ -63,7 +58,8 @@ export const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-lite-image";
 export const GEMINI_TEXT_MODEL = "gemini-3.1-flash-lite";
 
 export const PROMPT_IMPROVER_INSTRUCTION = `You improve prompts for an AI YouTube thumbnail generator.
-Rewrite the user's idea into one vivid image description: the main subject and its expression or action, the composition, the background, the lighting and the mood.
+Rewrite the user's idea into one vivid image description: the main subject and what it is doing, the composition, the background, the lighting and the mood.
+If a person appears, describe a specific individual who fits the topic (age, look, clothing, setting), not a generic model, with a natural expression that suits the mood. Never add a shocked, screaming or open-mouthed face unless the user asked for one.
 Keep the user's topic and language. Do not add brand names, hashtags, quotes or explanations.
 Reply with the improved prompt only, under ${PROMPT_MAX_LENGTH - 100} characters.`;
 
