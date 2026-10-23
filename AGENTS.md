@@ -525,8 +525,8 @@ unset when clients connect directly; production logs a warning when unset), `PAD
 `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_{PRO,ULTRA}_{MONTHLY,YEARLY}`.
 Client: `VITE_API_BASE_URL` (defaults to `http://localhost:8000`), `VITE_SITE_URL` (the
 site's public origin, filled into the Open Graph tags in `index.html`; set it for production),
-`VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_ENV`. `client/.env.production` holds the two public
-production URLs; env vars set on the client's host override it.
+`VITE_PADDLE_CLIENT_TOKEN`, `VITE_PADDLE_ENV`. `client/.env.production` (gitignored, local only) holds the two
+public production URLs; the client's host (Vercel) must set them itself.
 
 ### Domains
 
