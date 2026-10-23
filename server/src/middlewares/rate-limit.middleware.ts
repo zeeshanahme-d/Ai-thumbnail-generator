@@ -64,8 +64,6 @@ export const passwordCheckLimiter = createLimiter({ windowMinutes: 15, limit: 5,
 /** Generations per signed-in user. Mounted before multer so rejected requests never write a file. */
 export const generateLimiter = createLimiter({ windowMinutes: 1, limit: 5, by: "user" });
 
-/** Thumbnail views per IP, so one client cannot push a thumbnail up the trending sort. */
-export const viewLimiter = createLimiter({ windowMinutes: 1, limit: 30, by: "ip" });
 
 /** Checkouts and billing-portal links per signed-in user. Each one calls the Paddle API. */
 export const billingLimiter = createLimiter({ windowMinutes: 10, limit: 10, by: "user" });

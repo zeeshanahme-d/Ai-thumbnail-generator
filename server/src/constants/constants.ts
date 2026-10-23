@@ -101,24 +101,14 @@ export const THUMBNAIL_SORT_OPTIONS: Record<string, any> = {
     createdAt: -1,
   },
 
-  "most-views": {
-    viewsCount: -1,
-    createdAt: -1,
-  },
-
   oldest: {
     createdAt: 1,
   },
 };
 
-// Trending score = (likes × LIKE_WEIGHT + views) / (hours since publishing + AGE_OFFSET) ^ GRAVITY,
-// as on Hacker News. A like needs an account, so it counts for more than a view.
-export const TRENDING_LIKE_WEIGHT = 5;
+// Trending score = likes / (hours since publishing + AGE_OFFSET) ^ GRAVITY, as on Hacker News.
 export const TRENDING_AGE_OFFSET_HOURS = 2;
 export const TRENDING_GRAVITY = 1.5;
-
-// Guests are told apart by a random visitor cookie, so each one adds a view only once.
-export const VISITOR_COOKIE_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 
 // Cloudinary rendition for link previews: a JPEG every crawler accepts, small enough for WhatsApp.
 export const SHARE_IMAGE_TRANSFORMATION = "f_jpg,q_auto,w_1200";

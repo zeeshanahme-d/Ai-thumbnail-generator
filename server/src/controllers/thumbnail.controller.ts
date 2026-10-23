@@ -12,7 +12,6 @@ import {
 } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
-import thumbnailViewModel from "../models/thumbnailView.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AuthErrorCode, ColorScheme, GenerationErrorCode, ThumbnailStyle, UploadErrorCode } from "../constants/enums.js";
 import { buildThumbnailPrompt } from "../utils/thumbnail-prompt.js";
@@ -24,7 +23,6 @@ import userModel from "../models/user.model.js";
 import mongoose from "mongoose";
 import { escapeRegex } from "../utils/helpers.js";
 import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/share-page.js";
-import { getViewerKey } from "../utils/viewer.js";
 import logger from "../utils/logger.js";
 
 // Left out of public responses: how the creator paid for a generation and which model made it.
@@ -332,46 +330,6 @@ const getThumbnailById = async (req: Request, res: Response) => {
   const isLiked = userId ? Boolean(await likeDislikeModel.exists({ userId, thumbnailId: thumbnail._id })) : false;
 
   return ApiResponse.success(res, 200, "Thumbnail fetched.", { ...thumbnail, isLiked });
-};
-
-/**
- * POST /thumbnails/:id/view
- * Count a view of a published thumbnail once per viewer, signed in or guest. The owner's own
- * views are not counted.
- */
-const recordThumbnailView = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  if (!mongoose.isObjectIdOrHexString(id)) {
-    return ApiResponse.error(res, 400, "Invalid thumbnail id.");
-  }
-
-  const thumbnail = await thumbnailModel
-    .findOne({ _id: id, published: true, deletedAt: null })
-    .select("userId")
-    .lean();
-
-  if (!thumbnail) {
-    return ApiResponse.error(res, 404, "Thumbnail not found.");
-  }
-
-  if (thumbnail.userId.toString() === req.user?.userId) {
-    return ApiResponse.success(res, 200, "Views of your own thumbnail are not counted.", { counted: false });
-  }
-
-  // The unique index lets only the viewer's first view insert, even when requests arrive together.
-  const { upsertedCount } = await thumbnailViewModel.updateOne(
-    { thumbnailId: thumbnail._id, viewerKey: getViewerKey(req, res) },
-    {},
-    { upsert: true },
-  );
-
-  const counted = upsertedCount === 1;
-  if (counted) {
-    await thumbnailModel.updateOne({ _id: thumbnail._id }, { $inc: { viewsCount: 1 } });
-  }
-
-  return ApiResponse.success(res, 200, counted ? "View recorded." : "View already counted.", { counted });
 };
 
 /**
@@ -716,7 +674,6 @@ export {
   getMyThumbnails,
   getCommunityThumbnails,
   getThumbnailById,
-  recordThumbnailView,
   getThumbnailSharePage,
   getRecycleBinThumbnails,
   softDeleteThumbnail,
