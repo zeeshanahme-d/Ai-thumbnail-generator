@@ -12,7 +12,6 @@ import useThumbnail from "../../core/thumbnails/hooks/use-thumbnail";
 import { useSession } from "../../store/useSessionStore";
 import Button from "../../components/Button";
 import Eyebrow from "../../components/Eyebrow";
-import PageLoader from "../../components/PageLoader";
 import Wrapper from "../../components/Wrapper";
 
 import PreviewBreadcrumb from "./components/PreviewBreadcrumb";
@@ -23,6 +22,7 @@ import PreviewStyleCard from "./components/PreviewStyleCard";
 import PreviewPromptCard from "./components/PreviewPromptCard";
 import PreviewActions from "./components/PreviewActions";
 import PreviewMoreThumbnails from "./components/PreviewMoreThumbnails";
+import ThumbnailPreviewSkeleton from "./components/ThumbnailPreviewSkeleton";
 
 import type { ThumbnailPreviewState } from "../../types";
 
@@ -46,7 +46,7 @@ export default function ThumbnailPreview() {
   const { mutate: likeMutate, isPending: isLiking } = useLikeThumbnail();
 
   if (isPending) {
-    return <PageLoader />;
+    return <ThumbnailPreviewSkeleton />;
   }
 
   if (!thumbnail) {
