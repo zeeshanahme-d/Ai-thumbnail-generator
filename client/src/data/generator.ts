@@ -5,12 +5,12 @@ export const PROMPT_TEMPLATES: IPromptTemplate[] = [
   {
     label: "Gaming",
     icon: Gamepad2,
-    prompt: "A gamer with a shocked face in front of a glowing screen, an epic boss battle with fire and lightning exploding behind them, neon rim lighting",
+    prompt: "A focused gamer in a headset leaning toward a glowing screen, an epic boss battle with fire and lightning exploding behind them, neon rim lighting",
   },
   {
     label: "Tech",
     icon: Cpu,
-    prompt: "A sleek new smartphone floating above a dark desk, a creator pointing at it with an excited face, glowing blue accents and sharp studio lighting",
+    prompt: "A sleek new smartphone floating above a dark desk, a creator pointing at it with a confident grin, glowing blue accents and sharp studio lighting",
   },
   {
     label: "Vlog",
@@ -35,7 +35,7 @@ export const PROMPT_TEMPLATES: IPromptTemplate[] = [
   {
     label: "Cooking",
     icon: ChefHat,
-    prompt: "A chef tasting a steaming dish with a surprised delighted face, colorful fresh ingredients flying around, warm kitchen lighting",
+    prompt: "A chef tasting a steaming dish with a satisfied smile, colorful fresh ingredients flying around, warm kitchen lighting",
   },
 ];
 

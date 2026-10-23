@@ -39,6 +39,6 @@ export const capabilities: ICapability[] = [
 
 // The Improve tile's example: a rough idea and the Gaming template as the fuller prompt.
 export const IMPROVE_EXAMPLE = {
-    idea: "gaming video, boss fight, shocked face",
+    idea: "gaming video, boss fight, focused gamer",
     improved: PROMPT_TEMPLATES[0].prompt,
 };

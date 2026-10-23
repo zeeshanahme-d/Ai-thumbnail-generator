@@ -479,8 +479,11 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 2. Server applies a due monthly refill, then reserves credits atomically
    (`CREDIT_COST.GENERATE_COST = 5`)
 3. Creates a thumbnail document with `isGenerating: true`
-4. Builds a detailed prompt from style presets (`constants/constants.ts`), color scheme
-   descriptions, text overlay rules, reference image instructions
+4. Builds the prompt with `buildThumbnailPrompt` (`utils/thumbnail-prompt.ts`): plain paragraphs
+   for the title, the creator's brief (which wins over presets), the style and color presets
+   (`constants/constants.ts`, descriptions, none asks for an expression), reference image or
+   casting rules, a natural expression (no default shocked face), the headline or no-text rule
+   and the YouTube safe area. Check and print it: `npx tsx src/utils/thumbnail-prompt.check.ts --print`
 5. Calls `generateImage()` (`utils/gemini.ts`, which also has `generateText()`) with
    `GEMINI_IMAGE_MODEL`:
    60 s timeout per attempt, 429/503 retried with 1 s and 2 s backoff, safety blocks and
