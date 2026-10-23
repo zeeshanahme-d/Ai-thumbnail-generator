@@ -440,11 +440,6 @@ export interface UserId {
 
 export interface MediaAsset {
   url: string;
-  publicId?: string;
-  originalName?: string;
-  directory?: string;
-  format?: string;
-  bytes?: number;
 }
 
 export interface IUser {
