@@ -237,7 +237,7 @@ const getMyThumbnails = async (req: Request, res: Response) => {
     thumbnailModel
       .find(query)
       .sort(sortQuery)
-      .populate("userId", "fullName username avatar")
+      .populate("userId", "fullName username avatar.url")
       .lean()
       .skip(skip)
       .limit(limit),
@@ -291,7 +291,7 @@ const getCommunityThumbnails = async (req: Request, res: Response) => {
       .find(query)
       .select(PUBLIC_THUMBNAIL_PROJECTION)
       .sort(sortQuery)
-      .populate("userId", "fullName username avatar")
+      .populate("userId", "fullName username avatar.url")
       .lean()
       .skip(skip)
       .limit(limit),
@@ -320,7 +320,7 @@ const getThumbnailById = async (req: Request, res: Response) => {
   const thumbnail = await thumbnailModel
     .findOne({ _id: req.params.id, $or: visibleTo })
     .select(PUBLIC_THUMBNAIL_PROJECTION)
-    .populate("userId", "fullName username avatar")
+    .populate("userId", "fullName username avatar.url")
     .lean();
 
   if (!thumbnail) {
@@ -394,7 +394,7 @@ const getRecycleBinThumbnails = async (req: Request, res: Response) => {
     thumbnailModel
       .find(query)
       .sort(sortQuery)
-      .populate("userId", "fullName username avatar")
+      .populate("userId", "fullName username avatar.url")
       .lean()
       .skip(skip)
       .limit(limit),

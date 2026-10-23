@@ -22,7 +22,7 @@ async function handleUploadAvatar(req: Request, res: Response) {
   }
 
   // Fetch user to get old avatar publicId
-  const currentUser = await userModel.findById(userId);
+  const currentUser = await userModel.findById(userId).select("+avatar.publicId");
   if (!currentUser) {
     return ApiResponse.error(res, 404, "User not found.", "USER_NOT_FOUND");
   }
