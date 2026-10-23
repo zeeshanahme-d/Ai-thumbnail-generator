@@ -18,10 +18,6 @@ const thumbnailSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    viewsCount: {
-      type: Number,
-      default: 0,
-    },
     // Recomputed for published thumbnails by the scheduled jobs.
     trendingScore: {
       type: Number,
@@ -113,7 +109,6 @@ const thumbnailSchema = new mongoose.Schema(
 // Community feed, one per sort (newest and oldest share the first), and a user's own gallery.
 thumbnailSchema.index({ published: 1, createdAt: -1 });
 thumbnailSchema.index({ published: 1, likesCount: -1, createdAt: -1 });
-thumbnailSchema.index({ published: 1, viewsCount: -1, createdAt: -1 });
 thumbnailSchema.index({ published: 1, trendingScore: -1, createdAt: -1 });
 thumbnailSchema.index({ userId: 1, deletedAt: 1, createdAt: -1 });
 // Recycle-bin items across all users, for the 30-day purge.

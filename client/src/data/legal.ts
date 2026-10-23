@@ -71,7 +71,6 @@ const privacyPolicy: ILegalDocument = {
             paragraphs: ["We use a small number of cookies and browser storage items, all needed for the service to work:"],
             list: [
                 "accessToken (15 minutes) and refreshToken (30 days): secure, http-only cookies that keep you signed in.",
-                "visitorId (1 year): lets us count a signed-out visitor's view of a published thumbnail only once.",
                 "Local storage: a copy of your basic profile so pages load faster, and your light or dark theme choice.",
                 "Session storage: your email address while you finish verifying it or resetting your password.",
             ],

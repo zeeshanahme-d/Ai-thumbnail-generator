@@ -22,7 +22,6 @@ export enum THUMBNAIL_SORT {
   Newest = "newest",
   Oldest = "oldest",
   MostLiked = "most-liked",
-  MostViews = "most-views",
   Trending = "trending",
 }
 

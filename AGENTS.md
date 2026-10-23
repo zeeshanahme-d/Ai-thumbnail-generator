@@ -299,7 +299,7 @@ server/
    ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
    ├─ controllers/           # auth, user, thumbnail, upload-files, billing
    ├─ middlewares/            # auth (JWT), multer (image upload), validate (zod)
-   ├─ models/                # user, refreshToken, thumbnail, likeDislike, thumbnailView
+   ├─ models/                # user, refreshToken, thumbnail, likeDislike
    ├─ schemas/               # media.schema.ts (reusable Mongoose subdocument)
    ├─ validations/           # zod schemas for auth, thumbnail and billing endpoints
    ├─ helper/                # halper-functions.ts (bcrypt), token-helpers.ts (JWT)
@@ -388,13 +388,6 @@ detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
   `trending` sorts by `trendingScore`
 - `GET /thumbnail/:id` — detail: published ones for anyone, any of their own for the owner.
   Non-id paths (`/recycle-bin`) skip to the protected router via `next("router")`
-- `POST /thumbnail/:id/view` — counts a view on a published thumbnail once per viewer, like
-  likes: a `thumbnailView` record with a unique `{ thumbnailId, viewerKey }` index is upserted
-  and `viewsCount` only goes up when it was inserted. `viewerKey` (`utils/viewer.ts`) is
-  `user:<id>`, or `guest:<uuid>` from an httpOnly `visitorId` cookie set on a guest's first view.
-  The owner's own views don't count; `viewLimiter` caps calls per IP. React StrictMode calls it
-  twice in dev, which the dedupe absorbs. View records are deleted with the thumbnail
-  (`deleteThumbnailsForever`) and with the viewer's account; the counts stay
 - `GET /thumbnail/:id/share` — the shared link: HTML with Open Graph tags that redirects to
   `CLIENT_URL/thumbnail/:id` (`utils/share-page.ts`)
 
@@ -570,11 +563,11 @@ generation (up to ~3 Gemini attempts of 60 s), e.g. Nginx `client_max_body_size 
   Invoices has no in-app list, it points to Paddle's receipts and the portal
 - Paid Pro/Ultra plans through Paddle (see Billing above); `PricingCard` opens checkout
 - Monthly free-credit refill, stuck-generation cleanup, the 30-day recycle-bin purge and the
-  trending score (likes and views decayed by the age since first publish, `TRENDING_*` in
+  trending score (likes decayed by the age since first publish, `TRENDING_*` in
   `constants.ts`; `publishedAt` is kept through unpublishing so it can't be reset)
   (`utils/scheduled-jobs.ts`); permanent deletes all go through `deleteThumbnailsForever`
-- `/thumbnail/:id` fetches by id (`useThumbnail`, router state is only a placeholder), counts a
-  view on open, and Share copies the server's `/share` link so previews show the image
+- `/thumbnail/:id` fetches by id (`useThumbnail`, router state is only a placeholder), and
+  Share copies the server's `/share` link so previews show the image
 
 ### Not implemented / placeholder
 - **Plan switching** — subscribers can cancel and re-subscribe, but not switch Pro ↔ Ultra

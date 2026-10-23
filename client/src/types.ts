@@ -497,7 +497,6 @@ export interface Thumbnail {
   user_prompt?: string;
   deletedAt?: string | null;
   likesCount?: number;
-  viewsCount?: number;
   isLiked?: boolean;
   __v?: number;
 }
