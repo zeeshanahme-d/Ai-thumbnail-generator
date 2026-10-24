@@ -6,17 +6,20 @@ import {
   Palette,
   SlidersHorizontal,
   Sparkles,
+  Tag,
   WandSparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../Button";
 import PopoverPanel from "../PopoverPanel";
-import AspectRatioPicker from "./AspectRatioPicker";
+import FormatPicker from "./FormatPicker";
+import CategoryPicker from "./CategoryPicker";
 import ReferenceImageUpload from "./ReferenceImageUpload";
 import TextOverlayToggle from "./TextOverlayToggle";
 import {
-  ASPECT_RATIOS,
   PROMPT_TEMPLATES,
+  THUMBNAIL_CATEGORIES,
+  THUMBNAIL_FORMATS,
   THUMBNAIL_STYLES,
   THUMBNAIL_STYLES_COLORS,
 } from "../../data/generator";
@@ -29,6 +32,7 @@ import ColorSchemePicker from "./ColorSchemePicker";
 
 const STYLE_PANEL_ID = "prompt-style-panel";
 const COLOR_PICKER_ID = "prompt-color-picker-panel";
+const CATEGORY_PANEL_ID = "prompt-category-panel";
 const FORMAT_PANEL_ID = "prompt-format-panel";
 const REFERENCE_PANEL_ID = "prompt-reference-panel";
 
@@ -54,7 +58,8 @@ const PromptCard = ({
   const [colorScheme, setColorScheme] = useState<string>(
     THUMBNAIL_STYLES_COLORS[0].label,
   );
-  const [aspectRatio, setAspectRatio] = useState(ASPECT_RATIOS[0].value);
+  const [format, setFormat] = useState(THUMBNAIL_FORMATS[0].value);
+  const [category, setCategory] = useState(THUMBNAIL_CATEGORIES[0].label);
   const [textOverlay, setTextOverlay] = useState(true);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [openPanelId, setOpenPanelId] = useState<string | null>(null);
@@ -67,14 +72,17 @@ const PromptCard = ({
   const hasPrompt = prompt.trim().length > 0;
   const canSubmit = hasPrompt && !disabled && !isImproving;
   const hasReference = Boolean(referenceImage);
+  const selectedFormat = THUMBNAIL_FORMATS.find((option) => option.value === format) ?? THUMBNAIL_FORMATS[0];
 
   const handleChange = (next: string) => {
     if (value === undefined) setInternalValue(next);
     onChange?.(next);
   };
 
-  const handleUseTemplate = (templatePrompt: string) => {
+  // Templates share their names with categories, so picking one also sets its category.
+  const handleUseTemplate = (templateLabel: string, templatePrompt: string) => {
     handleChange(templatePrompt);
+    if (THUMBNAIL_CATEGORIES.some((option) => option.label === templateLabel)) setCategory(templateLabel);
     textareaRef.current?.focus();
   };
 
@@ -108,7 +116,8 @@ const PromptCard = ({
     onSubmit?.({
       prompt: prompt.trim(),
       style,
-      aspectRatio,
+      format,
+      category,
       colorScheme,
       textOverlay,
       referenceImage,
@@ -148,9 +157,16 @@ const PromptCard = ({
               </span>
               <span className="h-3 w-px bg-border" />
               <span>
-                Aspect ratio:{" "}
+                Format:{" "}
                 <span className="font-medium text-text-secondary">
-                  {aspectRatio}
+                  {selectedFormat.name} · {selectedFormat.aspectRatio}
+                </span>
+              </span>
+              <span className="h-3 w-px bg-border" />
+              <span>
+                Category:{" "}
+                <span className="font-medium text-text-secondary">
+                  {category}
                 </span>
               </span>
               <span className="h-3 w-px bg-border" />
@@ -235,7 +251,7 @@ const PromptCard = ({
               variant="secondary"
               size="xs"
               fullWidth={false}
-              onClick={() => handleUseTemplate(templatePrompt)}
+              onClick={() => handleUseTemplate(templateLabel, templatePrompt)}
               className="shrink-0 whitespace-nowrap"
             >
               <Icon size={14} />
@@ -262,6 +278,13 @@ const PromptCard = ({
                   icon={Palette}
                   label="Color scheme"
                   isOpen={openPanelId === COLOR_PICKER_ID}
+                  isConfigured
+                />
+                <ToolButton
+                  panelId={CATEGORY_PANEL_ID}
+                  icon={Tag}
+                  label="Category"
+                  isOpen={openPanelId === CATEGORY_PANEL_ID}
                   isConfigured
                 />
                 <ToolButton
@@ -333,11 +356,19 @@ const PromptCard = ({
           </PopoverPanel>
 
           <PopoverPanel
+            id={CATEGORY_PANEL_ID}
+            title="Category"
+            onOpenChange={trackPanel(CATEGORY_PANEL_ID)}
+          >
+            <CategoryPicker value={category} onChange={setCategory} />
+          </PopoverPanel>
+
+          <PopoverPanel
             id={FORMAT_PANEL_ID}
             title="Format & settings"
             onOpenChange={trackPanel(FORMAT_PANEL_ID)}
           >
-            <AspectRatioPicker value={aspectRatio} onChange={setAspectRatio} />
+            <FormatPicker value={format} onChange={setFormat} />
             <div className="mt-6">
               <TextOverlayToggle value={textOverlay} onChange={setTextOverlay} />
             </div>

@@ -5,7 +5,8 @@ export interface GenerateThumbnailPayload {
   title: string;
   prompt: string;
   style: string;
-  aspect_ratio: string;
+  format: string;
+  category: string;
   color_scheme: string;
   text_overlay?: boolean;
   referenceImage?: File | null;

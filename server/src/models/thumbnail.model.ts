@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import {
   AspectRatio,
   ColorScheme,
+  ThumbnailCategory,
+  ThumbnailFormat,
   ThumbnailModel,
   ThumbnailStyle,
 } from "../constants/enums.js";
@@ -46,6 +48,17 @@ const thumbnailSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(AspectRatio),
       default: AspectRatio.Widescreen,
+    },
+
+    // No defaults: thumbnails made before formats and categories existed stay without them.
+    format: {
+      type: String,
+      enum: Object.values(ThumbnailFormat),
+    },
+
+    category: {
+      type: String,
+      enum: Object.values(ThumbnailCategory),
     },
 
     color_scheme: {

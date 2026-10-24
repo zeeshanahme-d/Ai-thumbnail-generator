@@ -1,26 +1,26 @@
 import type { IFaq } from "../types";
 import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST, PAID_CREDITS_SPENDABLE } from "../lib/credits";
 import { ACCEPTED_IMAGE_LABEL, MAX_IMAGE_SIZE_MB } from "../lib/imageValidation";
-import { ASPECT_RATIOS } from "./generator";
+import { THUMBNAIL_FORMATS } from "./generator";
 import { CREDIT_PACK, YEARLY_DISCOUNT } from "./pricing";
 
-const aspectRatioList = new Intl.ListFormat("en", { type: "conjunction" }).format(
-    ASPECT_RATIOS.map(({ label, value }) => `${label} (${value})`),
+const formatList = new Intl.ListFormat("en", { type: "conjunction" }).format(
+    THUMBNAIL_FORMATS.map(({ name, aspectRatio }) => `${name} (${aspectRatio})`),
 );
 
 export const generalFaqs: IFaq[] = [
     {
         question: "What is Eyecatch AI?",
         answer:
-            "Eyecatch AI turns a short description of your video into a ready-to-use thumbnail. Pick a style, aspect ratio and color scheme, optionally add a reference image, and Google's Gemini AI generates it in seconds.",
+            "Eyecatch AI turns a short description of your video into a ready-to-use thumbnail. Pick a platform, category, style and color scheme, optionally add a reference image, and Google's Gemini AI generates it in seconds.",
     },
     {
         question: "Is Eyecatch AI free?",
         answer: `Yes. Verify your email and you get ${FREE_MONTHLY_CREDITS} free credits, topped back up every 30 days. Each thumbnail costs ${GENERATION_CREDIT_COST} credits and no credit card is needed.`,
     },
     {
-        question: "Which sizes can I create?",
-        answer: `${aspectRatioList}. Every size costs the same number of credits.`,
+        question: "Which platforms and sizes can I create?",
+        answer: `${formatList}. Every format costs the same number of credits.`,
     },
     {
         question: "Can I use my own image as a reference?",

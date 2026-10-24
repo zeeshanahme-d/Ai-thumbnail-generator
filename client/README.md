@@ -1,6 +1,6 @@
 # Eyecatch AI: client
 
-The React app for [Eyecatch AI](https://eyecatch.zeeshanahmed.dev), an AI YouTube thumbnail generator. It talks to the Express API in [`../server`](../server).
+The React app for [Eyecatch AI](https://eyecatch.zeeshanahmed.dev), an AI thumbnail generator for YouTube, TikTok, Instagram and more. It talks to the Express API in [`../server`](../server).
 
 **Live:** https://eyecatch.zeeshanahmed.dev
 

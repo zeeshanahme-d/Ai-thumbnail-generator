@@ -4,7 +4,7 @@ import type { IUser, PlanId } from "../types";
 export const GENERATION_CREDIT_COST = 5;
 
 // Mirrors CREDIT_COST.SIGNUP_BONUS: what verified free accounts get, and refill to every 30 days.
-export const FREE_MONTHLY_CREDITS = 10;
+export const FREE_MONTHLY_CREDITS = 20;
 
 // Mirrors PAID_CREDITS_SPENDABLE in server/src/constants/constants.ts. Payments run in Paddle test
 // mode, so plan and pack credits are shown but only the free monthly credits can be spent.

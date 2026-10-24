@@ -9,7 +9,7 @@ export const capabilities: ICapability[] = [
         label: "Size",
         title: "Made at the size you post",
         description:
-            "YouTube 16:9, Shorts 9:16, square, 4:3 or 3:4. The image is generated at that size, so nothing gets cropped afterwards.",
+            "YouTube, Shorts, TikTok, Instagram, Facebook, X, Twitch and Vimeo, each at its own size. The image is generated at that size, so nothing gets cropped afterwards.",
     },
     {
         id: "style",

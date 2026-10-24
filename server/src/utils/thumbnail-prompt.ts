@@ -1,20 +1,15 @@
-import { colorSchemeDescriptions, stylePrompts } from "../constants/constants.js";
-import { AspectRatio, type ColorScheme, type ThumbnailStyle } from "../constants/enums.js";
+import { THUMBNAIL_FORMATS, colorSchemeDescriptions, stylePrompts } from "../constants/constants.js";
+import { ThumbnailCategory, type ColorScheme, type ThumbnailFormat, type ThumbnailStyle } from "../constants/enums.js";
 
 type ThumbnailPromptInput = {
   title: string;
   prompt?: string;
   style: ThumbnailStyle;
   colorScheme: ColorScheme;
-  aspectRatio: string;
+  format: ThumbnailFormat;
+  category: ThumbnailCategory;
   textOverlay: boolean;
   hasReferenceImage: boolean;
-};
-
-// Where YouTube draws over the image, so nothing important goes there.
-const SAFE_AREA: Partial<Record<string, string>> = {
-  [AspectRatio.Widescreen]: "Keep the bottom-right corner free of anything important, because YouTube places the video length there.",
-  [AspectRatio.Vertical]: "Keep the bottom fifth and the right edge free of anything important, because YouTube Shorts places its buttons and caption there.",
 };
 
 /**
@@ -24,12 +19,19 @@ const SAFE_AREA: Partial<Record<string, string>> = {
  * the same open-mouthed "shocked" reaction every time.
  */
 export function buildThumbnailPrompt(input: ThumbnailPromptInput): string {
-  const { title, style, colorScheme, aspectRatio, textOverlay, hasReferenceImage } = input;
+  const { title, style, colorScheme, format, category, textOverlay, hasReferenceImage } = input;
+  const { aspectRatio, subject, safeArea } = THUMBNAIL_FORMATS[format];
   const brief = input.prompt?.trim();
 
   const parts = [
-    `Design a YouTube thumbnail for a video titled "${title.trim()}". It should look like the work of a professional thumbnail designer: one clear focal point, a simple layout and strong contrast, so it reads instantly at small sizes on a phone.`,
+    `Design ${subject} "${title.trim()}". It should look like the work of a professional designer: one clear focal point, a simple layout and strong contrast, so it reads instantly at small sizes on a phone.`,
   ];
+
+  if (category !== ThumbnailCategory.General) {
+    parts.push(
+      `It's for the ${category} niche: use the visual language viewers know from popular ${category.toLowerCase()} content, so it's recognisable at a glance.`,
+    );
+  }
 
   if (brief) {
     parts.push(`The creator's brief, which takes priority over the style notes below: "${brief}"`);
@@ -65,7 +67,7 @@ export function buildThumbnailPrompt(input: ThumbnailPromptInput): string {
   parts.push(
     [
       `Composition: a ${aspectRatio} frame with the main subject large and in sharp focus, a clean background that doesn't compete with it, and faces fully inside the frame.`,
-      SAFE_AREA[aspectRatio],
+      safeArea,
       "No borders, frames or watermarks.",
     ].filter(Boolean).join(" "),
   );

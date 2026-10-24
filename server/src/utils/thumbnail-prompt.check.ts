@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { buildThumbnailPrompt } from "./thumbnail-prompt.js";
-import { AspectRatio, ColorScheme, ThumbnailStyle } from "../constants/enums.js";
-import { stylePrompts } from "../constants/constants.js";
+import { ColorScheme, ThumbnailCategory, ThumbnailFormat, ThumbnailStyle } from "../constants/enums.js";
+import { THUMBNAIL_FORMATS, stylePrompts } from "../constants/constants.js";
 import logger from "./logger.js";
 
 const base = {
@@ -9,14 +9,17 @@ const base = {
   prompt: "",
   style: ThumbnailStyle.BoldGraphic,
   colorScheme: ColorScheme.Vibrant,
-  aspectRatio: AspectRatio.Widescreen,
+  format: ThumbnailFormat.YouTube,
+  category: ThumbnailCategory.General,
   textOverlay: true,
   hasReferenceImage: false,
 };
 
 const plain = buildThumbnailPrompt(base);
 assert.ok(plain.includes(`"I tried every budget smartwatch"`));
+assert.ok(plain.startsWith("Design a YouTube thumbnail for a video titled"));
 assert.ok(!plain.includes("creator's brief"), "no brief line without a prompt");
+assert.ok(!plain.includes("niche"), "no category line for General");
 assert.ok(plain.includes("headline"));
 assert.ok(plain.includes("bottom-right corner"), "16:9 keeps the timestamp corner clear");
 assert.ok(plain.includes("Include a person only if"));
@@ -33,7 +36,23 @@ assert.ok(noText.includes("no text") && !noText.includes("headline"));
 const withReference = buildThumbnailPrompt({ ...base, hasReferenceImage: true });
 assert.ok(withReference.includes("keep exactly that person") && !withReference.includes("Include a person only if"));
 
-const square = buildThumbnailPrompt({ ...base, aspectRatio: AspectRatio.Square });
+const gaming = buildThumbnailPrompt({ ...base, category: ThumbnailCategory.Gaming });
+assert.ok(gaming.includes("Gaming niche") && gaming.includes("popular gaming content"));
+
+// Every format names its platform's subject and its own frame, with no other platform's safe area.
+for (const format of Object.values(ThumbnailFormat)) {
+  const { aspectRatio, subject, safeArea } = THUMBNAIL_FORMATS[format];
+  const text = buildThumbnailPrompt({ ...base, format });
+  assert.ok(text.startsWith(`Design ${subject} "`), format);
+  assert.ok(text.includes(`a ${aspectRatio} frame`), format);
+  if (safeArea) assert.ok(text.includes(safeArea), format);
+  if (format !== ThumbnailFormat.YouTube) assert.ok(!text.includes("YouTube places"), format);
+}
+
+const tiktok = buildThumbnailPrompt({ ...base, format: ThumbnailFormat.TikTok });
+assert.ok(tiktok.includes("TikTok cover") && tiktok.includes("9:16 frame") && !tiktok.includes("YouTube"));
+
+const square = buildThumbnailPrompt({ ...base, format: ThumbnailFormat.Square });
 assert.ok(!square.includes("bottom-right") && square.includes("1:1 frame"));
 
 if (process.argv.includes("--print")) process.stdout.write(`${withBrief}\n`);

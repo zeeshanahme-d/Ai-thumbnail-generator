@@ -57,7 +57,8 @@ export interface ProcessTimelineProps {
 export interface PromptSubmission {
   prompt: string;
   style: string;
-  aspectRatio: string;
+  format: string;
+  category: string;
   colorScheme: string;
   textOverlay: boolean;
   referenceImage: File | null;
@@ -152,6 +153,22 @@ export interface IAspectRatio {
   label: string;
   /** CSS aspect-ratio value used for the preview shape. */
   ratio: string;
+}
+
+/** Where a thumbnail will be posted, which sets its size. */
+export interface IThumbnailFormat {
+  value: string;
+  platform: string;
+  /** Short name inside its platform's row in the picker. */
+  label: string;
+  /** Full name, shown on its own. */
+  name: string;
+  aspectRatio: string;
+}
+
+export interface IThumbnailCategory {
+  label: string;
+  icon: LucideIcon;
 }
 
 export interface IDashboardNavItem {
@@ -478,6 +495,8 @@ export interface Thumbnail {
   image_url?: string;
   thumbnail?: MediaAsset;
   aspect_ratio?: string;
+  format?: string;
+  category?: string;
   color_scheme?: string;
   createdAt: string;
   updatedAt: string;

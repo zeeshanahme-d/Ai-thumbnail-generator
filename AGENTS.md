@@ -5,8 +5,8 @@ Guidance for Codex when working in this repository.
 ## Project
 
 AI Thumbnail Generator ("Eyecatch AI") — a web app where a user describes a thumbnail,
-picks a style, aspect ratio, color scheme, and optional reference image, and the app
-generates a YouTube/social thumbnail using **Gemini AI** (`gemini-3.1-flash-lite-image`).
+picks a platform format, category, style, color scheme, and optional reference image, and the app
+generates a thumbnail for YouTube, TikTok, Instagram, Facebook, X, Twitch or Vimeo using **Gemini AI** (`gemini-3.1-flash-lite-image`).
 
 Two workspaces, each with its own `package.json`:
 
@@ -46,7 +46,7 @@ client/src/
 ├─ App.tsx           # QueryClientProvider → SessionProvider → AppRoutes
 ├─ types.ts          # ALL shared interfaces/types live here
 ├─ components/       # reusable components (shared across pages/sections)
-│  ├─ image-generate-components/  # PromptCard, StylePicker, AspectRatioPicker, etc.
+│  ├─ image-generate-components/  # PromptCard, StylePicker, FormatPicker, CategoryPicker, etc.
 │  └─ modals/        # ConfirmDialog
 ├─ sections/         # homepage sections (HeroSection, CapabilitiesSection, ProcessSection, …)
 │  └─ components/    # homepage-only parts: hero/, capabilities/ (bento demos), process/ (walkthrough)
@@ -222,7 +222,7 @@ Check these before writing anything new:
   `buttonClasses()` from `lib/buttonClasses.ts`, the same classes Button renders.
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
-  uncontrolled; includes style/aspect-ratio/color-scheme/reference-image pickers and the
+  uncontrolled; includes style/category/format/color-scheme/reference-image pickers and the
   text-on-image switch (on by default).
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
   signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
@@ -252,7 +252,7 @@ Check these before writing anything new:
   sample thumbnails (`sampleThumbnails` in `data/hero.ts`, 640px WebP copies).
 - **`FaqAccordion.tsx`** — animated accordion, one answer open at a time; questions live
   in `data/faq.ts`.
-- **`StylePicker` / `AspectRatioPicker` / `ColorSchemePicker` / `ReferenceImageUpload` /
+- **`StylePicker` / `CategoryPicker` / `FormatPicker` / `ColorSchemePicker` / `ReferenceImageUpload` /
   `TextOverlayToggle`**
   — controlled (`value`/`onChange`) pickers used inside `PromptCard`.
 - **`ThumbnailCard.tsx`** — the unified card for displaying thumbnails. Supports
@@ -469,7 +469,8 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 
 ### AI Generation flow
 
-1. Client sends `POST /thumbnail` with `title`, `prompt`, `style`, `aspect_ratio`,
+1. Client sends `POST /thumbnail` with `title`, `prompt`, `style`, `format` (`ThumbnailFormat`, default
+   `youtube`; the server takes the aspect ratio from `THUMBNAIL_FORMATS`), `category` (default `General`),
    `color_scheme`, `text_overlay` (parsed with `z.stringbool()`, so `"false"` is false; on
    by default),
    and optional `referenceImage` file
@@ -479,8 +480,8 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 4. Builds the prompt with `buildThumbnailPrompt` (`utils/thumbnail-prompt.ts`): plain paragraphs
    for the title, the creator's brief (which wins over presets), the style and color presets
    (`constants/constants.ts`, descriptions, none asks for an expression), reference image or
-   casting rules, a natural expression (no default shocked face), the headline or no-text rule
-   and the YouTube safe area. Check and print it: `npx tsx src/utils/thumbnail-prompt.check.ts --print`
+   casting rules, the category niche (left out for General), a natural expression (no default shocked face), the headline or no-text rule
+   and the format's safe area (where its platform draws over the image). Check and print it: `npx tsx src/utils/thumbnail-prompt.check.ts --print`
 5. Calls `generateImage()` (`utils/gemini.ts`, which also has `generateText()`) with
    `GEMINI_IMAGE_MODEL`:
    60 s timeout per attempt, 429/503 retried with 1 s and 2 s backoff, safety blocks and
@@ -495,14 +496,14 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 
 - **Test mode (portfolio)**: `PAID_CREDITS_SPENDABLE = false` (`constants.ts`, mirrored in
   client `lib/credits.ts`). Payments run in the Paddle sandbox; plans and packs are recorded
-  but only the free credits (`SIGNUP_BONUS`, 10) spend (`min(totalcredits, SIGNUP_BONUS) − creditsUsed`, pack never).
+  but only the free credits (`SIGNUP_BONUS`, 20) spend (`min(totalcredits, SIGNUP_BONUS) − creditsUsed`, pack never).
   Every verified account, whatever its plan, gets the free 30-day refill; paid periods record
   `subscriptionPeriodStart/End` only, and cancelling doesn't refill (no subscribe/cancel
   farming). Settings shows plan credits (`PLAN_MONTHLY_CREDITS`) and pack credits as locked;
   `TestCheckoutDialog` (test card, Cancel / Proceed) opens before every checkout. The rest
   of this section and Billing describe the `true` behaviour.
-- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (10 credits)
-  (`$max`, so older accounts that already have 20 are not topped up twice). Signup rejects
+- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (20 credits)
+  (`$max`, so an account is never topped up twice). Signup rejects
   disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
 - `user.totalcredits` vs `user.creditsUsed` is the monthly allowance, which refills overwrite;
@@ -553,7 +554,7 @@ generation (up to ~3 Gemini attempts of 60 s), e.g. Nginx `client_max_body_size 
 ### Working features
 - Full email auth (signup with email verification, login, forgot/reset/change password
   with OTP email, rate limits on auth routes)
-- Thumbnail generation via Gemini AI with style/color/aspect-ratio presets
+- Thumbnail generation via Gemini AI with platform format, category, style and color presets
 - Dashboard: Generate, Gallery, Community, Recycle Bin (all wired to real API)
 - Like/unlike, publish/unpublish, soft delete/restore/permanent delete
 - Profile editing + avatar upload via Cloudinary

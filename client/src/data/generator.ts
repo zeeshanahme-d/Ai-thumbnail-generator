@@ -1,5 +1,28 @@
-import { ChefHat, Cpu, Dumbbell, Gamepad2, GraduationCap, TrendingUp, Video } from "lucide-react";
-import type { IAspectRatio, IPromptTemplate, IThumbnailStyle } from "../types";
+import {
+  Briefcase,
+  ChefHat,
+  Cpu,
+  Dumbbell,
+  Gamepad2,
+  GraduationCap,
+  LayoutGrid,
+  Laugh,
+  Music,
+  Newspaper,
+  Plane,
+  Shirt,
+  Star,
+  TrendingUp,
+  Trophy,
+  Video,
+} from "lucide-react";
+import type {
+  IAspectRatio,
+  IPromptTemplate,
+  IThumbnailCategory,
+  IThumbnailFormat,
+  IThumbnailStyle,
+} from "../types";
 
 export const PROMPT_TEMPLATES: IPromptTemplate[] = [
   {
@@ -33,7 +56,7 @@ export const PROMPT_TEMPLATES: IPromptTemplate[] = [
     prompt: "A muscular athlete mid-lift with a determined face in a dark gym, sweat glistening under a dramatic spotlight",
   },
   {
-    label: "Cooking",
+    label: "Food",
     icon: ChefHat,
     prompt: "A chef tasting a steaming dish with a satisfied smile, colorful fresh ingredients flying around, warm kitchen lighting",
   },
@@ -119,9 +142,48 @@ export const THUMBNAIL_STYLES_COLORS = [
 ] as const;
 
 export const ASPECT_RATIOS: IAspectRatio[] = [
-  { value: "16:9", label: "YouTube", ratio: "16 / 9" },
-  { value: "9:16", label: "Shorts", ratio: "9 / 16" },
+  { value: "16:9", label: "Widescreen", ratio: "16 / 9" },
+  { value: "9:16", label: "Vertical", ratio: "9 / 16" },
+  { value: "4:5", label: "Feed post", ratio: "4 / 5" },
   { value: "1:1", label: "Square", ratio: "1 / 1" },
-  { value: "4:3", label: "Traditional", ratio: "4 / 3" },
+  { value: "4:3", label: "Classic", ratio: "4 / 3" },
   { value: "3:4", label: "Portrait", ratio: "3 / 4" },
+];
+
+// Mirrors ThumbnailFormat and THUMBNAIL_FORMATS in the server; the first one is the default.
+export const THUMBNAIL_FORMATS: IThumbnailFormat[] = [
+  { value: "youtube", platform: "YouTube", label: "Video", name: "YouTube video", aspectRatio: "16:9" },
+  { value: "youtube-shorts", platform: "YouTube", label: "Shorts", name: "YouTube Shorts", aspectRatio: "9:16" },
+  { value: "tiktok", platform: "TikTok", label: "Video cover", name: "TikTok", aspectRatio: "9:16" },
+  { value: "instagram-post", platform: "Instagram", label: "Post", name: "Instagram post", aspectRatio: "4:5" },
+  { value: "instagram-reel", platform: "Instagram", label: "Reel", name: "Instagram Reel", aspectRatio: "9:16" },
+  { value: "instagram-story", platform: "Instagram", label: "Story", name: "Instagram Story", aspectRatio: "9:16" },
+  { value: "facebook-video", platform: "Facebook", label: "Video", name: "Facebook video", aspectRatio: "16:9" },
+  { value: "facebook-post", platform: "Facebook", label: "Post", name: "Facebook post", aspectRatio: "4:5" },
+  { value: "x", platform: "X", label: "Post", name: "X post", aspectRatio: "16:9" },
+  { value: "twitch", platform: "Twitch", label: "Stream", name: "Twitch stream", aspectRatio: "16:9" },
+  { value: "vimeo", platform: "Vimeo", label: "Video", name: "Vimeo video", aspectRatio: "16:9" },
+  { value: "square", platform: "Any platform", label: "Square", name: "Square", aspectRatio: "1:1" },
+  { value: "classic", platform: "Any platform", label: "Classic", name: "Classic", aspectRatio: "4:3" },
+  { value: "portrait", platform: "Any platform", label: "Portrait", name: "Portrait", aspectRatio: "3:4" },
+];
+
+// Mirrors ThumbnailCategory in the server; the first one is the default.
+export const THUMBNAIL_CATEGORIES: IThumbnailCategory[] = [
+  { label: "General", icon: LayoutGrid },
+  { label: "Gaming", icon: Gamepad2 },
+  { label: "Tech", icon: Cpu },
+  { label: "Vlog", icon: Video },
+  { label: "Education", icon: GraduationCap },
+  { label: "Finance", icon: TrendingUp },
+  { label: "Business", icon: Briefcase },
+  { label: "Fitness", icon: Dumbbell },
+  { label: "Food", icon: ChefHat },
+  { label: "Travel", icon: Plane },
+  { label: "Beauty & Fashion", icon: Shirt },
+  { label: "Music", icon: Music },
+  { label: "Comedy", icon: Laugh },
+  { label: "Sports", icon: Trophy },
+  { label: "News", icon: Newspaper },
+  { label: "Reviews", icon: Star },
 ];
