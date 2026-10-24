@@ -12,6 +12,7 @@ import {
 import toast from "react-hot-toast";
 import Button from "../Button";
 import PopoverPanel from "../PopoverPanel";
+import Tooltip from "../Tooltip";
 import FormatPicker from "./FormatPicker";
 import CategoryPicker from "./CategoryPicker";
 import ReferenceImageUpload from "./ReferenceImageUpload";
@@ -127,9 +128,8 @@ const PromptCard = ({
   return (
     <div
       onMouseDown={handleCardMouseDown}
-      className={`cursor-text rounded-2xl border bg-background-card p-4 shadow-card transition-[border-color] duration-200 sm:p-5 ${
-        isFocused ? "border-primary" : "border-border"
-      } ${className}`}
+      className={`cursor-text rounded-2xl border bg-background-card p-4 shadow-card transition-[border-color] duration-200 sm:p-5 ${isFocused ? "border-primary" : "border-border"
+        } ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -181,7 +181,7 @@ const PromptCard = ({
                   <span className="h-3 w-px bg-border" />
                   <span className="flex items-center gap-1">
                     Reference:{" "}
-                    <span className="font-medium inline-block text-text-secondary truncate max-w-[150px]">
+                    <span className="font-medium inline-block text-text-secondary truncate max-w-37.5">
                       {referenceImage?.name}
                     </span>
                   </span>
@@ -194,27 +194,26 @@ const PromptCard = ({
         {/* The tooltip sits on the wrapper: disabled buttons get no hover events in Chrome,
             so pointer-events-none lets the hover reach it while the prompt is empty. */}
         {isAuthenticated && (
-          <span
-            className="inline-flex shrink-0"
-            title={hasPrompt ? "Improve my prompt with AI" : "Write a prompt, then improve it with AI"}
-          >
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              rounded="lg"
-              disabled={!hasPrompt || disabled || isImproving}
-              onClick={handleImprove}
-              aria-label="Improve my prompt with AI"
-              className="disabled:pointer-events-none"
-            >
-              {isImproving ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <WandSparkles size={16} />
-              )}
-            </Button>
-          </span>
+          <Tooltip label={hasPrompt ? "Improve my prompt with AI" : "Write a prompt, then improve it with AI"}>
+            <span className="inline-flex shrink-0">
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                rounded="lg"
+                disabled={!hasPrompt || disabled || isImproving}
+                onClick={handleImprove}
+                aria-label="Improve my prompt with AI"
+                className="disabled:pointer-events-none"
+              >
+                {isImproving ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <WandSparkles size={16} />
+                )}
+              </Button>
+            </span>
+          </Tooltip>
         )}
       </div>
 
@@ -235,15 +234,14 @@ const PromptCard = ({
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`block w-full min-h-32 sm:min-h-[150px] max-h-[220px] h-auto resize-none border-none bg-transparent text-[0.95rem] leading-relaxed text-text-primary outline-none placeholder:text-text-muted ${
-          label || isAuthenticated ? "mt-3" : ""
-        }`}
+        className={`block w-full min-h-32 sm:min-h-37.5 max-h-55 h-auto resize-none border-none bg-transparent text-[0.95rem] leading-relaxed text-text-primary outline-none placeholder:text-text-muted ${label || isAuthenticated ? "mt-3" : ""
+          }`}
       />
 
       {/* One swipeable row, bleeding to the card edges so chips aren't cut off at the padding */}
       {!hasPrompt && !disabled && (
         <div className="-mx-4 mt-3 flex items-center gap-2 overflow-x-auto px-4 scrollbar-none sm:-mx-5 sm:px-5">
-          <span className="shrink-0 text-xs text-text-muted">Start from a template:</span>
+          <span className="shrink-0 text-xs text-text-muted">template:</span>
           {PROMPT_TEMPLATES.map(({ label: templateLabel, icon: Icon, prompt: templatePrompt }) => (
             <Button
               key={templateLabel}
@@ -411,7 +409,6 @@ const ToolButton = ({
     size="icon"
     rounded="lg"
     popoverTarget={panelId}
-    title={label}
     aria-label={label}
     className="relative"
   >

@@ -220,6 +220,7 @@ Check these before writing anything new:
   `rounded` (full | lg), `fullWidth`. Covers icon buttons and chips; extend it rather than
   hand-rolling a `<button>` with utility classes. A `<Link>` that looks like a button uses
   `buttonClasses()` from `lib/buttonClasses.ts`, the same classes Button renders.
+  Icon sizes with an `aria-label` show it as a `Tooltip` automatically; don't add `title`.
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
   uncontrolled; includes style/category/format/color-scheme/reference-image pickers and the
@@ -230,6 +231,9 @@ Check these before writing anything new:
   placeholder that types out the templates, so it passes `ariaLabel`) and the dashboard
   generate page.
 - **`PopoverPanel.tsx`** — native-popover shell (title + Done). Wrap any picker in it.
+- **`Tooltip.tsx`** — hover / keyboard-focus label in a manual popover (top layer, so nothing
+  clips it). Wrap something yourself only when the label differs from the aria-label or the
+  button can be disabled (disabled buttons get no hover); icon Buttons inside skip their own.
 - **`SectionTitle.tsx`** — label + heading + description. `as="h1"` for a page title;
   `animate={false}` everywhere except the homepage and `/pricing`. `align`: `center`
   (pill, default), `start` (left, mono eyebrow) or `split` (heading left, description
