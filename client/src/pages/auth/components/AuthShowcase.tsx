@@ -1,6 +1,6 @@
 import Eyebrow from "../../../components/Eyebrow";
 import { sampleThumbnails } from "../../../data/hero";
-import { ASPECT_RATIOS, THUMBNAIL_STYLES, THUMBNAIL_STYLES_COLORS } from "../../../data/generator";
+import { THUMBNAIL_FORMATS, THUMBNAIL_STYLES, THUMBNAIL_STYLES_COLORS } from "../../../data/generator";
 
 // The 16:9 samples, split into two columns.
 const wideSamples = sampleThumbnails.filter(({ width, height }) => width !== height);
@@ -38,12 +38,12 @@ export default function AuthShowcase() {
       <div aria-hidden="true" className="backdrop-grain pointer-events-none absolute inset-0" />
 
       <div className="relative p-12 xl:p-16">
-        <Eyebrow dot>YouTube thumbnail generator</Eyebrow>
+        <Eyebrow dot>AI thumbnail generator</Eyebrow>
         <p className="mt-5 max-w-[16ch] text-[clamp(2rem,1.2rem+2vw,3rem)] font-medium leading-[1.04] tracking-[-0.035em] text-text-primary">
           Thumbnails that earn the <span className="text-primary">click.</span>
         </p>
         <p className="mt-5 font-mono text-xs uppercase tracking-[0.06em] text-text-muted">
-          {THUMBNAIL_STYLES.length} styles · {ASPECT_RATIOS.length} sizes · {THUMBNAIL_STYLES_COLORS.length} color schemes
+          {THUMBNAIL_STYLES.length} styles · {THUMBNAIL_FORMATS.length} formats · {THUMBNAIL_STYLES_COLORS.length} color schemes
         </p>
       </div>
     </aside>

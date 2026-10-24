@@ -8,12 +8,21 @@ import {
   GENERATION_FAILURES,
   PROMPT_IMPROVER_INSTRUCTION,
   PROMPT_MAX_LENGTH,
+  THUMBNAIL_FORMATS,
   THUMBNAIL_SORT_OPTIONS,
 } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
 import likeDislikeModel from "../models/likeDislik.modal.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { AuthErrorCode, ColorScheme, GenerationErrorCode, ThumbnailStyle, UploadErrorCode } from "../constants/enums.js";
+import {
+  AuthErrorCode,
+  ColorScheme,
+  GenerationErrorCode,
+  ThumbnailCategory,
+  ThumbnailFormat,
+  ThumbnailStyle,
+  UploadErrorCode,
+} from "../constants/enums.js";
 import { buildThumbnailPrompt } from "../utils/thumbnail-prompt.js";
 import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
 import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
@@ -51,7 +60,8 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
   let succeeded = false;
 
   try {
-    const { title, prompt: user_prompt, style, aspect_ratio, color_scheme, text_overlay } = req.validated!.body;
+    const { title, prompt: user_prompt, style, format, category, color_scheme, text_overlay } = req.validated!.body;
+    const aspect_ratio = THUMBNAIL_FORMATS[format as ThumbnailFormat].aspectRatio;
 
     if (!title || typeof title !== "string" || !title.trim()) {
       return ApiResponse.error(res, 400, "Please provide a thumbnail title.");
@@ -99,7 +109,9 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       prompt_used: user_prompt ?? "",
       style: style || "Bold & Graphic",
       title: title.trim(),
-      aspect_ratio: aspect_ratio || "16:9",
+      aspect_ratio,
+      format,
+      category,
       text_overlay: Boolean(text_overlay),
       color_scheme: color_scheme || "Vibrant",
       isGenerating: true,
@@ -114,7 +126,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       topP: 0.95,
       responseModalities: ["IMAGE"],
       imageConfig: {
-        aspectRatio: aspect_ratio || "16:9",
+        aspectRatio: aspect_ratio,
         imageSize: "1k",
       },
       safetySettings: [
@@ -142,7 +154,8 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       prompt: user_prompt,
       style: style as ThumbnailStyle,
       colorScheme: color_scheme as ColorScheme,
-      aspectRatio: aspect_ratio,
+      format: format as ThumbnailFormat,
+      category: category as ThumbnailCategory,
       textOverlay: Boolean(text_overlay),
       hasReferenceImage: Boolean(referenceImagePart),
     });

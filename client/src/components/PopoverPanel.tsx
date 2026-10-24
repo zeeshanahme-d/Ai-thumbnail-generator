@@ -44,7 +44,8 @@ export default function PopoverPanel({
           </Button>
         </div>
 
-        <div className="mt-4">{children}</div>
+        {/* The padding keeps focus rings from being clipped by the scroll box. */}
+        <div className="-mx-1 -mb-1 mt-3 max-h-[calc(100dvh-10rem)] overflow-y-auto p-1">{children}</div>
       </div>
     </div>
   );

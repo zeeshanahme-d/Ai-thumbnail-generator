@@ -15,7 +15,7 @@ export default function ProcessSection() {
           align="split"
           text1="How it works"
           text2={["From one sentence", "to the home feed."]}
-          text3="Describe the video, set the controls, generate, then see the thumbnail next to other videos before you post."
+          text3="Describe the video, pick the platform, generate, and for YouTube see the thumbnail next to other videos before you post."
         />
       </Wrapper>
 

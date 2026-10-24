@@ -3,7 +3,7 @@ import { X, Download } from "lucide-react";
 import Button from "../../../../components/Button";
 import { handleDownloadFile } from "../../../../lib/herlper-fuctions";
 import type { Thumbnail } from "../../../../types";
-import { getThumbnailImageUrl } from "../../../../lib/thumbnail";
+import { getThumbnailFormatLabel, getThumbnailImageUrl } from "../../../../lib/thumbnail";
 
 interface GenerationPreviewModalProps {
   open: boolean;
@@ -37,7 +37,8 @@ export default function GenerationPreviewModal({
   const imageUrl = getThumbnailImageUrl(thumbnail);
   const details = [
     { label: "Style", value: thumbnail.style },
-    { label: "Size", value: thumbnail.aspect_ratio || "16:9" },
+    { label: "Format", value: getThumbnailFormatLabel(thumbnail) },
+    { label: "Category", value: thumbnail.category },
     { label: "Color", value: thumbnail.color_scheme },
     { label: "Text", value: thumbnail.text_overlay ? "On" : "Off" },
   ].filter((detail) => detail.value);

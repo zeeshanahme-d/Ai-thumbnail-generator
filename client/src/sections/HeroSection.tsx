@@ -24,7 +24,7 @@ export default function HeroSection() {
         <div className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-8">
           <div className="lg:col-span-8">
             <motion.div {...enter(0)}>
-              <Eyebrow dot>YouTube thumbnail generator</Eyebrow>
+              <Eyebrow dot>AI thumbnail generator</Eyebrow>
             </motion.div>
             <h1 className="mt-6 text-[clamp(2.5rem,1.5rem+5vw,5.5rem)] font-medium leading-[0.98] tracking-[-0.045em] text-text-primary">
               <MaskedLines
@@ -42,7 +42,7 @@ export default function HeroSection() {
             {...enter(0.15)}
             className="max-w-[38ch] text-pretty text-[clamp(1.0625rem,1rem+0.3vw,1.25rem)] leading-[1.55] text-text-secondary lg:col-span-4"
           >
-            Describe your video in a sentence. Pick a style, size and colors, add a reference
+            Describe your video in a sentence. Pick a platform, style and colors, add a reference
             image if you have one, and get a thumbnail in seconds.
           </motion.p>
         </div>

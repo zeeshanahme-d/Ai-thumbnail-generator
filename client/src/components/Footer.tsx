@@ -44,7 +44,7 @@ function FooterBrand() {
         <Logo className="h-7 w-auto" />
       </Link>
       <p className="mt-4 text-sm leading-relaxed text-text-secondary">
-        Describe your video, pick a style and get a YouTube thumbnail in seconds.
+        Describe your video, pick a platform and style, and get a thumbnail in seconds.
       </p>
       <Link
         to="/dashboard/generate"

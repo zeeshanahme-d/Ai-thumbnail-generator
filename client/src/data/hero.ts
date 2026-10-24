@@ -1,11 +1,22 @@
 import type { IHeroSpec, IThumbnailSample } from "../types";
-import { ASPECT_RATIOS, THUMBNAIL_STYLES, THUMBNAIL_STYLES_COLORS } from "./generator";
+import {
+    PLATFORM_NAMES,
+    THUMBNAIL_CATEGORIES,
+    THUMBNAIL_FORMATS,
+    THUMBNAIL_STYLES,
+    THUMBNAIL_STYLES_COLORS,
+} from "./generator";
 import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../lib/credits";
 
 // What the generator offers, counted from the same data the generator uses.
 export const heroSpecs: IHeroSpec[] = [
+    {
+        label: "Platforms",
+        value: `${PLATFORM_NAMES.length} platforms · ${THUMBNAIL_FORMATS.length} formats`,
+        note: PLATFORM_NAMES.join(", "),
+    },
+    { label: "Categories", value: `${THUMBNAIL_CATEGORIES.length} niches` },
     { label: "Styles", value: `${THUMBNAIL_STYLES.length} presets` },
-    { label: "Sizes", value: ASPECT_RATIOS.map(({ value }) => value).join(" · ") },
     { label: "Colors", value: `${THUMBNAIL_STYLES_COLORS.length} schemes` },
     { label: "Cost", value: `${GENERATION_CREDIT_COST} credits / thumbnail` },
     { label: "Free", value: `${FREE_MONTHLY_CREDITS} credits / month`, note: "Once your email is verified." },

@@ -1,5 +1,18 @@
 import dayjs from "dayjs";
+import { THUMBNAIL_FORMATS } from "../data/generator";
 import type { Thumbnail } from "../types";
+
+/** "TikTok · 9:16", or only the ratio for thumbnails made before formats existed. */
+export function getThumbnailFormatLabel(thumbnail: Thumbnail): string {
+  const ratio = thumbnail.aspect_ratio || "16:9";
+  const format = THUMBNAIL_FORMATS.find((option) => option.value === thumbnail.format);
+  return format ? `${format.name} · ${ratio}` : ratio;
+}
+
+// The YouTube preview only makes sense for YouTube videos (older thumbnails have no format).
+export function hasYouTubePreview(thumbnail: Thumbnail): boolean {
+  return !thumbnail.format || thumbnail.format === "youtube";
+}
 
 // Mirrors RECYCLE_BIN_RETENTION_MS in server/src/constants/constants.ts.
 export const RECYCLE_BIN_RETENTION_DAYS = 30;

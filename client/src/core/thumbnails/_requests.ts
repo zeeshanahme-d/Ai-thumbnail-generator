@@ -61,7 +61,8 @@ export async function generateThumbnail(payload: GenerateThumbnailPayload) {
   formData.append("title", payload.title);
   formData.append("prompt", payload.prompt || "");
   formData.append("style", payload.style);
-  formData.append("aspect_ratio", payload.aspect_ratio);
+  formData.append("format", payload.format);
+  formData.append("category", payload.category);
   formData.append("color_scheme", payload.color_scheme);
   if (payload.text_overlay !== undefined) {
     formData.append("text_overlay", String(payload.text_overlay));

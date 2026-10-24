@@ -31,6 +31,44 @@ export enum AspectRatio {
   Square = "1:1",
   Standard = "4:3",
   Portrait = "3:4",
+  Feed = "4:5",
+}
+
+// Where the image will be posted; each one has its own size (THUMBNAIL_FORMATS).
+export enum ThumbnailFormat {
+  YouTube = "youtube",
+  YouTubeShorts = "youtube-shorts",
+  TikTok = "tiktok",
+  InstagramPost = "instagram-post",
+  InstagramReel = "instagram-reel",
+  InstagramStory = "instagram-story",
+  FacebookVideo = "facebook-video",
+  FacebookPost = "facebook-post",
+  X = "x",
+  Twitch = "twitch",
+  Vimeo = "vimeo",
+  Square = "square",
+  Classic = "classic",
+  Portrait = "portrait",
+}
+
+export enum ThumbnailCategory {
+  General = "General",
+  Gaming = "Gaming",
+  Tech = "Tech",
+  Vlog = "Vlog",
+  Education = "Education",
+  Finance = "Finance",
+  Business = "Business",
+  Fitness = "Fitness",
+  Food = "Food",
+  Travel = "Travel",
+  Beauty = "Beauty & Fashion",
+  Music = "Music",
+  Comedy = "Comedy",
+  Sports = "Sports",
+  News = "News",
+  Reviews = "Reviews",
 }
 
 export enum ColorScheme {

@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Heart, Loader2 } from "lucide-react";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { STYLE_DOTS } from "../../data/community";
-import { getThumbnailImageUrl, getThumbnailAuthorName } from "../../lib/thumbnail";
+import { getThumbnailImageUrl, getThumbnailAuthorName, getThumbnailFormatLabel } from "../../lib/thumbnail";
 import { buttonClasses } from "../../lib/buttonClasses";
 import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../../lib/credits";
 import useGetCommunityThumbnails from "../../core/thumbnails/hooks/useGetCommunityThumbnails";
@@ -112,7 +112,7 @@ export default function ThumbnailPreview() {
                     alt={thumbnail.title}
                     loading="lazy"
                     decoding="async"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 )}
 
@@ -124,10 +124,10 @@ export default function ThumbnailPreview() {
                   </span>
                 )}
 
-                {/* Aspect ratio badge */}
+                {/* Format badge */}
                 {thumbnail.aspect_ratio && !thumbnail.isGenerating && (
                   <span className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-1 font-mono text-xs text-white backdrop-blur">
-                    {thumbnail.aspect_ratio}
+                    {getThumbnailFormatLabel(thumbnail)}
                   </span>
                 )}
               </div>

@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import Button from "../../../components/Button";
 import { handleDownloadFile } from "../../../lib/herlper-fuctions";
 import type { Thumbnail, YtPreviewState } from "../../../types";
-import { getThumbnailImageUrl } from "../../../lib/thumbnail";
+import { getThumbnailImageUrl, hasYouTubePreview } from "../../../lib/thumbnail";
 import { getThumbnailShareUrl } from "../../../core/thumbnails/_requests";
 
 interface PreviewActionsProps {
@@ -68,17 +68,19 @@ export default function PreviewActions({ thumbnail }: PreviewActionsProps) {
         Share
       </Button>
 
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        fullWidth={false}
-        onClick={() => navigate("/youtube-style-preview", { state: { thumbnail } satisfies YtPreviewState })}
-        className="gap-2"
-      >
-        <MonitorPlay size={15} />
-        YouTube preview
-      </Button>
+      {hasYouTubePreview(thumbnail) && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          fullWidth={false}
+          onClick={() => navigate("/youtube-style-preview", { state: { thumbnail } satisfies YtPreviewState })}
+          className="gap-2"
+        >
+          <MonitorPlay size={15} />
+          YouTube preview
+        </Button>
+      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import Button from "../../../../components/Button";
 import Eyebrow from "../../../../components/Eyebrow";
 import GenerationPreviewModal from "./GenerationPreviewModal";
 import { handleDownloadFile } from "../../../../lib/herlper-fuctions";
-import { getThumbnailImageUrl } from "../../../../lib/thumbnail";
+import { getThumbnailFormatLabel, getThumbnailImageUrl, hasYouTubePreview } from "../../../../lib/thumbnail";
 import usePublishThumbnail from "../../../../core/thumbnails/hooks/usePublishThumbnail";
 import type { Thumbnail, YtPreviewState } from "../../../../types";
 
@@ -64,7 +64,7 @@ export default function GenerationResultCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Eyebrow dot>Ready</Eyebrow>
             <span className="font-mono text-xs text-text-muted">
-              {thumbnail.style} · {thumbnail.aspect_ratio || "16:9"}
+              {thumbnail.style} · {getThumbnailFormatLabel(thumbnail)}
             </span>
           </div>
 
@@ -81,7 +81,7 @@ export default function GenerationResultCard({
             alt={thumbnail.title}
             loading="lazy"
             decoding="async"
-            className="size-full object-cover"
+            className="size-full object-contain"
           />
 
           {/* Quick action over the image */}
@@ -130,15 +130,17 @@ export default function GenerationResultCard({
               Fullscreen
             </Button>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              fullWidth={false}
-              onClick={() => navigate("/youtube-style-preview", { state: { thumbnail } satisfies YtPreviewState })}
-            >
-              <MonitorPlay size={15} />
-              YouTube preview
-            </Button>
+            {hasYouTubePreview(thumbnail) && (
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth={false}
+                onClick={() => navigate("/youtube-style-preview", { state: { thumbnail } satisfies YtPreviewState })}
+              >
+                <MonitorPlay size={15} />
+                YouTube preview
+              </Button>
+            )}
           </div>
 
           <Button

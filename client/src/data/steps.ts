@@ -1,5 +1,5 @@
 import type { IProcessSetting, IStep, IYtPreviewVideo } from "../types";
-import { THUMBNAIL_STYLES, THUMBNAIL_STYLES_COLORS } from "./generator";
+import { THUMBNAIL_FORMATS, THUMBNAIL_STYLES, THUMBNAIL_STYLES_COLORS } from "./generator";
 import { YT_PREVIEW_NEIGHBORS, YT_PREVIEW_SAMPLE } from "./ytPreview";
 
 export const steps: IStep[] = [
@@ -9,15 +9,15 @@ export const steps: IStep[] = [
     },
     {
         title: "Set the controls",
-        description: "Pick a style, a size and a color scheme. Add a reference image if you have one.",
+        description: "Pick the platform, a category, a style and a color scheme. Add a reference image if you have one.",
     },
     {
         title: "Generate",
-        description: "The thumbnail is ready in seconds and saved to your gallery. If it fails, your credits come back.",
+        description: "It's made at that platform's exact size in seconds and saved to your gallery. If it fails, your credits come back.",
     },
     {
-        title: "Check it on YouTube",
-        description: "Preview it in a home feed, in search and on mobile, in light or dark, before you upload.",
+        title: "Check it, then post",
+        description: "For YouTube, preview it in a home feed, in search and on mobile before you upload. Then download it and post.",
     },
 ];
 
@@ -26,8 +26,9 @@ export const PROCESS_PROMPT =
     "A shocked creator surrounded by floating smartwatches, bold text TOP SMARTWATCH UNDER 1499, glowing blue tech background";
 
 export const PROCESS_SETTINGS: IProcessSetting[] = [
+    { label: "Platform", value: `${THUMBNAIL_FORMATS[0].name} · ${THUMBNAIL_FORMATS[0].aspectRatio}` },
+    { label: "Category", value: "Tech" },
     { label: "Style", value: THUMBNAIL_STYLES[0].label },
-    { label: "Size", value: "16:9" },
     { label: "Color", value: THUMBNAIL_STYLES_COLORS[0].label },
 ];
 

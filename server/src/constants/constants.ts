@@ -1,4 +1,63 @@
-import { ColorScheme, GenerationErrorCode, ThumbnailStyle } from "./enums.js";
+import { AspectRatio, ColorScheme, GenerationErrorCode, ThumbnailFormat, ThumbnailStyle } from "./enums.js";
+
+// `subject` opens the prompt ("Design {subject} "{title}""); `safeArea` is where the platform
+// draws over the image. Mirrored in client/src/data/generator.ts.
+export const THUMBNAIL_FORMATS: Record<ThumbnailFormat, { aspectRatio: AspectRatio; subject: string; safeArea?: string }> = {
+  [ThumbnailFormat.YouTube]: {
+    aspectRatio: AspectRatio.Widescreen,
+    subject: "a YouTube thumbnail for a video titled",
+    safeArea: "Keep the bottom-right corner free of anything important, because YouTube places the video length there.",
+  },
+  [ThumbnailFormat.YouTubeShorts]: {
+    aspectRatio: AspectRatio.Vertical,
+    subject: "a YouTube Shorts cover for a video titled",
+    safeArea: "Keep the bottom fifth and the right edge free of anything important, because YouTube Shorts places its buttons and caption there.",
+  },
+  [ThumbnailFormat.TikTok]: {
+    aspectRatio: AspectRatio.Vertical,
+    subject: "a TikTok cover for a video titled",
+    safeArea: "Keep the bottom fifth and the right edge free of anything important, because TikTok places its buttons and caption there.",
+  },
+  [ThumbnailFormat.InstagramPost]: {
+    aspectRatio: AspectRatio.Feed,
+    subject: "an Instagram feed post about",
+    safeArea: "Keep the subject and any text away from the top and bottom edges, because Instagram's profile grid crops them.",
+  },
+  [ThumbnailFormat.InstagramReel]: {
+    aspectRatio: AspectRatio.Vertical,
+    subject: "an Instagram Reels cover for a video titled",
+    safeArea: "Keep the subject and any text in the middle of the frame, because the profile grid shows only the centre and Reels places its buttons and caption along the bottom and right edge.",
+  },
+  [ThumbnailFormat.InstagramStory]: {
+    aspectRatio: AspectRatio.Vertical,
+    subject: "an Instagram Story about",
+    safeArea: "Keep the top seventh and the bottom fifth free of anything important, because Stories place the profile name at the top and the reply bar at the bottom.",
+  },
+  [ThumbnailFormat.FacebookVideo]: {
+    aspectRatio: AspectRatio.Widescreen,
+    subject: "a Facebook video thumbnail for a video titled",
+  },
+  [ThumbnailFormat.FacebookPost]: {
+    aspectRatio: AspectRatio.Feed,
+    subject: "a Facebook feed post about",
+  },
+  [ThumbnailFormat.X]: {
+    aspectRatio: AspectRatio.Widescreen,
+    subject: "an image for a post on X about",
+  },
+  [ThumbnailFormat.Twitch]: {
+    aspectRatio: AspectRatio.Widescreen,
+    subject: "a Twitch stream thumbnail for a stream titled",
+    safeArea: "Keep the top-left and bottom-left corners free of anything important, because Twitch places the live badge and viewer count there.",
+  },
+  [ThumbnailFormat.Vimeo]: {
+    aspectRatio: AspectRatio.Widescreen,
+    subject: "a Vimeo thumbnail for a video titled",
+  },
+  [ThumbnailFormat.Square]: { aspectRatio: AspectRatio.Square, subject: "a square thumbnail titled" },
+  [ThumbnailFormat.Classic]: { aspectRatio: AspectRatio.Standard, subject: "a thumbnail titled" },
+  [ThumbnailFormat.Portrait]: { aspectRatio: AspectRatio.Portrait, subject: "a portrait thumbnail titled" },
+};
 
 // Style presets, written as descriptions: image models follow a described look better than a
 // keyword list. None of them asks for a facial expression; the prompt picks one from the topic.
@@ -27,7 +86,7 @@ export const colorSchemeDescriptions: Record<ColorScheme, string> = {
 };
 
 export const CREDIT_COST = {
-  SIGNUP_BONUS: 10,
+  SIGNUP_BONUS: 20,
   GENERATE_COST: 5,
   RECREATE_COST: 10,
 };
@@ -57,7 +116,7 @@ export const PROMPT_MAX_LENGTH = 500;
 export const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-lite-image";
 export const GEMINI_TEXT_MODEL = "gemini-3.1-flash-lite";
 
-export const PROMPT_IMPROVER_INSTRUCTION = `You improve prompts for an AI YouTube thumbnail generator.
+export const PROMPT_IMPROVER_INSTRUCTION = `You improve prompts for an AI thumbnail generator for YouTube, TikTok, Instagram, Facebook, X, Twitch and Vimeo.
 Rewrite the user's idea into one vivid image description: the main subject and what it is doing, the composition, the background, the lighting and the mood.
 If a person appears, describe a specific individual who fits the topic (age, look, clothing, setting), not a generic model, with a natural expression that suits the mood. Never add a shocked, screaming or open-mouthed face unless the user asked for one.
 Keep the user's topic and language. Do not add brand names, hashtags, quotes or explanations.

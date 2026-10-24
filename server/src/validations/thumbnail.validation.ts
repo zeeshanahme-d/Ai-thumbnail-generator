@@ -1,8 +1,9 @@
 import { z } from "zod";
 import {
-  AspectRatio,
   ColorScheme,
   THUMBNAIL_SORT,
+  ThumbnailCategory,
+  ThumbnailFormat,
   ThumbnailStyle,
 } from "../constants/enums.js";
 import { PROMPT_MAX_LENGTH } from "../constants/constants.js";
@@ -12,8 +13,6 @@ const thumbnailStyleValues = Object.values(ThumbnailStyle) as [
   ...string[],
 ];
 
-const aspectRatioValues = Object.values(AspectRatio) as [string, ...string[]];
-
 const colorSchemeValues = Object.values(ColorScheme) as [string, ...string[]];
 
 const promptMaxMessage = `Prompt must be at most ${PROMPT_MAX_LENGTH} characters`;
@@ -22,7 +21,9 @@ const generateThumbnailSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200, "Title must be at most 200 characters"),
   prompt: z.string().trim().max(PROMPT_MAX_LENGTH, promptMaxMessage).optional().default(""),
   style: z.enum(thumbnailStyleValues),
-  aspect_ratio: z.enum(aspectRatioValues).optional().default(AspectRatio.Widescreen),
+  // The format decides the aspect ratio, so the client doesn't send one.
+  format: z.enum(ThumbnailFormat).optional().default(ThumbnailFormat.YouTube),
+  category: z.enum(ThumbnailCategory).optional().default(ThumbnailCategory.General),
   color_scheme: z.enum(colorSchemeValues).optional().default(ColorScheme.Vibrant),
   // Multipart fields arrive as strings; stringbool reads "false" as false, unlike coerce, and
   text_overlay: z.stringbool().optional().default(true),

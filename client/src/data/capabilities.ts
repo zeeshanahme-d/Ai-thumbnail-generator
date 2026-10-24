@@ -1,15 +1,22 @@
 import type { ICapability } from "../types";
 import { ACCEPTED_IMAGE_LABEL, MAX_IMAGE_SIZE_MB } from "../lib/imageValidation";
-import { PROMPT_TEMPLATES, THUMBNAIL_STYLES, THUMBNAIL_STYLES_COLORS } from "./generator";
+import {
+    PLATFORM_NAMES,
+    PROMPT_TEMPLATES,
+    THUMBNAIL_CATEGORIES,
+    THUMBNAIL_STYLES,
+    THUMBNAIL_STYLES_COLORS,
+} from "./generator";
+
+const platformList = new Intl.ListFormat("en", { type: "conjunction" }).format(PLATFORM_NAMES);
 
 // The homepage bento: one tile per generator control. CapabilitiesSection picks each tile's demo and size by id.
 export const capabilities: ICapability[] = [
     {
-        id: "aspect-ratio",
-        label: "Size",
-        title: "Made at the size you post",
-        description:
-            "YouTube 16:9, Shorts 9:16, square, 4:3 or 3:4. The image is generated at that size, so nothing gets cropped afterwards.",
+        id: "format",
+        label: "Platform",
+        title: "Made for where you post",
+        description: `${platformList}, or a plain square, 4:3 or 3:4. Each format is generated at its own size, so nothing gets cropped afterwards.`,
     },
     {
         id: "style",
@@ -34,6 +41,12 @@ export const capabilities: ICapability[] = [
         label: "Reference",
         title: "Bring your face, logo or product",
         description: `Add a ${ACCEPTED_IMAGE_LABEL} image up to ${MAX_IMAGE_SIZE_MB} MB to guide the result. It's used for that one generation and never stored.`,
+    },
+    {
+        id: "category",
+        label: "Category",
+        title: `${THUMBNAIL_CATEGORIES.length} niches to pick from`,
+        description: "Gaming, tech, finance, food and more. Pick your niche and the AI is asked for the look its viewers expect.",
     },
 ];
 
