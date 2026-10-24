@@ -17,7 +17,6 @@ import {
   Video,
 } from "lucide-react";
 import type {
-  IAspectRatio,
   IPromptTemplate,
   IThumbnailCategory,
   IThumbnailFormat,
@@ -141,14 +140,7 @@ export const THUMBNAIL_STYLES_COLORS = [
   },
 ] as const;
 
-export const ASPECT_RATIOS: IAspectRatio[] = [
-  { value: "16:9", label: "Widescreen", ratio: "16 / 9" },
-  { value: "9:16", label: "Vertical", ratio: "9 / 16" },
-  { value: "4:5", label: "Feed post", ratio: "4 / 5" },
-  { value: "1:1", label: "Square", ratio: "1 / 1" },
-  { value: "4:3", label: "Classic", ratio: "4 / 3" },
-  { value: "3:4", label: "Portrait", ratio: "3 / 4" },
-];
+export const ANY_PLATFORM = "Any platform";
 
 // Mirrors ThumbnailFormat and THUMBNAIL_FORMATS in the server; the first one is the default.
 export const THUMBNAIL_FORMATS: IThumbnailFormat[] = [
@@ -163,10 +155,14 @@ export const THUMBNAIL_FORMATS: IThumbnailFormat[] = [
   { value: "x", platform: "X", label: "Post", name: "X post", aspectRatio: "16:9" },
   { value: "twitch", platform: "Twitch", label: "Stream", name: "Twitch stream", aspectRatio: "16:9" },
   { value: "vimeo", platform: "Vimeo", label: "Video", name: "Vimeo video", aspectRatio: "16:9" },
-  { value: "square", platform: "Any platform", label: "Square", name: "Square", aspectRatio: "1:1" },
-  { value: "classic", platform: "Any platform", label: "Classic", name: "Classic", aspectRatio: "4:3" },
-  { value: "portrait", platform: "Any platform", label: "Portrait", name: "Portrait", aspectRatio: "3:4" },
+  { value: "square", platform: ANY_PLATFORM, label: "Square", name: "Square", aspectRatio: "1:1" },
+  { value: "classic", platform: ANY_PLATFORM, label: "Classic", name: "Classic", aspectRatio: "4:3" },
+  { value: "portrait", platform: ANY_PLATFORM, label: "Portrait", name: "Portrait", aspectRatio: "3:4" },
 ];
+
+export const PLATFORM_NAMES = [...new Set(THUMBNAIL_FORMATS.map(({ platform }) => platform))].filter(
+  (platform) => platform !== ANY_PLATFORM,
+);
 
 // Mirrors ThumbnailCategory in the server; the first one is the default.
 export const THUMBNAIL_CATEGORIES: IThumbnailCategory[] = [

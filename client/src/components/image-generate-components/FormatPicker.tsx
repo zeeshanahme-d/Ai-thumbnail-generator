@@ -51,18 +51,16 @@ export default function FormatPicker({ value, onChange }: FormatPickerProps) {
               type="button"
               onClick={() => onChange(format.value)}
               aria-pressed={isSelected}
-              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border py-3 transition-colors ${
-                isSelected
+              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border py-3 transition-colors ${isSelected
                   ? "border-text-primary bg-background-surface-2"
                   : "border-border hover:border-border-strong"
-              }`}
+                }`}
             >
               <span className="flex h-10 items-center justify-center">
                 <span
                   style={{ aspectRatio: format.aspectRatio.replace(":", " / ") }}
-                  className={`block h-full max-w-14 rounded border-2 ${
-                    isSelected ? "border-text-primary" : "border-text-muted"
-                  }`}
+                  className={`block h-full max-w-14 rounded border-2 ${isSelected ? "border-text-primary" : "border-text-muted"
+                    }`}
                 />
               </span>
               <span className={`text-sm ${isSelected ? "text-text-primary" : "text-text-secondary"}`}>

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import type React from "react";
 
-export type CapabilityId = "aspect-ratio" | "style" | "color-scheme" | "improve" | "reference";
+export type CapabilityId = "format" | "style" | "color-scheme" | "improve" | "reference" | "category";
 
 export interface ICapability {
   id: CapabilityId;
@@ -146,13 +146,6 @@ export interface IPromptTemplate {
   label: string;
   icon: LucideIcon;
   prompt: string;
-}
-
-export interface IAspectRatio {
-  value: string;
-  label: string;
-  /** CSS aspect-ratio value used for the preview shape. */
-  ratio: string;
 }
 
 /** Where a thumbnail will be posted, which sets its size. */
