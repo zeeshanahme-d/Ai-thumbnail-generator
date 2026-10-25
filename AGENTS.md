@@ -273,7 +273,7 @@ Check these before writing anything new:
   popovers, because a closed popover hides everything inside it.
 - **`ListError.tsx`** — "Couldn't load" message with Try again, for a list whose first load
   failed (`loadFailed` / `refetch` from `useInfiniteThumbnails`).
-- **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),
+- **`Input.tsx`** (icon + input; `type="password"` gets a show/hide button), **`Alert.tsx`** (error | success | warning | info),
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**.
 
