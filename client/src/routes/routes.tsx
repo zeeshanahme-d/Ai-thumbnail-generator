@@ -5,6 +5,7 @@ import GuestRoute from './guest-route';
 import HomePage from '../pages/home/HomePage';
 import MainLayout from '../pages/layouts/MainLayout';
 import ErrorBoundary from '../components/ErrorBoundary';
+import ScrollToTop from '../components/ScrollToTop';
 import PageLoader from '../components/PageLoader';
 import ThumbnailPreviewSkeleton from '../pages/thumbnail-preview/components/ThumbnailPreviewSkeleton';
 
@@ -32,6 +33,7 @@ const NotFound = lazy(() => import('../pages/not-found/NotFound'));
 function AppRoutes() {
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <ErrorBoundary>
                 <Suspense fallback={<PageLoader fullScreen />}>
                     <Routes>

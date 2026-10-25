@@ -88,7 +88,8 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
 - **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
   `/profile`, `/thumbnail/:id`, `/pricing`, `/privacy-policy`, `/terms` and
   `/refund-policy` are public. The three legal routes share `pages/legal/LegalPage`, whose
-  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top.
+  text lives in `data/legal.ts`. `ScrollToTop` (`components/`, mounted at the router root) opens
+  every new page at the top, in every layout; back/forward and `#anchor` links keep their position.
 
 Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
 The auth pages share `pages/auth/AuthLayout`: the form on the left and, from `lg` up,
