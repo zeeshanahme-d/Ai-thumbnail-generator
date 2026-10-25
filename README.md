@@ -10,7 +10,7 @@ AI thumbnail generator for YouTube, TikTok, Instagram, Facebook, X, Twitch and V
 
 ## Features
 
-- **Generate:** 14 platform formats (YouTube video and Shorts, TikTok, Instagram post, Reel and Story, Facebook video and post, X, Twitch, Vimeo, plus square, 4:3 and 3:4), 16 categories, 5 styles, 8 color schemes, an optional reference image (face, product, logo), and text on the image on or off.
+- **Generate:** 14 platform formats (YouTube video and Shorts, TikTok, Instagram post, Reel and Story, Facebook video and post, X, Twitch, Vimeo, plus square, 4:3 and 3:4), 16 categories, 5 styles, 8 color schemes, an optional reference image (your face, a product, or a thumbnail whose layout you like, up to 2 MB), and text on the image on or off.
 - **Prompt help:** niche templates, and an Improve button that rewrites a rough idea into a detailed prompt.
 - **Gallery:** your thumbnails, with filters, sorting, publishing and downloads.
 - **Community:** published thumbnails with search, likes and Trending, Newest and Most liked sorts.

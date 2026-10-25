@@ -58,7 +58,7 @@ Every response has the same shape (`utils/apiResponse.ts`), and errors include a
 ## How generation works
 
 1. A due monthly refill is applied, then 5 credits are reserved in one atomic update.
-2. The prompt is built from the title, the user's prompt, the style and color presets, an optional reference image and the text-on-image setting (`utils/thumbnail-prompt.ts`).
+2. The prompt is built from the title, the user's prompt, the style and color presets, the platform format and category, an optional reference image and the text-on-image setting (`utils/thumbnail-prompt.ts`).
 3. Gemini is called with a 60-second timeout and up to 3 attempts. The image is streamed to Cloudinary.
 4. If it fails, the record is deleted and the credits are refunded. A scheduled job cleans up generations cut off by a crash.
 
@@ -86,5 +86,5 @@ npm start
 ```
 
 - **Production env:** set `NODE_ENV=production` and `CLIENT_URL` to the site's origin.
-- **Proxy:** set `TRUST_PROXY=1` behind a reverse proxy. The proxy must accept bodies over 5 MB and wait longer than a generation; for Nginx, `client_max_body_size 6m` and `proxy_read_timeout 300s`.
+- **Proxy:** set `TRUST_PROXY=1` behind a reverse proxy. The proxy must accept bodies over 2 MB and wait longer than a generation (about 300 s).
 - **Cookies:** auth cookies are `SameSite=Strict`, so the site and the API must share a registrable domain.

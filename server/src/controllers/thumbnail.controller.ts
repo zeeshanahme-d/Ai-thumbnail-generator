@@ -160,7 +160,8 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       hasReferenceImage: Boolean(referenceImagePart),
     });
 
-    const contents = referenceImagePart ? [prompt, referenceImagePart] : [prompt];
+    // The image first and the instructions last, as Google recommends for prompts with images.
+    const contents = referenceImagePart ? [referenceImagePart, prompt] : [prompt];
 
     const result = await generateImage({
       model,

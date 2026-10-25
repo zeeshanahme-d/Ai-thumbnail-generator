@@ -13,10 +13,9 @@ type ThumbnailPromptInput = {
 };
 
 /**
- * The prompt sent to the image model. Written as plain paragraphs, which image models follow
- * better than keyword lists, and phrased as what to show rather than long lists of what to avoid.
- * The creator's brief wins over the presets, and expressions come from the topic, so faces aren't
- * the same open-mouthed "shocked" reaction every time.
+ * The prompt sent to the image model: short plain sentences, which image models follow better than
+ * keyword lists, and kept brief because every word is billed. The creator's brief wins over the
+ * presets, and expressions come from the topic, so faces aren't the same "shocked" reaction every time.
  */
 export function buildThumbnailPrompt(input: ThumbnailPromptInput): string {
   const { title, style, colorScheme, format, category, textOverlay, hasReferenceImage } = input;
@@ -24,51 +23,40 @@ export function buildThumbnailPrompt(input: ThumbnailPromptInput): string {
   const brief = input.prompt?.trim();
 
   const parts = [
-    `Design ${subject} "${title.trim()}". It should look like the work of a professional designer: one clear focal point, a simple layout and strong contrast, so it reads instantly at small sizes on a phone.`,
+    `Design ${subject} "${title.trim()}": professional, one clear focal point, a simple layout and strong contrast that reads at phone size.`,
   ];
 
   if (category !== ThumbnailCategory.General) {
-    parts.push(
-      `It's for the ${category} niche: use the visual language viewers know from popular ${category.toLowerCase()} content, so it's recognisable at a glance.`,
-    );
+    parts.push(`Use the visual language of popular ${category.toLowerCase()} content.`);
   }
 
-  if (brief) {
-    parts.push(`The creator's brief, which takes priority over the style notes below: "${brief}"`);
-  }
+  if (brief) parts.push(`Brief, which overrides the style notes: "${brief}"`);
 
-  parts.push(
-    `Style: ${stylePrompts[style]}`,
-    `Colors: ${colorSchemeDescriptions[colorScheme]}. Use them for the whole image, including the lighting.`,
-  );
+  parts.push(`Style: ${stylePrompts[style]} Colors: ${colorSchemeDescriptions[colorScheme]}, lighting included.`);
 
   if (hasReferenceImage) {
     parts.push(
-      "A reference image is attached. Use what it shows, such as a person, product, logo or mascot, as the main subject of a new scene. If it shows a person, keep exactly that person: the same face, features, skin tone, hairstyle and build, so they're instantly recognisable. Their clothing, pose and expression can change to suit the scene. Light them to match the new scene. Don't reuse the reference's background or layout.",
+      "Use the attached image as the brief says. Otherwise: if it is a thumbnail or design, copy only its layout, lettering and colors, never its people, logos or text; if it shows a person, make them the main person and keep their exact face, skin tone, hair and build in a new scene; if it is a product or logo, feature it.",
     );
   } else {
     parts.push(
-      "Include a person only if the brief asks for one or the topic is about a person (a vlog, a reaction, a tutorial with a host). Otherwise let the subject itself, such as the product, place, food or object, fill the frame. When a person appears, follow any description of them in the brief and cast a specific individual for the rest: decide their age, look, hairstyle, clothing and surroundings from the topic, so they look like a real person who belongs in this video and not a generic stock-photo model.",
+      "Show a person only if the brief or topic needs one, cast as a specific, real-looking individual who fits the video, not a stock model. Otherwise let the subject fill the frame.",
     );
   }
+
+  parts.push("Expressions are natural and fit the mood; no open-mouthed shocked face unless the brief asks for one.");
 
   parts.push(
-    "Give any person a natural, believable expression that fits the mood of the video, such as focused, confident, curious, calm, amused or determined. Don't default to an open-mouthed shocked or screaming face; use one only when the brief asks for surprise or shock.",
+    textOverlay
+      ? "Add one headline of two to five words with the title's hook, in its language, never the full title: large heavy lettering, at most two lines, one key word in an accent color, spelled correctly, never covering a face or the subject. No other text."
+      : `No text, letters or numbers anywhere, and no logos${hasReferenceImage ? " other than one from the attached image" : ""}.`,
   );
-
-  if (textOverlay) {
-    parts.push(
-      `Add a short headline of two to five words that captures the hook of the title, in the title's language. Never write out the full title. Set it in large, heavy, easy-to-read lettering on at most two lines, with strong contrast against the background, and highlight one key word in an accent color. Spell every word correctly. Place it in an empty part of the frame so it never covers a face or the main subject. The headline is the only text in the image.`,
-    );
-  } else {
-    parts.push("The image has no text, letters, numbers, captions or logos anywhere; the visuals tell the story on their own.");
-  }
 
   parts.push(
     [
-      `Composition: a ${aspectRatio} frame with the main subject large and in sharp focus, a clean background that doesn't compete with it, and faces fully inside the frame.`,
+      `Composition: a ${aspectRatio} frame, the subject large and sharp, a clean background, faces fully in frame.`,
       safeArea,
-      "No borders, frames or watermarks.",
+      "No borders, watermarks or platform interface such as badges or buttons.",
     ].filter(Boolean).join(" "),
   );
 

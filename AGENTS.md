@@ -5,7 +5,7 @@ Guidance for Codex when working in this repository.
 ## Project
 
 AI Thumbnail Generator ("Eyecatch AI") — a web app where a user describes a thumbnail,
-picks a platform format, category, style, color scheme, and optional reference image, and the app
+picks a platform format, category, style, color scheme, and an optional reference image, and the app
 generates a thumbnail for YouTube, TikTok, Instagram, Facebook, X, Twitch or Vimeo using **Gemini AI** (`gemini-3.1-flash-lite-image`).
 
 Two workspaces, each with its own `package.json`:
@@ -223,7 +223,7 @@ Check these before writing anything new:
   Icon sizes with an `aria-label` show it as a `Tooltip` automatically; don't add `title`.
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
-  uncontrolled; includes style/category/format/color-scheme/reference-image pickers and the
+  uncontrolled; includes style/category/format/color-scheme pickers, the reference-image upload (`ReferenceImageUpload`) and the
   text-on-image switch (on by default).
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
   signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
@@ -274,7 +274,8 @@ Check these before writing anything new:
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**.
 
-`lib/imageValidation.ts` owns image rules (extensions, MIME, 5 MB max) and returns a
+`lib/imageValidation.ts` owns image rules (extensions, MIME, 2 MB max, for avatars and reference images
+alike) and returns a
 user-facing message; reuse it for any upload. `lib/passwordValidation.ts` owns the
 password rule and mirrors `server/src/validations/password.validation.ts`;
 `lib/userValidation.ts` owns the full-name and username rules (including reserved names)
@@ -424,8 +425,8 @@ detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 - `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary); 10 per hour
   per user (`avatarUploadLimiter`)
 
-`uploadSingleImage` keeps the file in memory (`req.file.buffer`, never on disk) and checks
-its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
+`uploadSingleImage` (avatar and reference image, 2 MB, `MAX_IMAGE_SIZE_MB`) keeps the file in memory
+(`req.file.buffer`, never on disk) and checks its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
 `schemas/media.schema.ts` (avatar and thumbnail image) sends only `url` to the client: the other
 fields are `select: false` plus a `toJSON` transform. Read `publicId` with `+avatar.publicId` (or
 name `thumbnail.publicId`), and select `avatar.url`, never the whole `avatar`, in an inclusive
@@ -477,14 +478,15 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
    `youtube`; the server takes the aspect ratio from `THUMBNAIL_FORMATS`), `category` (default `General`),
    `color_scheme`, `text_overlay` (parsed with `z.stringbool()`, so `"false"` is false; on
    by default),
-   and optional `referenceImage` file
+   and the optional `referenceImage` file, sent to the image model before the prompt. One image call
+   per generation and a short prompt keep Gemini costs low
 2. Server applies a due monthly refill, then reserves credits atomically
    (`CREDIT_COST.GENERATE_COST = 5`)
 3. Creates a thumbnail document with `isGenerating: true`
-4. Builds the prompt with `buildThumbnailPrompt` (`utils/thumbnail-prompt.ts`): plain paragraphs
+4. Builds the prompt with `buildThumbnailPrompt` (`utils/thumbnail-prompt.ts`): short plain paragraphs
    for the title, the creator's brief (which wins over presets), the style and color presets
-   (`constants/constants.ts`, descriptions, none asks for an expression), reference image or
-   casting rules, the category niche (left out for General), a natural expression (no default shocked face), the headline or no-text rule
+   (`constants/constants.ts`, descriptions, none asks for an expression), the reference image (used as the brief says; otherwise a thumbnail lends only its layout,
+   lettering and colors, a person keeps their identity, a product or logo is featured) or casting rules, the category niche (left out for General), a natural expression (no default shocked face), the headline or no-text rule
    and the format's safe area (where its platform draws over the image). Check and print it: `npx tsx src/utils/thumbnail-prompt.check.ts --print`
 5. Calls `generateImage()` (`utils/gemini.ts`, which also has `generateText()`) with
    `GEMINI_IMAGE_MODEL`:
@@ -541,9 +543,7 @@ public production URLs; the client's host (Vercel) must set them itself.
 
 Site `https://eyecatch.zeeshanahmed.dev` (Vercel), API `https://api.eyecatch.zeeshanahmed.dev`
 (one Node process on an Oracle Ampere instance behind a reverse proxy, so `TRUST_PROXY=1`).
-The proxy must allow bodies over 5 MB (reference images, avatars) and wait longer than a
-generation (up to ~3 Gemini attempts of 60 s), e.g. Nginx `client_max_body_size 6m` and
-`proxy_read_timeout 300s`.
+Whatever sits in front of Node must allow bodies over 2 MB (a reference image or an avatar) and wait longer than a generation (up to ~3 Gemini attempts of 60 s).
 - `getClientOrigins()` (`utils/helpers.ts`) reads `CLIENT_URL`; outside production it adds
   `localhost:5173`/`5174`. Only those origins pass CORS, and any POST/PUT/PATCH/DELETE carrying
   another `Origin` is refused with `ORIGIN_NOT_ALLOWED` (CORS alone would still run a

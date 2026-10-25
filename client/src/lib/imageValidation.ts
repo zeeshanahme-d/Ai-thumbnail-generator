@@ -11,7 +11,7 @@ export const ACCEPTED_IMAGE_MIME_TYPES: readonly string[] = [
     "image/webp",
 ];
 
-export const MAX_IMAGE_SIZE_MB = 5;
+export const MAX_IMAGE_SIZE_MB = 2;
 
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 

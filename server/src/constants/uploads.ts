@@ -17,6 +17,6 @@ export const ACCEPTED_IMAGE_LABEL = ACCEPTED_IMAGE_EXTENSIONS.map((extension) =>
   extension.toUpperCase(),
 ).join(", ");
 
-export const MAX_IMAGE_SIZE_MB = 5;
+export const MAX_IMAGE_SIZE_MB = 2;
 
 export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;

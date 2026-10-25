@@ -75,7 +75,7 @@ export default function ReferenceImageUpload({
     <div>
       <Eyebrow>Reference image</Eyebrow>
       <p className="mt-1 text-xs text-text-muted">
-        Blend a face, logo, or asset directly into your thumbnail output.
+        Your face, a product, or a thumbnail whose layout and fonts you like. Say how to use it in your prompt.
       </p>
 
       <input
