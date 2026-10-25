@@ -3,11 +3,11 @@ import mongoose from "mongoose";
 import { ApiResponse } from "../utils/apiResponse.js";
 import userModel from "../models/user.model.js";
 import refreshTokenModel from "../models/refreshToken.model.js";
-import likeDislikModel from "../models/likeDislik.modal.js";
+import likeDislikeModel from "../models/likeDislike.model.js";
 import thumbnailModel from "../models/thumbnail.model.js";
-import { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import { deleteFileFromCloudinary } from "../utils/cloudinary.js";
 import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
-import { matchHashedPassword } from "../helper/halper-functions.js";
+import { matchHashedPassword } from "../helper/password-helpers.js";
 import { usernameSchema } from "../validations/user-fields.validation.js";
 import { isLiveSubscription } from "../utils/billing.js";
 import paddle from "../config/paddle.js";
@@ -113,12 +113,12 @@ async function handleDeleteAccount(req: Request, res: Response) {
   }
 
   // Take this user's likes off other thumbnails' counts. A user likes a thumbnail at most once.
-  const likedThumbnailIds = await likeDislikModel.distinct("thumbnailId", { userId });
+  const likedThumbnailIds = await likeDislikeModel.distinct("thumbnailId", { userId });
   await thumbnailModel.updateMany(
     { _id: mongoose.trusted({ $in: likedThumbnailIds }), likesCount: mongoose.trusted({ $gt: 0 }) },
     { $inc: { likesCount: -1 } },
   );
-  await likeDislikModel.deleteMany({ userId });
+  await likeDislikeModel.deleteMany({ userId });
 
 
   // The user's thumbnails go with their images and the likes other users gave them.

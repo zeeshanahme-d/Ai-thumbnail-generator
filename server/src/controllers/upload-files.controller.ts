@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import uploadFileOnCloudinary, { deleteFileFromCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { UploadErrorCode } from "../constants/enums.js";
 import userModel from "../models/user.model.js";
@@ -29,7 +29,7 @@ async function handleUploadAvatar(req: Request, res: Response) {
 
   const previousPublicId = currentUser.avatar?.publicId;
 
-  const result = await uploadFileOnCloudniary(req.file.buffer, "avatar");
+  const result = await uploadFileOnCloudinary(req.file.buffer, "avatar");
 
   if (!result) {
     return ApiResponse.error(res, 502, "Image upload failed. Please try again.", UploadErrorCode.UploadFailed,);

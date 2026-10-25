@@ -11,7 +11,7 @@ const configureCloudinary = () => {
 
 // Streams an in-memory image to Cloudinary. Resolves to null when the upload fails.
 // Cloudinary picks a random public id; uploaders' filenames never end up in the public URL.
-const uploadFileOnCloudniary = (
+const uploadFileOnCloudinary = (
   buffer: Buffer,
   folder = "thumbnails",
 ): Promise<UploadApiResponse | null> => {
@@ -46,4 +46,4 @@ export const deleteFileFromCloudinary = async (publicId: string) => {
   }
 };
 
-export default uploadFileOnCloudniary;
+export default uploadFileOnCloudinary;

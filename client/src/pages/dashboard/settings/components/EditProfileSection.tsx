@@ -9,7 +9,7 @@ import SettingsSection from "./SettingsSection";
 import { useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useSession } from "../../../../store/useSessionStore";
-import { getUserInitial, debounce } from "../../../../lib/herlper-fuctions";
+import { getUserInitial, debounce } from "../../../../lib/helpers";
 import { useUploadAvatar } from "../core/hooks/use-upload-avatar";
 import { useUpdateProfile } from "../core/hooks/use-update-profile";
 import { useCheckUsername } from "../../../profile/core/hooks/useCheckUsername";

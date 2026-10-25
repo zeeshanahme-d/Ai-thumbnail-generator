@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Settings, Globe } from "lucide-react";
 import { buttonClasses } from "../../../lib/buttonClasses";
-import { getUserInitial } from "../../../lib/herlper-fuctions";
+import { getUserInitial } from "../../../lib/helpers";
 import type { IUser } from "../../../types";
 import type { PublicUserProfile } from "../core/_models";
 

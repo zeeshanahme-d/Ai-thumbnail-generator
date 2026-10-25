@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LogOut, Settings, User } from "lucide-react";
 import Button from "./Button";
 import { useSession } from "../store/useSessionStore";
-import { getUserInitial } from "../lib/herlper-fuctions";
+import { getUserInitial } from "../lib/helpers";
 import LogoutDialog from "./modals/LogoutDialog";
 
 const MENU_ID = "profile-menu";

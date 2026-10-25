@@ -307,14 +307,14 @@ server/
    ├─ app.ts                 # express app; CORS + write-origin check from CLIENT_URL (getClientOrigins)
    ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts
    ├─ constants/             # enums.ts (all enums), constants.ts (style prompts, credit costs, sort)
-   ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
+   ├─ routes/                # auth, user, thumbnail, thumbnail-public, upload-files, billing
    ├─ controllers/           # auth, user, thumbnail, upload-files, billing
    ├─ middlewares/            # auth (JWT), multer (image upload), validate (zod)
    ├─ models/                # user, refreshToken, thumbnail, likeDislike
    ├─ schemas/               # media.schema.ts (reusable Mongoose subdocument)
    ├─ validations/           # zod schemas for auth, thumbnail and billing endpoints
-   ├─ helper/                # halper-functions.ts (bcrypt), token-helpers.ts (JWT)
-   ├─ utils/                 # apiResponse, billing, cloudniary, credits, delete-thumbnails, email, gemini,
+   ├─ helper/                # password-helpers.ts (bcrypt), token-helpers.ts (JWT)
+   ├─ utils/                 # apiResponse, billing, cloudinary, credits, delete-thumbnails, email, gemini,
    │                         # pagination, scheduled-jobs, helpers
    ├─ db/                    # connection.ts (Mongoose connect)
    └─ types/express.d.ts     # augments Request.user, Request.validated
@@ -597,5 +597,3 @@ Whatever sits in front of Node must allow bodies over 2 MB (a reference image or
 ### Known bugs
 - Rate-limit counters are in memory: a restart resets them, and running several processes
   (pm2 cluster mode) would give each its own count; that needs a shared store such as Redis.
-- `likeDislik.modal.ts` — filename should be `.model.ts`.
-- `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.

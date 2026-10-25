@@ -21,7 +21,7 @@ import type { ThumbnailCardProps } from "../types";
 import Button from "./Button";
 import useLikeThumbnail from "../core/thumbnails/hooks/useLikeThumbnail";
 import usePublishThumbnail from "../core/thumbnails/hooks/usePublishThumbnail";
-import { handleDownloadFile } from "../lib/herlper-fuctions";
+import { handleDownloadFile } from "../lib/helpers";
 import { useSession } from "../store/useSessionStore";
 
 export default function ThumbnailCard({
