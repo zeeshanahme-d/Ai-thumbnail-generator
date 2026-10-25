@@ -6,7 +6,7 @@ import { dashboardNav } from "../../../data/dashboardNav";
 import { useSession } from "../../../store/useSessionStore";
 import { getRemainingCredits } from "../../../lib/credits";
 import { buttonClasses } from "../../../lib/buttonClasses";
-import { getUserInitial } from "../../../lib/herlper-fuctions";
+import { getUserInitial } from "../../../lib/helpers";
 import Button from "../../../components/Button";
 import Eyebrow from "../../../components/Eyebrow";
 import ThemeButton from "../../../components/ThemeButton";

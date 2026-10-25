@@ -8,7 +8,7 @@ import {
   hashPassword,
   matchHashedPassword,
   simulatePasswordCheck,
-} from "../helper/halper-functions.js";
+} from "../helper/password-helpers.js";
 import {
   generateAccessToken,
   generateRefreshToken,

@@ -88,7 +88,8 @@ Stack: React 19, react-router-dom v7, **@tanstack/react-query** (server state),
 - **Marketing** (`MainLayout` = Navbar + Footer) — `/`, `/community`,
   `/profile`, `/thumbnail/:id`, `/pricing`, `/privacy-policy`, `/terms` and
   `/refund-policy` are public. The three legal routes share `pages/legal/LegalPage`, whose
-  text lives in `data/legal.ts`. `MainLayout` scrolls new pages to the top.
+  text lives in `data/legal.ts`. `ScrollToTop` (`components/`, mounted at the router root) opens
+  every new page at the top, in every layout; back/forward and `#anchor` links keep their position.
 
 Auth pages and `/youtube-style-preview` render outside `MainLayout` (no navbar/footer).
 The auth pages share `pages/auth/AuthLayout`: the form on the left and, from `lg` up,
@@ -101,9 +102,10 @@ The auth pages share `pages/auth/AuthLayout`: the form on the left and, from `lg
   key (`tg_session`). Tokens are stored in **httpOnly cookies**, not in the store.
   `clearSession()` also clears the React Query cache (`lib/queryClient.ts`), so the next
   user never sees the previous user's data.
-- **`components/SessionProvider.tsx`** calls `POST /auth/verify` once on every page
-  load and blocks rendering until it settles, so guards never act on stale state. Only a
-  `401` clears the session; a network or server error keeps the stored one.
+- **`components/SessionProvider.tsx`** calls `POST /auth/verify` once per page load **only
+  when a user is stored** (`tg_session`; the httpOnly cookies are invisible to JS), and blocks
+  rendering until it settles, so guards never act on stale state. Guests make no call and
+  render at once. Only a `401` clears the session; a network or server error keeps the stored one.
 - **`lib/axios.ts`** interceptor: on `401` + `error: "TOKEN_EXPIRED"` or
   `"TOKEN_MISSING"`, calls `/auth/refresh` and replays the original request. Requests
   that fail together share one in-flight refresh. On refresh failure, clears the session
@@ -307,14 +309,14 @@ server/
    ├─ app.ts                 # express app; CORS + write-origin check from CLIENT_URL (getClientOrigins)
    ├─ config/                # genai.ts (Gemini), cloudinary.ts, paddle.ts
    ├─ constants/             # enums.ts (all enums), constants.ts (style prompts, credit costs, sort)
-   ├─ routes/                # auth, user, thumbnail, thumbnail-public, uploads-files, billing
+   ├─ routes/                # auth, user, thumbnail, thumbnail-public, upload-files, billing
    ├─ controllers/           # auth, user, thumbnail, upload-files, billing
    ├─ middlewares/            # auth (JWT), multer (image upload), validate (zod)
    ├─ models/                # user, refreshToken, thumbnail, likeDislike
    ├─ schemas/               # media.schema.ts (reusable Mongoose subdocument)
    ├─ validations/           # zod schemas for auth, thumbnail and billing endpoints
-   ├─ helper/                # halper-functions.ts (bcrypt), token-helpers.ts (JWT)
-   ├─ utils/                 # apiResponse, billing, cloudniary, credits, delete-thumbnails, email, gemini,
+   ├─ helper/                # password-helpers.ts (bcrypt), token-helpers.ts (JWT)
+   ├─ utils/                 # apiResponse, billing, cloudinary, credits, delete-thumbnails, email, gemini,
    │                         # pagination, scheduled-jobs, helpers
    ├─ db/                    # connection.ts (Mongoose connect)
    └─ types/express.d.ts     # augments Request.user, Request.validated
@@ -597,5 +599,3 @@ Whatever sits in front of Node must allow bodies over 2 MB (a reference image or
 ### Known bugs
 - Rate-limit counters are in memory: a restart resets them, and running several processes
   (pm2 cluster mode) would give each its own count; that needs a shared store such as Redis.
-- `likeDislik.modal.ts` — filename should be `.model.ts`.
-- `halper-functions.ts` and `cloudniary.ts` are misspelled filenames.

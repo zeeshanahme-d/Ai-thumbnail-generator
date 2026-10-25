@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import thumbnailModel from "../models/thumbnail.model.js";
-import likeDislikeModel from "../models/likeDislik.modal.js";
-import { deleteFileFromCloudinary } from "./cloudniary.js";
+import likeDislikeModel from "../models/likeDislike.model.js";
+import { deleteFileFromCloudinary } from "./cloudinary.js";
 
 /**
  * Permanently removes the thumbnails matching `filter`: their Cloudinary images, like

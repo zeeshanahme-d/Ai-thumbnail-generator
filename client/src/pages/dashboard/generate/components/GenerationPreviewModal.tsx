@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { X, Download } from "lucide-react";
 import Button from "../../../../components/Button";
-import { handleDownloadFile } from "../../../../lib/herlper-fuctions";
+import { handleDownloadFile } from "../../../../lib/helpers";
 import type { Thumbnail } from "../../../../types";
 import { getThumbnailFormatLabel, getThumbnailImageUrl } from "../../../../lib/thumbnail";
 

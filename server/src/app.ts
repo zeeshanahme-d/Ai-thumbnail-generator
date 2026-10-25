@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import authenticationToken from "./middlewares/auth.middleware.js";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
-import uploadsRouter from "./routes/uploads-files.routes.js";
+import uploadsRouter from "./routes/upload-files.routes.js";
 import thumbnailRouter from "./routes/thumbnail.routes.js";
 import thumbnailPublicRouter from "./routes/thumbnail-public.routes.js";
 import billingRouter from "./routes/billing.routes.js";

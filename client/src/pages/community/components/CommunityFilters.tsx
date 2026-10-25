@@ -1,7 +1,7 @@
 import Input from "../../../components/Input";
 import Button from "../../../components/Button";
 import { useMemo, useState } from "react";
-import { debounce } from "../../../lib/herlper-fuctions";
+import { debounce } from "../../../lib/helpers";
 import { Search } from "lucide-react";
 import type { CommunityFiltersProps } from "../../../types";
 import { SORT_TABS, STYLE_DOTS, STYLE_FILTERS } from "../../../data/community";

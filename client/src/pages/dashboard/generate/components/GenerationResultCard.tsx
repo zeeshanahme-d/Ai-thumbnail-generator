@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import Button from "../../../../components/Button";
 import Eyebrow from "../../../../components/Eyebrow";
 import GenerationPreviewModal from "./GenerationPreviewModal";
-import { handleDownloadFile } from "../../../../lib/herlper-fuctions";
+import { handleDownloadFile } from "../../../../lib/helpers";
 import { getThumbnailFormatLabel, getThumbnailImageUrl, hasYouTubePreview } from "../../../../lib/thumbnail";
 import usePublishThumbnail from "../../../../core/thumbnails/hooks/usePublishThumbnail";
 import type { Thumbnail, YtPreviewState } from "../../../../types";

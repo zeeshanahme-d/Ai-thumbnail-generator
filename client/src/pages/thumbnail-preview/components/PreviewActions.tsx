@@ -2,7 +2,7 @@ import { Download, MonitorPlay, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../../../components/Button";
-import { handleDownloadFile } from "../../../lib/herlper-fuctions";
+import { handleDownloadFile } from "../../../lib/helpers";
 import type { Thumbnail, YtPreviewState } from "../../../types";
 import { getThumbnailImageUrl, hasYouTubePreview } from "../../../lib/thumbnail";
 import { getThumbnailShareUrl } from "../../../core/thumbnails/_requests";

@@ -12,7 +12,7 @@ import {
   THUMBNAIL_SORT_OPTIONS,
 } from "../constants/constants.js";
 import thumbnailModel from "../models/thumbnail.model.js";
-import likeDislikeModel from "../models/likeDislik.modal.js";
+import likeDislikeModel from "../models/likeDislike.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import {
   AuthErrorCode,
@@ -25,7 +25,7 @@ import {
 } from "../constants/enums.js";
 import { buildImproverInput, buildThumbnailPrompt } from "../utils/thumbnail-prompt.js";
 import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
-import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
+import uploadFileOnCloudinary, { deleteFileFromCloudinary } from "../utils/cloudinary.js";
 import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
 import { formatPaginatedResponse } from "../utils/pagination.js";
 import userModel from "../models/user.model.js";
@@ -51,7 +51,7 @@ const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> =>
  * POST /thumbnails
  * Generate a new thumbnail using Gemini AI model.
  */
-const generateGminiThumbnail = async (req: Request, res: Response) => {
+const generateGeminiThumbnail = async (req: Request, res: Response) => {
   const userId = req.user!.userId as string;
   let thumbnailId: string | null = null;
   let creditsReserved = false;
@@ -172,7 +172,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       return ApiResponse.error(res, failure.status, failure.message, result.code);
     }
 
-    const finalResult = await uploadFileOnCloudniary(Buffer.from(result.imageBase64, "base64"));
+    const finalResult = await uploadFileOnCloudinary(Buffer.from(result.imageBase64, "base64"));
     if (!finalResult) {
       return ApiResponse.error(res, 502, "Failed to upload generated image. Please try again.", UploadErrorCode.UploadFailed,);
     }
@@ -681,7 +681,7 @@ const publishThumbnailToCommunity = async (req: Request, res: Response) => {
 
 
 export {
-  generateGminiThumbnail,
+  generateGeminiThumbnail,
   getMyThumbnails,
   getCommunityThumbnails,
   getThumbnailById,

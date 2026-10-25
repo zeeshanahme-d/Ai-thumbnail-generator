@@ -1,7 +1,7 @@
 import express from "express";
 import validate from "../middlewares/validate.js";
 import {
-  generateGminiThumbnail,
+  generateGeminiThumbnail,
   getMyThumbnails,
   getRecycleBinThumbnails,
   softDeleteThumbnail,
@@ -31,7 +31,7 @@ router.delete("/recycle-bin", emptyRecycleBin);
 router.patch("/recycle-bin/restore", restoreAllThumbnails);
 
 // The limiter runs before multer, so rejected requests are never read into memory.
-router.post("/", generateLimiter, uploadSingleImage("referenceImage"), validate(generateThumbnailSchema), generateGminiThumbnail);
+router.post("/", generateLimiter, uploadSingleImage("referenceImage"), validate(generateThumbnailSchema), generateGeminiThumbnail);
 
 router.post("/improve-prompt", improvePromptLimiter, validate(improvePromptSchema), improvePrompt);
 
