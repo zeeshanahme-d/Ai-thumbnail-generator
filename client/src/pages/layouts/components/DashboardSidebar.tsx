@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { ChevronLeft, LogOut, X, Settings as SettingsIcon } from "lucide-react";
 import Logo from "../../../assets/svgs/logo.svg?react";
@@ -10,6 +10,7 @@ import { getUserInitial } from "../../../lib/herlper-fuctions";
 import Button from "../../../components/Button";
 import Eyebrow from "../../../components/Eyebrow";
 import ThemeButton from "../../../components/ThemeButton";
+import Tooltip from "../../../components/Tooltip";
 import LogoutDialog from "../../../components/modals/LogoutDialog";
 
 interface DashboardSidebarProps {
@@ -27,6 +28,34 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   const user = useSession((state) => state.user);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+
+  // Collapsed, only the avatar shows, so the label names the link and shows on hover.
+  const profileLink = (
+    <Link
+      to="/profile"
+      aria-label={isCollapsed ? "Profile" : undefined}
+      className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}
+    >
+      <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background-surface-2 text-sm font-medium text-text-primary">
+        {user?.avatar?.url ? (
+          <img src={user.avatar.url} alt="" className="size-full object-cover" />
+        ) : (
+          getUserInitial(user?.fullName)
+        )}
+      </span>
+      {!isCollapsed && (
+        <>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-text-primary">{user?.fullName ?? "Guest"}</span>
+            <span className="block truncate text-xs text-text-muted">{user?.email ?? ""}</span>
+          </span>
+          <span className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.06em] text-text-secondary">
+            {user?.plan ?? "free"}
+          </span>
+        </>
+      )}
+    </Link>
+  );
 
   return (
     <aside
@@ -74,36 +103,43 @@ export default function DashboardSidebar({
           <div key={section.label} className="mb-6 last:mb-0">
             {!isCollapsed && <Eyebrow className="px-3 pb-2">{section.label}</Eyebrow>}
             <div className="flex flex-col gap-1">
-              {section.items.map(({ to, icon: Icon, label, description }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={() => setIsMobileOpen(false)}
-                  title={isCollapsed ? label : undefined}
-                  className={({ isActive }) =>
-                    `relative flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors ${isActive
-                      ? "bg-background-surface-2 text-text-primary"
-                      : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {/* The current page's marker: a short brand-red bar on the left edge. */}
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-primary" />
-                      )}
-                      <Icon size={18} className="shrink-0" />
-                      {!isCollapsed && (
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium">{label}</span>
-                          <span className="block truncate text-xs text-text-muted">{description}</span>
-                        </span>
-                      )}
-                    </>
-                  )}
-                </NavLink>
-              ))}
+              {section.items.map(({ to, icon: Icon, label, description }) => {
+                const link = (
+                  <NavLink
+                    to={to}
+                    onClick={() => setIsMobileOpen(false)}
+                    // Collapsed, the text is hidden, so the label names the link and shows on hover.
+                    aria-label={isCollapsed ? label : undefined}
+                    className={({ isActive }) =>
+                      `relative flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors ${isActive
+                        ? "bg-background-surface-2 text-text-primary"
+                        : "text-text-secondary hover:bg-background-surface-2 hover:text-text-primary"
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {/* The current page's marker: a short brand-red bar on the left edge. */}
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-primary" />
+                        )}
+                        <Icon size={18} className="shrink-0" />
+                        {!isCollapsed && (
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium">{label}</span>
+                            <span className="block truncate text-xs text-text-muted">{description}</span>
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                );
+                return (
+                  <Fragment key={to}>
+                    {isCollapsed ? <Tooltip label={label} side="right">{link}</Tooltip> : link}
+                  </Fragment>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -118,36 +154,20 @@ export default function DashboardSidebar({
           </div>
         )}
 
-        <Link to="/profile" className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
-          <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background-surface-2 text-sm font-medium text-text-primary">
-            {user?.avatar?.url ? (
-              <img src={user.avatar.url} alt="" className="size-full object-cover" />
-            ) : (
-              getUserInitial(user?.fullName)
-            )}
-          </span>
-          {!isCollapsed && (
-            <>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-text-primary">{user?.fullName ?? "Guest"}</span>
-                <span className="block truncate text-xs text-text-muted">{user?.email ?? ""}</span>
-              </span>
-              <span className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.06em] text-text-secondary">
-                {user?.plan ?? "free"}
-              </span>
-            </>
-          )}
-        </Link>
+        {isCollapsed ? <Tooltip label="Profile" side="right">{profileLink}</Tooltip> : profileLink}
 
         <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col items-center" : ""}`}>
           <ThemeButton showLabel={!isCollapsed} className="rounded-lg" />
-          <Link
-            to="/dashboard/settings"
-            aria-label="Settings"
-            className={buttonClasses({ variant: "secondary", size: "icon", rounded: "lg" })}
-          >
-            <SettingsIcon size={15} />
-          </Link>
+          {/* A Link styled as a button, so it doesn't get Button's automatic tooltip. */}
+          <Tooltip label="Settings">
+            <Link
+              to="/dashboard/settings"
+              aria-label="Settings"
+              className={buttonClasses({ variant: "secondary", size: "icon", rounded: "lg" })}
+            >
+              <SettingsIcon size={15} />
+            </Link>
+          </Tooltip>
           <Button
             type="button"
             variant="secondary"

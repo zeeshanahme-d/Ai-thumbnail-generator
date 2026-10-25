@@ -234,6 +234,8 @@ Check these before writing anything new:
 - **`Tooltip.tsx`** — hover / keyboard-focus label in a manual popover (top layer, so nothing
   clips it). Wrap something yourself only when the label differs from the aria-label or the
   button can be disabled (disabled buttons get no hover); icon Buttons inside skip their own.
+  Also wrap icon-only `<Link>`s styled with `buttonClasses()`, which get no automatic tooltip.
+  `side="right"` for vertical lists, such as the collapsed sidebar's links. Never use `title`.
 - **`SectionTitle.tsx`** — label + heading + description. `as="h1"` for a page title;
   `animate={false}` everywhere except the homepage and `/pricing`. `align`: `center`
   (pill, default), `start` (left, mono eyebrow) or `split` (heading left, description

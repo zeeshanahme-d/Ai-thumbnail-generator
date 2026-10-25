@@ -8,6 +8,8 @@ const SHOW_DELAY_MS = 200;
 interface TooltipProps {
   label: string;
   children: ReactNode;
+  /** "right" suits a vertical list such as the collapsed sidebar. */
+  side?: "top" | "right";
 }
 
 /**
@@ -15,7 +17,7 @@ interface TooltipProps {
  * It is a manual popover, so it renders in the top layer and no `overflow-hidden` parent clips it.
  * The text is visual only: the child must carry the same name itself (an aria-label).
  */
-export default function Tooltip({ label, children }: TooltipProps) {
+export default function Tooltip({ label, children, side = "top" }: TooltipProps) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const tipRef = useRef<HTMLSpanElement>(null);
   const timerRef = useRef<number | undefined>(undefined);
@@ -40,7 +42,7 @@ export default function Tooltip({ label, children }: TooltipProps) {
     if (!open || !tip || !trigger) return;
 
     tip.showPopover();
-    placeTooltip(tip, trigger);
+    placeTooltip(tip, trigger, side);
 
     const close = () => setOpen(false);
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -56,7 +58,7 @@ export default function Tooltip({ label, children }: TooltipProps) {
       document.removeEventListener("keydown", closeOnEscape);
       if (tip.matches(":popover-open")) tip.hidePopover();
     };
-  }, [open, label]);
+  }, [open, label, side]);
 
   return (
     <span
@@ -81,10 +83,19 @@ export default function Tooltip({ label, children }: TooltipProps) {
   );
 }
 
-// Centered above the trigger, flipped below near the top of the window, kept inside it sideways.
-// offsetWidth/Height ignore the entrance scale, which getBoundingClientRect would include.
-function placeTooltip(tip: HTMLElement, trigger: Element) {
+// "top": centered above the trigger, flipped below near the top of the window, kept inside it
+// sideways. "right": vertically centered beside it. offsetWidth/Height ignore the entrance
+// scale, which getBoundingClientRect would include.
+function placeTooltip(tip: HTMLElement, trigger: Element, side: "top" | "right") {
   const anchor = trigger.getBoundingClientRect();
+  if (side === "right") {
+    const middle = anchor.top + anchor.height / 2 - tip.offsetHeight / 2;
+    const maxTop = window.innerHeight - tip.offsetHeight - VIEWPORT_MARGIN;
+    tip.style.top = `${Math.max(VIEWPORT_MARGIN, Math.min(middle, maxTop))}px`;
+    tip.style.left = `${anchor.right + GAP}px`;
+    return;
+  }
+
   const above = anchor.top - GAP - tip.offsetHeight;
   const centered = anchor.left + anchor.width / 2 - tip.offsetWidth / 2;
   const maxLeft = window.innerWidth - tip.offsetWidth - VIEWPORT_MARGIN;
