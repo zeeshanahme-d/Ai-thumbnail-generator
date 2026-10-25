@@ -18,13 +18,7 @@ interface ErrorResponse {
 }
 
 export class ApiResponse {
-  static success<T>(
-    res: Response,
-    statusCode = 200,
-    message = "Success",
-    data?: T,
-    meta?: Record<string, unknown>,
-  ): Response<SuccessResponse<T>> {
+  static success<T>(res: Response, statusCode = 200, message = "Success", data?: T, meta?: Record<string, unknown>,): Response<SuccessResponse<T>> {
     return res.status(statusCode).json({
       success: true,
       statusCode,
@@ -35,12 +29,7 @@ export class ApiResponse {
     });
   }
 
-  static error(
-    res: Response,
-    statusCode = 500,
-    message = "Something went wrong",
-    error?: unknown,
-  ): Response<ErrorResponse> {
+  static error(res: Response, statusCode = 500, message = "Something went wrong", error?: unknown,): Response<ErrorResponse> {
     return res.status(statusCode).json({
       success: false,
       statusCode,
