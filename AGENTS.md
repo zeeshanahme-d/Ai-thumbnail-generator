@@ -101,9 +101,10 @@ The auth pages share `pages/auth/AuthLayout`: the form on the left and, from `lg
   key (`tg_session`). Tokens are stored in **httpOnly cookies**, not in the store.
   `clearSession()` also clears the React Query cache (`lib/queryClient.ts`), so the next
   user never sees the previous user's data.
-- **`components/SessionProvider.tsx`** calls `POST /auth/verify` once on every page
-  load and blocks rendering until it settles, so guards never act on stale state. Only a
-  `401` clears the session; a network or server error keeps the stored one.
+- **`components/SessionProvider.tsx`** calls `POST /auth/verify` once per page load **only
+  when a user is stored** (`tg_session`; the httpOnly cookies are invisible to JS), and blocks
+  rendering until it settles, so guards never act on stale state. Guests make no call and
+  render at once. Only a `401` clears the session; a network or server error keeps the stored one.
 - **`lib/axios.ts`** interceptor: on `401` + `error: "TOKEN_EXPIRED"` or
   `"TOKEN_MISSING"`, calls `/auth/refresh` and replays the original request. Requests
   that fail together share one in-flight refresh. On refresh failure, clears the session

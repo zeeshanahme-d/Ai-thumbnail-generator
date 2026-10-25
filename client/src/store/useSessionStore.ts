@@ -33,7 +33,8 @@ export const useSession = create<SessionState>((set, get) => {
   return {
     user: stored?.user ?? null,
     isAuthenticated: !!stored?.user,
-    isRestoring: true,
+    // Cookies are httpOnly, so the stored user is the only sign of a session; guests skip the check.
+    isRestoring: !!stored?.user,
 
     setSession: (user) => {
       localStorage.setItem(
