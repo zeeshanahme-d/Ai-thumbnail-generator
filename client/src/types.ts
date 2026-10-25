@@ -324,6 +324,11 @@ export interface TestCheckoutDialogProps {
   onProceed: () => void;
 }
 
+export interface LogoutDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
 export interface IPricingPlan {
   /** Matches UserPlan on the server. */
   id: PlanId;

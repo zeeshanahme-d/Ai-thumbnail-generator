@@ -1,10 +1,10 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, User } from "lucide-react";
 import Button from "./Button";
 import { useSession } from "../store/useSessionStore";
-import { useLogout } from "../core/auth/hooks";
 import { getUserInitial } from "../lib/herlper-fuctions";
+import LogoutDialog from "./modals/LogoutDialog";
 
 const MENU_ID = "profile-menu";
 
@@ -14,16 +14,16 @@ const ITEM_CLASSES =
 // The navbar avatar, opening a Profile / Settings / Log out menu. Desktop only; MobileNav covers small screens.
 export default function ProfileMenu() {
     const user = useSession((state) => state.user);
-    const { mutate: logout } = useLogout();
+    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     // The navbar stays mounted across routes, so the menu is closed by hand when a link is followed.
     const closeMenu = () => menuRef.current?.hidePopover();
 
-    // Clears the session even if the request fails; the navbar then shows Get Started again.
+    // Asks first; the dialog sits outside the menu, which hides everything inside it once closed.
     const handleLogout = () => {
         closeMenu();
-        logout();
+        setIsLogoutOpen(true);
     };
 
     return (
@@ -66,6 +66,8 @@ export default function ProfileMenu() {
                     </button>
                 </nav>
             </div>
+
+            <LogoutDialog open={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} />
         </>
     );
 }

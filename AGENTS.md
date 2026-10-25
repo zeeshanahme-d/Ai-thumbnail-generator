@@ -268,6 +268,9 @@ Check these before writing anything new:
   `children` for extra content such as a password input.
 - **`PageLoader.tsx`** — centered spinner. `fullScreen` for loads before any layout shows.
   Used by `SessionProvider` and as the `Suspense` fallback for lazy pages.
+- **`LogoutDialog`** (`components/modals/`) — the Log out confirmation, the only place that calls
+  `useLogout`. The navbar menu, mobile menu and dashboard sidebar render it **outside** their
+  popovers, because a closed popover hides everything inside it.
 - **`ListError.tsx`** — "Couldn't load" message with Try again, for a list whose first load
   failed (`loadFailed` / `refetch` from `useInfiniteThumbnails`).
 - **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),

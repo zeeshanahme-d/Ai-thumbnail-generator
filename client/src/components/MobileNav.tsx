@@ -2,9 +2,9 @@ import { useRef, useState, type ToggleEvent } from "react";
 import { ArrowRight, LogIn, LogOut, MenuIcon, Settings, User, XIcon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useSession } from "../store/useSessionStore";
-import { useLogout } from "../core/auth/hooks";
 import { navlinks } from "../data/navlinks";
 import Button from "./Button";
+import LogoutDialog from "./modals/LogoutDialog";
 
 const MENU_ID = "mobile-nav-menu";
 
@@ -14,16 +14,17 @@ const ITEM_CLASSES =
 export default function MobileNav() {
     const user = useSession((state) => state.user);
     const isAuthenticated = useSession((state) => state.isAuthenticated);
-    const { mutate: logout } = useLogout();
     const { pathname } = useLocation();
     const menuRef = useRef<HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
     const closeMenu = () => menuRef.current?.hidePopover();
 
+    // Asks first; the dialog sits outside the menu, which hides everything inside it once closed.
     const handleLogout = () => {
         closeMenu();
-        logout();
+        setIsLogoutOpen(true);
     };
 
     return (
@@ -102,6 +103,8 @@ export default function MobileNav() {
                     </Link>
                 </div>
             </div>
+
+            <LogoutDialog open={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} />
         </>
     );
 }

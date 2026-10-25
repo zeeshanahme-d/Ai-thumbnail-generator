@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { ChevronLeft, LogOut, X, Settings as SettingsIcon } from "lucide-react";
 import Logo from "../../../assets/svgs/logo.svg?react";
@@ -6,10 +7,10 @@ import { useSession } from "../../../store/useSessionStore";
 import { getRemainingCredits } from "../../../lib/credits";
 import { buttonClasses } from "../../../lib/buttonClasses";
 import { getUserInitial } from "../../../lib/herlper-fuctions";
-import { useLogout } from "../../../core/auth/hooks";
 import Button from "../../../components/Button";
 import Eyebrow from "../../../components/Eyebrow";
 import ThemeButton from "../../../components/ThemeButton";
+import LogoutDialog from "../../../components/modals/LogoutDialog";
 
 interface DashboardSidebarProps {
   isCollapsed: boolean;
@@ -25,7 +26,7 @@ export default function DashboardSidebar({
   setIsMobileOpen,
 }: DashboardSidebarProps) {
   const user = useSession((state) => state.user);
-  const { mutate: logout } = useLogout();
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
   return (
     <aside
@@ -152,13 +153,15 @@ export default function DashboardSidebar({
             variant="secondary"
             size="icon"
             rounded="lg"
-            onClick={() => logout()}
+            onClick={() => setIsLogoutOpen(true)}
             aria-label="Log out"
           >
             <LogOut size={15} />
           </Button>
         </div>
       </div>
+
+      <LogoutDialog open={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} />
     </aside>
   );
 }
