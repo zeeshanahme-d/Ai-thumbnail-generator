@@ -85,15 +85,13 @@ export const colorSchemeDescriptions: Record<ColorScheme, string> = {
   [ColorScheme.Pastel]: "soft pastel colors with low saturation, gentle and friendly",
 };
 
+// SIGNUP_BONUS is the freeCredits a verified account gets, and gets back at every refill.
+// Only free credits are spent; subscription and pack credits are recorded but never spendable.
 export const CREDIT_COST = {
-  SIGNUP_BONUS: 20,
+  SIGNUP_BONUS: 10,
   GENERATE_COST: 5,
   RECREATE_COST: 10,
 };
-
-
-export const PAID_CREDITS_SPENDABLE = false;
-
 
 export const CREDIT_PACK = {
   CREDITS_PER_UNIT: 5,

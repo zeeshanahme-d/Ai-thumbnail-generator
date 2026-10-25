@@ -387,7 +387,7 @@ you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it
 
 **Public** (via `thumbnail-public.routes.ts`, mounted first). `optionalAuthentication` lets guests
 through but checks anyone with a session cookie, so signed-in users get `isLiked`. Community and
-detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
+detail leave out `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 - `GET /thumbnail/community` — paginated community thumbnails. Search is a case-insensitive
   substring regex (a text index only matches whole words, which breaks search-as-you-type);
   `trending` sorts by `trendingScore`
@@ -458,17 +458,16 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
     event (`subscriptionUpdatedAt`) or one from a different subscription while the stored one
     is still live is ignored. If that other subscription is live too (two checkouts paid at
     once), it is cancelled at Paddle immediately; its first payment is refunded by hand.
-    `canceled`/`paused` move the account to Free and refill the free credits (`SIGNUP_BONUS`).
-  - `transaction.completed` owns the credits: a paid billing period sets `totalcredits` to
-    `credits_per_month`, clears usage and records `subscriptionPeriodStart/End`, once per
-    period. Payment-method-change transactions never refill. Renewal credits come from the
-    payment, not `subscription.updated`, which Paddle sends before charging.
+    `canceled`/`paused` move the account to Free and set `subscriptionCredits` to 0; free
+    credits are never touched, so subscribe-and-cancel hands out nothing.
+  - `transaction.completed` owns the plan credits: a paid billing period sets `subscriptionCredits`
+    to `credits_per_month` and records `subscriptionPeriodStart/End`, once per period.
+    Payment-method-change transactions grant nothing. Renewal credits come from the payment,
+    not `subscription.updated`, which Paddle sends before charging.
   - `transaction.completed` without a subscription is a credit pack (`grantCreditPack`):
     `credits_per_unit × quantity` from the paid transaction is added to `packCredits`, with the
     transaction id pushed to `creditPackTransactionIds` in the same write, so retries add nothing.
-- Paid refills inside a period (`resetDueCredits`): yearly plans clear usage on each monthly
-  anniversary of the period start (`nextPaidRefill`, capped at the period end); monthly plans
-  wait for the next payment. Check: `npx tsx src/utils/billing.check.ts`.
+- Check: `npx tsx src/utils/billing.check.ts` (price parsing and the credit balance).
 - Not built: switching plans (needs `subscriptions.update`); refunds of pack purchases are
   not taken back out of `packCredits`.
 
@@ -500,26 +499,28 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 
 ### Credits system
 
-- **Test mode (portfolio)**: `PAID_CREDITS_SPENDABLE = false` (`constants.ts`, mirrored in
-  client `lib/credits.ts`). Payments run in the Paddle sandbox; plans and packs are recorded
-  but only the free credits (`SIGNUP_BONUS`, 20) spend (`min(totalcredits, SIGNUP_BONUS) − creditsUsed`, pack never).
-  Every verified account, whatever its plan, gets the free 30-day refill; paid periods record
-  `subscriptionPeriodStart/End` only, and cancelling doesn't refill (no subscribe/cancel
-  farming). Settings shows plan credits (`PLAN_MONTHLY_CREDITS`) and pack credits as locked;
-  `TestCheckoutDialog` (test card, Cancel / Proceed) opens before every checkout. The rest
-  of this section and Billing describe the `true` behaviour.
-- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (20 credits)
+- **Only free credits spend** (portfolio, Paddle sandbox). User fields:
+  - `freeCredits`: the only spendable credits. Change it by hand in MongoDB to give a user more;
+    it lasts until the next refill.
+  - `usedCredits`: free credits spent since the last refill.
+  - `subscriptionCredits` (plan, from the webhook) and `packCredits` (bought): shown, never spent.
+  - `totalCredits`: free + subscription + pack, calculated in the user's `toJSON`, never stored.
+
+  All four are integers ≥ 0 in the schema. Hand edits skip the schema, so the maths counts a
+  missing or negative value as 0. Settings shows the free credits bar and the locked credits
+  with the total. `TestCheckoutDialog` (test card, Cancel / Proceed) opens before every checkout.
+- Balance = `getRemainingCredits` = `freeCredits − usedCredits` (`utils/credits.ts`, mirrored
+  in client `lib/credits.ts`, which disables Generate below 5). `reserveCredits` charges
+  atomically before calling Gemini: one update that only matches while enough remain. A failed
+  or stuck generation refunds with `refundCredits` (never below 0).
+- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (10 credits)
   (`$max`, so an account is never topped up twice). Signup rejects
   disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
-- `user.totalcredits` vs `user.creditsUsed` is the monthly allowance, which refills overwrite;
-  `user.packCredits` is bought credits, which never expire and no refill touches. Balance =
-  `getRemainingCredits` (allowance left + pack). `reserveCredits` charges atomically before
-  calling Gemini, allowance first (`splitCharge` / `chargeExpressions`, one pipeline update),
-  and returns how much came from the pack; the thumbnail stores it (`packCreditsUsed`) so a
-  failed or stuck generation refunds each part to where it came from (never below 0)
-- **Monthly refill** — only **verified** free accounts refill. When `creditsResetAt` passes
-  (or is missing), the account goes back to `SIGNUP_BONUS` credits with 0 used and the date moves 30 days
+- Old accounts with `totalcredits` / `creditsUsed` move over with `npx tsx src/db/migrate-credits.ts`
+  (run once; safe to rerun).
+- **Monthly refill** — only **verified** accounts refill, whatever their plan. When `creditsResetAt` passes
+  (or is missing), `freeCredits` goes back to `SIGNUP_BONUS` with 0 used and the date moves 30 days
   on (`CREDIT_RESET_INTERVAL_MS`). `resetDueCredits()` runs from `utils/scheduled-jobs.ts`
   every 10 minutes, for the one user before each generation, and on email verification. So
   verifying starts the cycle, and older accounts whose date passed while unverified refill

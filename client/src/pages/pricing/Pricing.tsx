@@ -13,7 +13,7 @@ import CreditFacts from "./components/CreditFacts";
 import PlanComparison from "./components/PlanComparison";
 import PricingFaq from "./components/PricingFaq";
 import { pricingPlans } from "../../data/pricing";
-import { FREE_MONTHLY_CREDITS, PAID_CREDITS_SPENDABLE } from "../../lib/credits";
+import { FREE_MONTHLY_CREDITS } from "../../lib/credits";
 import { STAGGER } from "../../lib/motion";
 import { getPaddle } from "../../lib/paddle";
 import type { BillingPeriod } from "../../types";
@@ -41,14 +41,12 @@ export default function Pricing() {
                 />
 
                 <Wrapper>
-                    {!PAID_CREDITS_SPENDABLE && (
-                        <Alert variant="info" className="mb-6">
-                            Test mode: Eyecatch AI is a portfolio project, so checkout runs in Paddle's test mode and no
-                            money is charged. Pay with the test card shown before checkout, never your real card. Credits
-                            you buy are shown in Settings but can't be spent; thumbnails use your{" "}
-                            {FREE_MONTHLY_CREDITS} free monthly credits.
-                        </Alert>
-                    )}
+                    <Alert variant="info" className="mb-6">
+                        Test mode: Eyecatch AI is a portfolio project, so checkout runs in Paddle's test mode and no
+                        money is charged. Pay with the test card shown before checkout, never your real card. Credits
+                        you buy are shown in Settings but can't be spent; thumbnails use your{" "}
+                        {FREE_MONTHLY_CREDITS} free monthly credits.
+                    </Alert>
                     <Reveal>
                         <CreditPackCard />
                     </Reveal>

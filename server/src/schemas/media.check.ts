@@ -16,7 +16,7 @@ const PRIVATE = ["publicId", "originalName", "directory", "format", "bytes"];
 for (const [field, query] of [
   ["avatar", userModel.find()],
   ["avatar", userModel.find().select("-password")],
-  ["thumbnail", thumbnailModel.find().select("-packCreditsUsed -model")],
+  ["thumbnail", thumbnailModel.find().select("-model")],
 ] as const) {
   const fields = projection(query);
   for (const key of PRIVATE) assert.equal(fields[`${field}.${key}`], 0, `${field}.${key} hidden`);

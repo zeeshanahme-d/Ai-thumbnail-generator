@@ -35,7 +35,7 @@ import { buildSharePage, getShareImageUrl, getThumbnailPageUrl } from "../utils/
 import logger from "../utils/logger.js";
 
 // Left out of public responses: how the creator paid for a generation and which model made it.
-const PUBLIC_THUMBNAIL_PROJECTION = "-packCreditsUsed -model";
+const PUBLIC_THUMBNAIL_PROJECTION = "-model";
 
 const getUserLikedThumbnailIds = async (userId: string): Promise<Set<string>> => {
   const likes = await likeDislikeModel
@@ -55,7 +55,6 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
   const userId = req.user!.userId as string;
   let thumbnailId: string | null = null;
   let creditsReserved = false;
-  let packCreditsUsed = 0;
   let uploadedPublicId: string | null = null;
   let succeeded = false;
 
@@ -73,7 +72,6 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     // Take the credits before calling Gemini. The finally block refunds them if anything fails.
     const reservation = await reserveCredits(userId, CREDIT_COST.GENERATE_COST);
     creditsReserved = reservation !== null;
-    packCreditsUsed = reservation?.fromPack ?? 0;
 
     if (!reservation) {
       const user = await userModel.findById(userId);
@@ -115,7 +113,6 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
       text_overlay: Boolean(text_overlay),
       color_scheme: color_scheme || "Vibrant",
       isGenerating: true,
-      packCreditsUsed,
     });
     thumbnailId = thumbnail._id.toString();
 
@@ -193,7 +190,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
     await thumbnail.save();
 
     succeeded = true;
-    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", { thumbnail, credits: reservation.balance });
+    return ApiResponse.success(res, 201, "Thumbnail generated successfully.", { thumbnail, credits: reservation });
 
   } finally {
     if (creditsReserved && !succeeded) {
@@ -204,7 +201,7 @@ const generateGminiThumbnail = async (req: Request, res: Response) => {
         : true;
 
       if (removed) {
-        await refundCredits(userId, CREDIT_COST.GENERATE_COST, packCreditsUsed).catch((error) => {
+        await refundCredits(userId, CREDIT_COST.GENERATE_COST).catch((error) => {
           logger.error("Failed to refund generation credits", { userId, credits: CREDIT_COST.GENERATE_COST, error });
         });
         // Uploaded before the save failed: with its record gone, nothing points at the image.

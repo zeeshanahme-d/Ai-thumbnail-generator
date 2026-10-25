@@ -1,5 +1,5 @@
 import type { IFaq } from "../types";
-import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST, PAID_CREDITS_SPENDABLE } from "../lib/credits";
+import { FREE_MONTHLY_CREDITS, GENERATION_CREDIT_COST } from "../lib/credits";
 import { ACCEPTED_IMAGE_LABEL, MAX_IMAGE_SIZE_MB } from "../lib/imageValidation";
 import { THUMBNAIL_FORMATS } from "./generator";
 import { CREDIT_PACK, YEARLY_DISCOUNT } from "./pricing";
@@ -73,9 +73,7 @@ export const pricingFaqs: IFaq[] = [
     },
     {
         question: "Can I buy credits or a plan today?",
-        answer: PAID_CREDITS_SPENDABLE
-            ? "Yes. Buy a one-time credit pack, or subscribe to Pro or Ultra, billed monthly or yearly."
-            : `You can try it, but payments run in Paddle's test mode because Eyecatch AI is a portfolio project. Use the test card shown before checkout, never a real card, and no money is charged. Bought credits and plans appear in Settings but can't be spent; thumbnails always use your ${FREE_MONTHLY_CREDITS} free monthly credits.`,
+        answer: `You can try it, but payments run in Paddle's test mode because Eyecatch AI is a portfolio project. Use the test card shown before checkout, never a real card, and no money is charged. Bought credits and plans appear in Settings but can't be spent; thumbnails always use your ${FREE_MONTHLY_CREDITS} free monthly credits.`,
     },
     {
         question: "How does yearly billing work?",

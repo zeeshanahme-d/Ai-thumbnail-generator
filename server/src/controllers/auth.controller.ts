@@ -369,7 +369,7 @@ async function handleSignupUser(req: Request, res: Response) {
   const hashedPassword = await hashPassword(password);
   const username = await generateUniqueUsername(fullName, userModel);
 
-  // totalcredits starts at 0; verifying the email grants the signup bonus.
+  // freeCredits starts at 0; verifying the email grants the signup bonus.
   const user = await userModel.create({
     fullName,
     username,
@@ -406,7 +406,7 @@ async function handleVerifyEmail(req: Request, res: Response) {
     { _id: user._id, isVerified: false },
     {
       $set: { isVerified: true },
-      $max: { totalcredits: CREDIT_COST.SIGNUP_BONUS },
+      $max: { freeCredits: CREDIT_COST.SIGNUP_BONUS },
       $unset: {
         emailVerificationOtp: 1,
         emailVerificationOtpExpiresAt: 1,
@@ -421,7 +421,7 @@ async function handleVerifyEmail(req: Request, res: Response) {
     await resetDueCredits(String(user._id));
   }
 
-  const updated = await userModel.findById(user._id).select("totalcredits creditsUsed packCredits").lean();
+  const updated = await userModel.findById(user._id).select("freeCredits usedCredits").lean();
   const grantedCredits = getRemainingCredits(updated) - creditsBefore;
 
   return ApiResponse.success(

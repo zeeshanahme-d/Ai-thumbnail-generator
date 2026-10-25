@@ -3,11 +3,8 @@ import type { SubscriptionNotification, TransactionNotification } from "@paddle/
 import paddle from "../config/paddle.js";
 import userModel from "../models/user.model.js";
 import { SubscriptionStatus, UserPlan } from "../constants/enums.js";
-import { PAID_CREDITS_SPENDABLE } from "../constants/constants.js";
-import { nextPaidRefill, resetDueCredits } from "./credits.js";
 import logger from "./logger.js";
 
-// Statuses that keep the paid plan. past_due keeps it while Paddle retries the payment.
 const LIVE_STATUSES: (string | null | undefined)[] = [
   SubscriptionStatus.Active,
   SubscriptionStatus.Trialing,
@@ -17,7 +14,7 @@ const LIVE_STATUSES: (string | null | undefined)[] = [
 export const isLiveSubscription = (status?: string | null) => LIVE_STATUSES.includes(status);
 
 // Transactions that pay for a billing period. A payment-method change can be a $0 transaction,
-// so it never refills.
+// so it never grants credits.
 const PAID_PERIOD_ORIGINS = ["api", "web", "subscription_recurring", "subscription_update"];
 
 type BillingUser = { _id: unknown; subscriptionId?: string | null; subscriptionStatus?: string | null };
@@ -54,8 +51,7 @@ async function findBillingUser(customData: unknown, subscriptionId: string): Pro
 // Another subscription that is still live owns the account, so events from this one are ignored.
 // Checkout refuses accounts with a live plan, so a real second subscription only starts after the
 // first ended, or when two checkouts were paid at once (two tabs).
-const ownedByOtherSubscription = (user: BillingUser, subscriptionId: string) =>
-  Boolean(user.subscriptionId && user.subscriptionId !== subscriptionId && isLiveSubscription(user.subscriptionStatus));
+const ownedByOtherSubscription = (user: BillingUser, subscriptionId: string) => Boolean(user.subscriptionId && user.subscriptionId !== subscriptionId && isLiveSubscription(user.subscriptionStatus));
 
 // The account keeps the subscription it already has, so Paddle must stop billing the duplicate.
 // Paddle's current state decides, so a late or repeated event never cancels twice. The duplicate's
@@ -68,7 +64,7 @@ async function cancelDuplicateSubscription(subscriptionId: string, userId: strin
   logger.warn("Duplicate subscription canceled, refund its first payment in Paddle", { userId, subscriptionId });
 }
 
-/** subscription.* events: mirrors the plan and status. Credits come from paid transactions. */
+/** subscription.* events: mirrors the plan and status. Plan credits come from paid transactions. */
 export async function syncSubscription(subscription: SubscriptionNotification): Promise<void> {
   const context = { subscriptionId: subscription.id, status: subscription.status };
 
@@ -102,11 +98,9 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
     subscriptionRenewsAt: subscription.nextBilledAt ? new Date(subscription.nextBilledAt) : null,
     subscriptionUpdatedAt: updatedAt,
   };
-  // Back on the free plan: the refill below replaces the paid credits with the free allowance.
-  // Without spendable paid credits the free cycle never changed, so cancelling must not refill it
-  // (a subscribe-and-cancel loop with test cards would otherwise hand out free credits).
-  const refillOnEnd = !live && PAID_CREDITS_SPENDABLE;
-  if (refillOnEnd) set.creditsResetAt = new Date();
+  // The plan ended, so its credits go. Free credits never change here, so a subscribe-and-cancel
+  // loop with test cards hands out nothing.
+  if (!live) set.subscriptionCredits = 0;
 
   const { modifiedCount } = await userModel.updateOne(
     {
@@ -126,12 +120,9 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
   }
 
   logger.info("Subscription synced", { ...context, userId, plan: set.plan });
-  if (refillOnEnd) {
-    await resetDueCredits(userId);
-  }
 }
 
-/** transaction.completed: a paid billing period refills the plan's credits, once per period. */
+/** transaction.completed: a paid billing period sets the plan's credits, once per period. */
 export async function grantPaidPeriod(transaction: TransactionNotification): Promise<void> {
   const { subscriptionId, billingPeriod } = transaction;
   if (!subscriptionId || !billingPeriod || !PAID_PERIOD_ORIGINS.includes(transaction.origin)) return;
@@ -163,12 +154,8 @@ export async function grantPaidPeriod(transaction: TransactionNotification): Pro
   const periodStart = new Date(billingPeriod.startsAt);
   const periodEnd = new Date(billingPeriod.endsAt);
 
-  // The period is always recorded (Settings shows it). Its credits only replace the free cycle
-  // while paid credits are spendable; otherwise the plan's credits are shown from the plan alone.
-  const set: Record<string, unknown> = { subscriptionPeriodStart: periodStart, subscriptionPeriodEnd: periodEnd };
-  if (PAID_CREDITS_SPENDABLE) {
-    Object.assign(set, { totalcredits: grant.credits, creditsUsed: 0, creditsResetAt: nextPaidRefill(periodStart, periodEnd) });
-  }
+  // Settings shows the period and its credits; the credits are never spendable.
+  const set = { subscriptionPeriodStart: periodStart, subscriptionPeriodEnd: periodEnd, subscriptionCredits: grant.credits };
 
   // Retries and duplicate events find the period already granted and change nothing.
   const { modifiedCount } = await userModel.updateOne(

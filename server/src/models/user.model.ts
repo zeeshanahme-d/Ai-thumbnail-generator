@@ -113,24 +113,38 @@ const userSchema = new mongoose.Schema(
       default: UserPlan.Free,
     },
 
-    // New accounts start at 0. Verifying the email grants CREDIT_COST.SIGNUP_BONUS,
-    // so throwaway signups cannot farm free credits.
-    totalcredits: {
+    // The only credits generations spend (utils/credits.ts). New accounts start at 0; verifying the
+    // email grants CREDIT_COST.SIGNUP_BONUS, so throwaway signups cannot farm them. Can be changed
+    // by hand in the database; each 30-day refill sets it back to the bonus.
+    freeCredits: {
       type: Number,
       default: 0,
+      min: 0,
+      validate: Number.isInteger,
     },
 
-    creditsUsed: {
+    // Free credits spent since the last refill.
+    usedCredits: {
       type: Number,
       default: 0,
+      min: 0,
+      validate: Number.isInteger,
     },
 
-    // Credits bought in packs. They never expire and no refill touches them; generations
-    // spend the monthly allowance above first.
+    // The plan's credits_per_month from the last paid period, 0 once the plan ends. Shown, never spent.
+    subscriptionCredits: {
+      type: Number,
+      default: 0,
+      min: 0,
+      validate: Number.isInteger,
+    },
+
+    // Credits bought in packs. Shown, never spent.
     packCredits: {
       type: Number,
       default: 0,
       min: 0,
+      validate: Number.isInteger,
     },
 
     // Paddle transactions already turned into pack credits, so a webhook retry adds nothing.
@@ -161,7 +175,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // The last billing period Paddle took payment for. Each one refills the credits once.
+    // The last billing period Paddle took payment for. Each one sets subscriptionCredits once.
     subscriptionPeriodStart: {
       type: Date,
       default: null,
@@ -216,9 +230,16 @@ const PRIVATE_FIELDS = [
   "creditPackTransactionIds",
 ];
 
+const CREDIT_FIELDS = ["freeCredits", "subscriptionCredits", "packCredits"];
+
 userSchema.set("toJSON", {
   transform: (_doc, ret: Record<string, unknown>) => {
     for (const field of PRIVATE_FIELDS) delete ret[field];
+    // Every credit the account holds, spendable or not. Calculated, never stored, so a hand edit
+    // of one credit field can't leave it wrong.
+    if ("freeCredits" in ret) {
+      ret.totalCredits = CREDIT_FIELDS.reduce((sum, field) => sum + Math.max(0, Number(ret[field]) || 0), 0);
+    }
     return ret;
   },
 });

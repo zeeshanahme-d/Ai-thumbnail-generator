@@ -14,7 +14,7 @@ export interface GenerateThumbnailPayload {
 
 export interface GenerateThumbnailResponse {
   thumbnail: Thumbnail;
-  credits: Pick<IUser, "totalcredits" | "creditsUsed" | "packCredits" | "creditsResetAt">;
+  credits: Pick<IUser, "freeCredits" | "usedCredits" | "creditsResetAt">;
 }
 
 export interface PaginationParams extends ThumbnailFilters {
