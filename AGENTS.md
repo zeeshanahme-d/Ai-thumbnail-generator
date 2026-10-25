@@ -226,7 +226,8 @@ Check these before writing anything new:
   uncontrolled; includes style/category/format/color-scheme pickers, the reference-image upload (`ReferenceImageUpload`) and the
   text-on-image switch (on by default).
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
-  signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
+  signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`), only with
+  `showTools` (the dashboard), never in the hero.
   Used by both `HeroSection` (through `HeroPrompt`, with `showTools={false}` and a
   placeholder that types out the templates, so it passes `ariaLabel`) and the dashboard
   generate page.
@@ -234,6 +235,8 @@ Check these before writing anything new:
 - **`Tooltip.tsx`** — hover / keyboard-focus label in a manual popover (top layer, so nothing
   clips it). Wrap something yourself only when the label differs from the aria-label or the
   button can be disabled (disabled buttons get no hover); icon Buttons inside skip their own.
+  Also wrap icon-only `<Link>`s styled with `buttonClasses()`, which get no automatic tooltip.
+  `side="right"` for vertical lists, such as the collapsed sidebar's links. Never use `title`.
 - **`SectionTitle.tsx`** — label + heading + description. `as="h1"` for a page title;
   `animate={false}` everywhere except the homepage and `/pricing`. `align`: `center`
   (pill, default), `start` (left, mono eyebrow) or `split` (heading left, description
@@ -268,9 +271,12 @@ Check these before writing anything new:
   `children` for extra content such as a password input.
 - **`PageLoader.tsx`** — centered spinner. `fullScreen` for loads before any layout shows.
   Used by `SessionProvider` and as the `Suspense` fallback for lazy pages.
+- **`LogoutDialog`** (`components/modals/`) — the Log out confirmation, the only place that calls
+  `useLogout`. The navbar menu, mobile menu and dashboard sidebar render it **outside** their
+  popovers, because a closed popover hides everything inside it.
 - **`ListError.tsx`** — "Couldn't load" message with Try again, for a list whose first load
   failed (`loadFailed` / `refetch` from `useInfiniteThumbnails`).
-- **`Input.tsx`** (icon + input), **`Alert.tsx`** (error | success | warning | info),
+- **`Input.tsx`** (icon + input; `type="password"` gets a show/hide button), **`Alert.tsx`** (error | success | warning | info),
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**.
 

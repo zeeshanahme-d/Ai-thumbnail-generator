@@ -98,8 +98,7 @@ export async function syncSubscription(subscription: SubscriptionNotification): 
     subscriptionRenewsAt: subscription.nextBilledAt ? new Date(subscription.nextBilledAt) : null,
     subscriptionUpdatedAt: updatedAt,
   };
-  // The plan ended, so its credits go. Free credits never change here, so a subscribe-and-cancel
-  // loop with test cards hands out nothing.
+  // Free credits never change here, so subscribing and cancelling hands out nothing.
   if (!live) set.subscriptionCredits = 0;
 
   const { modifiedCount } = await userModel.updateOne(
@@ -154,7 +153,6 @@ export async function grantPaidPeriod(transaction: TransactionNotification): Pro
   const periodStart = new Date(billingPeriod.startsAt);
   const periodEnd = new Date(billingPeriod.endsAt);
 
-  // Settings shows the period and its credits; the credits are never spendable.
   const set = { subscriptionPeriodStart: periodStart, subscriptionPeriodEnd: periodEnd, subscriptionCredits: grant.credits };
 
   // Retries and duplicate events find the period already granted and change nothing.

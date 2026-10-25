@@ -113,9 +113,7 @@ const userSchema = new mongoose.Schema(
       default: UserPlan.Free,
     },
 
-    // The only credits generations spend (utils/credits.ts). New accounts start at 0; verifying the
-    // email grants CREDIT_COST.SIGNUP_BONUS, so throwaway signups cannot farm them. Can be changed
-    // by hand in the database; each 30-day refill sets it back to the bonus.
+    // The only spendable credits. 0 until the email is verified, so throwaway signups get nothing.
     freeCredits: {
       type: Number,
       default: 0,
@@ -123,7 +121,6 @@ const userSchema = new mongoose.Schema(
       validate: Number.isInteger,
     },
 
-    // Free credits spent since the last refill.
     usedCredits: {
       type: Number,
       default: 0,
@@ -131,7 +128,7 @@ const userSchema = new mongoose.Schema(
       validate: Number.isInteger,
     },
 
-    // The plan's credits_per_month from the last paid period, 0 once the plan ends. Shown, never spent.
+    // Shown, never spent.
     subscriptionCredits: {
       type: Number,
       default: 0,
@@ -139,7 +136,6 @@ const userSchema = new mongoose.Schema(
       validate: Number.isInteger,
     },
 
-    // Credits bought in packs. Shown, never spent.
     packCredits: {
       type: Number,
       default: 0,
@@ -235,8 +231,7 @@ const CREDIT_FIELDS = ["freeCredits", "subscriptionCredits", "packCredits"];
 userSchema.set("toJSON", {
   transform: (_doc, ret: Record<string, unknown>) => {
     for (const field of PRIVATE_FIELDS) delete ret[field];
-    // Every credit the account holds, spendable or not. Calculated, never stored, so a hand edit
-    // of one credit field can't leave it wrong.
+    // Calculated, never stored, so a hand edit can't leave it wrong.
     if ("freeCredits" in ret) {
       ret.totalCredits = CREDIT_FIELDS.reduce((sum, field) => sum + Math.max(0, Number(ret[field]) || 0), 0);
     }
