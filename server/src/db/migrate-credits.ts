@@ -23,7 +23,6 @@ async function migrate() {
   const users = await userModel.collection.updateMany(oldFields, [
     {
       $set: {
-        // Only the free credits were ever spendable, so the old allowance counts up to the bonus.
         freeCredits: {
           $ifNull: ["$freeCredits", { $min: [{ $max: [0, { $ifNull: ["$totalcredits", 0] }] }, CREDIT_COST.SIGNUP_BONUS] }],
         },
@@ -49,7 +48,6 @@ async function migrate() {
     { $unset: ["totalcredits", "creditsUsed"] },
   ]);
 
-  // Pack credits are never spent any more, so no generation records them.
   const thumbnails = await thumbnailModel.collection.updateMany(
     { packCreditsUsed: { $exists: true } },
     { $unset: { packCreditsUsed: "" } },

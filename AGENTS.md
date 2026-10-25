@@ -226,7 +226,8 @@ Check these before writing anything new:
   uncontrolled; includes style/category/format/color-scheme pickers, the reference-image upload (`ReferenceImageUpload`) and the
   text-on-image switch (on by default).
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
-  signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
+  signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`), only with
+  `showTools` (the dashboard), never in the hero.
   Used by both `HeroSection` (through `HeroPrompt`, with `showTools={false}` and a
   placeholder that types out the templates, so it passes `ariaLabel`) and the dashboard
   generate page.

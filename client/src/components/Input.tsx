@@ -12,7 +12,6 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export default function Input({ icon: Icon, onClear, label, id, type, ...props }: InputProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
-  // Password fields get a show/hide button; the field stays a password field for autofill.
   const isPassword = type === "password";
   const [showPassword, setShowPassword] = useState(false);
 

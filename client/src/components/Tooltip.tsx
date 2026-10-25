@@ -8,7 +8,6 @@ const SHOW_DELAY_MS = 200;
 interface TooltipProps {
   label: string;
   children: ReactNode;
-  /** "right" suits a vertical list such as the collapsed sidebar. */
   side?: "top" | "right";
 }
 
@@ -83,9 +82,7 @@ export default function Tooltip({ label, children, side = "top" }: TooltipProps)
   );
 }
 
-// "top": centered above the trigger, flipped below near the top of the window, kept inside it
-// sideways. "right": vertically centered beside it. offsetWidth/Height ignore the entrance
-// scale, which getBoundingClientRect would include.
+// offsetWidth/Height ignore the entrance scale, which getBoundingClientRect would include.
 function placeTooltip(tip: HTMLElement, trigger: Element, side: "top" | "right") {
   const anchor = trigger.getBoundingClientRect();
   if (side === "right") {

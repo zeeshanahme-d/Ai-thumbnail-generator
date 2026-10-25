@@ -11,7 +11,6 @@ type CreditFields = Pick<IUser, "freeCredits" | "usedCredits">;
 const atLeastZero = (value: number | null | undefined) => Math.max(0, Number(value) || 0);
 
 // Mirrors getRemainingCredits in server/src/utils/credits.ts, which has the final say.
-/** The credits a user can spend: only free credits; subscription and pack credits never are. */
 export function getRemainingCredits(user: CreditFields | null | undefined): number {
     return Math.max(0, atLeastZero(user?.freeCredits) - atLeastZero(user?.usedCredits));
 }

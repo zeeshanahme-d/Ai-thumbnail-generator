@@ -25,9 +25,7 @@ assert.equal(getRemainingCredits({ freeCredits: free, usedCredits: 0 }), free);
 assert.equal(getRemainingCredits({ freeCredits: free, usedCredits: free - 5 }), 5);
 const subscriber = { freeCredits: 50, usedCredits: 0, subscriptionCredits: 500, packCredits: 100 };
 assert.equal(getRemainingCredits(subscriber), 50);
-// Usage above the free credits (after a hand edit lowered them) never goes negative.
 assert.equal(getRemainingCredits({ freeCredits: 5, usedCredits: 20 }), 0);
-// Hand edits that skip the schema: missing or negative values count as 0.
 assert.equal(getRemainingCredits({ freeCredits: -10, usedCredits: 0 }), 0);
 assert.equal(getRemainingCredits({ freeCredits: free, usedCredits: -5 }), free);
 assert.equal(getRemainingCredits({}), 0);

@@ -64,8 +64,8 @@ const PromptCard = ({
   const [textOverlay, setTextOverlay] = useState(true);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [openPanelId, setOpenPanelId] = useState<string | null>(null);
-  // Improving calls a signed-in endpoint, so guests only get the templates.
   const isAuthenticated = useSession((state) => state.isAuthenticated);
+  const canImprove = isAuthenticated && showTools;
   const { mutate: improve, isPending: isImproving } = useImprovePrompt();
 
   // Controlled when `value` is passed, otherwise the component keeps its own state.
@@ -193,7 +193,7 @@ const PromptCard = ({
 
         {/* The tooltip sits on the wrapper: disabled buttons get no hover events in Chrome,
             so pointer-events-none lets the hover reach it while the prompt is empty. */}
-        {isAuthenticated && (
+        {canImprove && (
           <Tooltip label={hasPrompt ? "Improve my prompt with AI" : "Write a prompt, then improve it with AI"}>
             <span className="inline-flex shrink-0">
               <Button
@@ -234,7 +234,7 @@ const PromptCard = ({
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className={`block w-full min-h-32 sm:min-h-37.5 max-h-55 h-auto resize-none border-none bg-transparent text-[0.95rem] leading-relaxed text-text-primary outline-none placeholder:text-text-muted ${label || isAuthenticated ? "mt-3" : ""
+        className={`block w-full min-h-32 sm:min-h-37.5 max-h-55 h-auto resize-none border-none bg-transparent text-[0.95rem] leading-relaxed text-text-primary outline-none placeholder:text-text-muted ${label || canImprove ? "mt-3" : ""
           }`}
       />
 

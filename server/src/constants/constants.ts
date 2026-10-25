@@ -85,8 +85,7 @@ export const colorSchemeDescriptions: Record<ColorScheme, string> = {
   [ColorScheme.Pastel]: "soft pastel colors with low saturation, gentle and friendly",
 };
 
-// SIGNUP_BONUS is the freeCredits a verified account gets, and gets back at every refill.
-// Only free credits are spent; subscription and pack credits are recorded but never spendable.
+// Only free credits are spent; subscription and pack credits are recorded, never spendable.
 export const CREDIT_COST = {
   SIGNUP_BONUS: 10,
   GENERATE_COST: 5,
@@ -114,9 +113,7 @@ export const PROMPT_MAX_LENGTH = 500;
 export const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-lite-image";
 export const GEMINI_TEXT_MODEL = "gemini-3.1-flash-lite";
 
-// The improved prompt's first line becomes the thumbnail's title (buildThumbnailTitle on the
-// client), and the image prompt makes the headline from the title, so line 1 must be the topic.
-// The style, colors and lighting are left out because the creator's presets choose them.
+// Line 1 becomes the thumbnail's title (buildThumbnailTitle), which the headline is made from.
 export const PROMPT_IMPROVER_INSTRUCTION = `You turn a creator's rough idea into a brief for an AI thumbnail generator. The creator's settings already choose the art style, colors, lighting and platform, and the generator sets the lettering.
 
 Reply in this form, in the creator's language, with no labels:

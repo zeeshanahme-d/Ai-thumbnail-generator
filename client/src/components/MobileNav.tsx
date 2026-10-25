@@ -21,7 +21,6 @@ export default function MobileNav() {
 
     const closeMenu = () => menuRef.current?.hidePopover();
 
-    // Asks first; the dialog sits outside the menu, which hides everything inside it once closed.
     const handleLogout = () => {
         closeMenu();
         setIsLogoutOpen(true);

@@ -29,7 +29,6 @@ export default function DashboardSidebar({
   const user = useSession((state) => state.user);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
-  // Collapsed, only the avatar shows, so the label names the link and shows on hover.
   const profileLink = (
     <Link
       to="/profile"
@@ -59,7 +58,7 @@ export default function DashboardSidebar({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col border-r border-border bg-background-surface transition-all duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col overflow-hidden border-r border-border bg-background-surface transition-all duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
         } ${isCollapsed ? "w-18" : "w-68"}`}
     >
       <div className={`flex h-16 items-center px-4 ${isCollapsed ? "justify-center" : "justify-between gap-2"}`}>
@@ -98,7 +97,7 @@ export default function DashboardSidebar({
       </div>
 
       {/* Navigation */}
-      <nav aria-label="Dashboard" className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+      <nav aria-label="Dashboard" className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 pt-2">
         {dashboardNav.map((section) => (
           <div key={section.label} className="mb-6 last:mb-0">
             {!isCollapsed && <Eyebrow className="px-3 pb-2">{section.label}</Eyebrow>}
@@ -108,7 +107,6 @@ export default function DashboardSidebar({
                   <NavLink
                     to={to}
                     onClick={() => setIsMobileOpen(false)}
-                    // Collapsed, the text is hidden, so the label names the link and shows on hover.
                     aria-label={isCollapsed ? label : undefined}
                     className={({ isActive }) =>
                       `relative flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors ${isActive
@@ -146,7 +144,7 @@ export default function DashboardSidebar({
       </nav>
 
       {/* Account */}
-      <div className="border-t border-border p-4">
+      <div className="whitespace-nowrap border-t border-border p-4">
         {!isCollapsed && (
           <div className="mb-4 flex items-center justify-between rounded-lg border border-border bg-background-card px-3 py-2.5">
             <Eyebrow>Credits left</Eyebrow>
@@ -158,7 +156,6 @@ export default function DashboardSidebar({
 
         <div className={`mt-4 flex gap-2 ${isCollapsed ? "flex-col items-center" : ""}`}>
           <ThemeButton showLabel={!isCollapsed} className="rounded-lg" />
-          {/* A Link styled as a button, so it doesn't get Button's automatic tooltip. */}
           <Tooltip label="Settings">
             <Link
               to="/dashboard/settings"

@@ -557,7 +557,6 @@ const restoreAllThumbnails = async (req: Request, res: Response) => {
 const improvePrompt = async (req: Request, res: Response) => {
   const { prompt, format, textOverlay, hasReferenceImage } = req.validated!.body;
 
-  // A low temperature keeps it close to the creator's idea instead of inventing a new one.
   const result = await generateText({
     model: GEMINI_TEXT_MODEL,
     contents: buildImproverInput({ prompt, format, textOverlay, hasReferenceImage }),

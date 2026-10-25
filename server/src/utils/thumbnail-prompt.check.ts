@@ -38,11 +38,9 @@ assert.ok(withReference.includes("as the brief says") && withReference.includes(
 assert.ok(withReference.includes("copy only its layout, lettering and colors"), "a thumbnail reference lends only its look");
 assert.ok(!withReference.includes("Show a person only if"), "the reference replaces the casting rule");
 assert.ok(!plain.includes("attached image"), "no reference paragraph without an image");
-// With text off, a logo the creator attached is still allowed.
 assert.ok(buildThumbnailPrompt({ ...base, textOverlay: false, hasReferenceImage: true }).includes("no logos other than one from the attached image"));
 assert.ok(noText.includes("no logos.") && !noText.includes("attached image"));
 
-// The platform's own badges and buttons are never drawn, whatever the format.
 assert.ok(plain.includes("platform interface"));
 
 const gaming = buildThumbnailPrompt({ ...base, category: ThumbnailCategory.Gaming });
@@ -64,7 +62,6 @@ assert.ok(tiktok.includes("TikTok cover") && tiktok.includes("9:16 frame") && !t
 const square = buildThumbnailPrompt({ ...base, format: ThumbnailFormat.Square });
 assert.ok(!square.includes("bottom-right") && square.includes("1:1 frame"));
 
-// The improver hears about the settings it can't see, and every platform name reads cleanly.
 const improverInput = buildImproverInput({ prompt: "  my idea  ", format: ThumbnailFormat.YouTube, textOverlay: true, hasReferenceImage: true });
 assert.equal(improverInput, "Settings: a YouTube thumbnail, 16:9; text on the image on; an image is attached.\nIdea: my idea");
 for (const format of Object.values(ThumbnailFormat)) {

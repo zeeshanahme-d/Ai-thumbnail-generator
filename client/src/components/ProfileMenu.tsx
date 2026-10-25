@@ -20,7 +20,6 @@ export default function ProfileMenu() {
     // The navbar stays mounted across routes, so the menu is closed by hand when a link is followed.
     const closeMenu = () => menuRef.current?.hidePopover();
 
-    // Asks first; the dialog sits outside the menu, which hides everything inside it once closed.
     const handleLogout = () => {
         closeMenu();
         setIsLogoutOpen(true);

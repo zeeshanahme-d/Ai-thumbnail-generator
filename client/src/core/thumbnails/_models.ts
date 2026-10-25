@@ -12,7 +12,6 @@ export interface GenerateThumbnailPayload {
   referenceImage?: File | null;
 }
 
-/** The prompt plus the settings the improver can't see. */
 export interface ImprovePromptPayload {
   prompt: string;
   format: string;
