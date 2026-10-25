@@ -29,8 +29,12 @@ const generateThumbnailSchema = z.object({
   text_overlay: z.stringbool().optional().default(true),
 });
 
+// The generation settings travel along so the improver knows about the attached image and the text.
 const improvePromptSchema = z.object({
   prompt: z.string().trim().min(1, "Write a prompt to improve").max(PROMPT_MAX_LENGTH, promptMaxMessage),
+  format: z.enum(ThumbnailFormat).optional().default(ThumbnailFormat.YouTube),
+  textOverlay: z.boolean().optional().default(true),
+  hasReferenceImage: z.boolean().optional().default(false),
 });
 
 const publishThumbnailSchema = z.object({

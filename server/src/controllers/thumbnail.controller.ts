@@ -23,7 +23,7 @@ import {
   ThumbnailStyle,
   UploadErrorCode,
 } from "../constants/enums.js";
-import { buildThumbnailPrompt } from "../utils/thumbnail-prompt.js";
+import { buildImproverInput, buildThumbnailPrompt } from "../utils/thumbnail-prompt.js";
 import { getRemainingCredits, refundCredits, reserveCredits, resetDueCredits } from "../utils/credits.js";
 import uploadFileOnCloudniary, { deleteFileFromCloudinary } from "../utils/cloudniary.js";
 import { deleteThumbnailsForever } from "../utils/delete-thumbnails.js";
@@ -555,12 +555,13 @@ const restoreAllThumbnails = async (req: Request, res: Response) => {
  * Rewrite the user's idea into a more detailed image prompt. Free, but rate limited.
  */
 const improvePrompt = async (req: Request, res: Response) => {
-  const { prompt } = req.validated!.body;
+  const { prompt, format, textOverlay, hasReferenceImage } = req.validated!.body;
 
+  // A low temperature keeps it close to the creator's idea instead of inventing a new one.
   const result = await generateText({
     model: GEMINI_TEXT_MODEL,
-    contents: prompt,
-    config: { systemInstruction: PROMPT_IMPROVER_INSTRUCTION, temperature: 0.8 },
+    contents: buildImproverInput({ prompt, format, textOverlay, hasReferenceImage }),
+    config: { systemInstruction: PROMPT_IMPROVER_INSTRUCTION, temperature: 0.4 },
   });
 
   if (!result.ok) {

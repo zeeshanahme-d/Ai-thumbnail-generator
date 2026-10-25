@@ -62,3 +62,16 @@ export function buildThumbnailPrompt(input: ThumbnailPromptInput): string {
 
   return parts.join("\n\n");
 }
+
+type ImproverInput = { prompt: string; format: ThumbnailFormat; textOverlay: boolean; hasReferenceImage: boolean };
+
+/** What the prompt improver gets: the settings it can't see, then the idea (PROMPT_IMPROVER_INSTRUCTION). */
+export function buildImproverInput({ prompt, format, textOverlay, hasReferenceImage }: ImproverInput): string {
+  const { aspectRatio, subject } = THUMBNAIL_FORMATS[format];
+  // "a YouTube thumbnail for a video titled" → "a YouTube thumbnail"
+  const platform = subject.replace(/ (for a (video|stream) titled|titled|about)$/, "");
+  return [
+    `Settings: ${platform}, ${aspectRatio}; text on the image ${textOverlay ? "on" : "off"}; ${hasReferenceImage ? "an image is attached" : "no image attached"}.`,
+    `Idea: ${prompt.trim()}`,
+  ].join("\n");
+}

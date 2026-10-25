@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildThumbnailPrompt } from "./thumbnail-prompt.js";
+import { buildImproverInput, buildThumbnailPrompt } from "./thumbnail-prompt.js";
 import { ColorScheme, ThumbnailCategory, ThumbnailFormat, ThumbnailStyle } from "../constants/enums.js";
 import { THUMBNAIL_FORMATS, stylePrompts } from "../constants/constants.js";
 import logger from "./logger.js";
@@ -63,6 +63,14 @@ assert.ok(tiktok.includes("TikTok cover") && tiktok.includes("9:16 frame") && !t
 
 const square = buildThumbnailPrompt({ ...base, format: ThumbnailFormat.Square });
 assert.ok(!square.includes("bottom-right") && square.includes("1:1 frame"));
+
+// The improver hears about the settings it can't see, and every platform name reads cleanly.
+const improverInput = buildImproverInput({ prompt: "  my idea  ", format: ThumbnailFormat.YouTube, textOverlay: true, hasReferenceImage: true });
+assert.equal(improverInput, "Settings: a YouTube thumbnail, 16:9; text on the image on; an image is attached.\nIdea: my idea");
+for (const format of Object.values(ThumbnailFormat)) {
+  const line = buildImproverInput({ prompt: "x", format, textOverlay: false, hasReferenceImage: false }).split("\n")[0];
+  assert.ok(!/ (titled|about),/.test(line) && line.includes("text on the image off; no image attached"), line);
+}
 
 if (process.argv.includes("--print")) process.stdout.write(`${withBrief}\n`);
 logger.info("thumbnail prompt checks passed");

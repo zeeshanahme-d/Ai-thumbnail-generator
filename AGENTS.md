@@ -398,8 +398,10 @@ detail leave out `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 
 **Protected** (via `thumbnail.routes.ts`, behind `authenticationToken`):
 - `POST /thumbnail` — generate thumbnail (multipart form with optional `referenceImage`)
-- `POST /thumbnail/improve-prompt` — rewrite `{ prompt }` with `GEMINI_TEXT_MODEL`; free,
-  10 per 10 minutes per user (`improvePromptLimiter`)
+- `POST /thumbnail/improve-prompt` — rewrite `{ prompt, format, textOverlay, hasReferenceImage }`
+  into a title line plus a short brief with `GEMINI_TEXT_MODEL` (`PROMPT_IMPROVER_INSTRUCTION`,
+  settings line from `buildImproverInput`). The first line becomes the thumbnail's title, and colors,
+  lighting and style are left to the presets. Free, 10 per 10 minutes per user (`improvePromptLimiter`)
 - `DELETE /thumbnail/recycle-bin` — empty the bin; `PATCH /thumbnail/recycle-bin/restore` —
   restore all. Both are registered before the `/:id` routes, which would match them.
 - `GET /thumbnail` — user's own thumbnails (paginated, filterable)
