@@ -85,15 +85,13 @@ export const colorSchemeDescriptions: Record<ColorScheme, string> = {
   [ColorScheme.Pastel]: "soft pastel colors with low saturation, gentle and friendly",
 };
 
+// SIGNUP_BONUS is the freeCredits a verified account gets, and gets back at every refill.
+// Only free credits are spent; subscription and pack credits are recorded but never spendable.
 export const CREDIT_COST = {
-  SIGNUP_BONUS: 20,
+  SIGNUP_BONUS: 10,
   GENERATE_COST: 5,
   RECREATE_COST: 10,
 };
-
-
-export const PAID_CREDITS_SPENDABLE = false;
-
 
 export const CREDIT_PACK = {
   CREDITS_PER_UNIT: 5,
@@ -116,11 +114,24 @@ export const PROMPT_MAX_LENGTH = 500;
 export const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-lite-image";
 export const GEMINI_TEXT_MODEL = "gemini-3.1-flash-lite";
 
-export const PROMPT_IMPROVER_INSTRUCTION = `You improve prompts for an AI thumbnail generator for YouTube, TikTok, Instagram, Facebook, X, Twitch and Vimeo.
-Rewrite the user's idea into one vivid image description: the main subject and what it is doing, the composition, the background, the lighting and the mood.
-If a person appears, describe a specific individual who fits the topic (age, look, clothing, setting), not a generic model, with a natural expression that suits the mood. Never add a shocked, screaming or open-mouthed face unless the user asked for one.
-Keep the user's topic and language. Do not add brand names, hashtags, quotes or explanations.
-Reply with the improved prompt only, under ${PROMPT_MAX_LENGTH - 100} characters.`;
+// The improved prompt's first line becomes the thumbnail's title (buildThumbnailTitle on the
+// client), and the image prompt makes the headline from the title, so line 1 must be the topic.
+// The style, colors and lighting are left out because the creator's presets choose them.
+export const PROMPT_IMPROVER_INSTRUCTION = `You turn a creator's rough idea into a brief for an AI thumbnail generator. The creator's settings already choose the art style, colors, lighting and platform, and the generator sets the lettering.
+
+Reply in this form, in the creator's language, with no labels:
+Line 1: the video's title as the creator would write it, under 70 characters. It must include any product, channel or brand name the creator wrote.
+An empty line.
+The brief, under 350 characters: the one main subject and what it shows, how it ties to the topic, the hook or feeling that makes someone click, and where things sit in the frame.
+
+Rules:
+- Keep everything the creator asked for, such as names of their product, channel or brand, people, objects, words and how to use the attached image. Never drop or contradict any of it.
+- Never choose colors, lighting, camera or art style.
+- You can't see the attached image, so call it "the attached image" and never guess what it shows. If the idea says to use it, say how in the brief.
+- Add a person only if the idea needs one, and never describe someone new when an image is attached.
+- Any person has a natural expression that fits the mood, never shocked or screaming unless asked.
+- When text on the image is on, end the brief with the headline in quotes, two to five words. When it is off, ask for no text.
+- No hashtags, emojis or explanations.`;
 
 export const GEMINI_TIMEOUT_MS = 60 * 1000;
 export const GEMINI_MAX_ATTEMPTS = 3;

@@ -93,12 +93,6 @@ const thumbnailSchema = new mongoose.Schema(
       default: true,
     },
 
-    // Pack credits this generation spent, so a failed one gives them back to the pack.
-    packCreditsUsed: {
-      type: Number,
-      default: 0,
-    },
-
     published: {
       type: Boolean,
       default: false,

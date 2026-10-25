@@ -88,7 +88,7 @@ const PromptCard = ({
   };
 
   const handleImprove = () => {
-    improve(prompt.trim(), {
+    improve({ prompt: prompt.trim(), format, textOverlay, hasReferenceImage: hasReference }, {
       onSuccess: (improved) => handleChange(improved.slice(0, maxLength)),
       onError: (error) => toast.error(getApiErrorMessage(error, "Couldn't improve your prompt.")),
     });

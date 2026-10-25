@@ -6,11 +6,11 @@ AI thumbnail generator for YouTube, TikTok, Instagram, Facebook, X, Twitch and V
 
 ![Eyecatch AI homepage](client/public/hero_img.png)
 
-> **Payments are in test mode.** This is a portfolio project: checkout runs in the Paddle sandbox and no money is charged. Use the test card `4242 4242 4242 4242` (any future expiry date, security code `100`). Credits you buy show in Settings but can't be spent; generations use the 20 free monthly credits you get after verifying your email.
+> **Payments are in test mode.** This is a portfolio project: checkout runs in the Paddle sandbox and no money is charged. Use the test card `4242 4242 4242 4242` (any future expiry date, security code `100`). Credits you buy show in Settings but can't be spent; generations use the 10 free monthly credits you get after verifying your email.
 
 ## Features
 
-- **Generate:** 14 platform formats (YouTube video and Shorts, TikTok, Instagram post, Reel and Story, Facebook video and post, X, Twitch, Vimeo, plus square, 4:3 and 3:4), 16 categories, 5 styles, 8 color schemes, an optional reference image (face, product, logo), and text on the image on or off.
+- **Generate:** 14 platform formats (YouTube video and Shorts, TikTok, Instagram post, Reel and Story, Facebook video and post, X, Twitch, Vimeo, plus square, 4:3 and 3:4), 16 categories, 5 styles, 8 color schemes, an optional reference image (your face, a product, or a thumbnail whose layout you like, up to 2 MB), and text on the image on or off.
 - **Prompt help:** niche templates, and an Improve button that rewrites a rough idea into a detailed prompt.
 - **Gallery:** your thumbnails, with filters, sorting, publishing and downloads.
 - **Community:** published thumbnails with search, likes and Trending, Newest and Most liked sorts.
@@ -18,7 +18,7 @@ AI thumbnail generator for YouTube, TikTok, Instagram, Facebook, X, Twitch and V
 - **Share links:** each one shows the thumbnail as the link preview on social media.
 - **Recycle bin:** restore deleted thumbnails within 30 days.
 - **Accounts:** email signup with a verification code, password reset by email, profile and avatar, and account deletion.
-- **Credits and billing:** 20 free credits a month (5 per thumbnail). Pro and Ultra plans and one-time credit packs run through Paddle, in test mode.
+- **Credits and billing:** 10 free credits a month (5 per thumbnail). Pro and Ultra plans and one-time credit packs run through Paddle, in test mode.
 - Light and dark theme.
 
 ## Tech stack

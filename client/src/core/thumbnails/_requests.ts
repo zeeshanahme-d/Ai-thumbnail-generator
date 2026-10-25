@@ -3,6 +3,7 @@ import type {
   ApiSuccessEnvelope,
   GenerateThumbnailPayload,
   GenerateThumbnailResponse,
+  ImprovePromptPayload,
   PaginatedThumbnailsResponse,
   PaginationParams,
   LikeResponse,
@@ -127,10 +128,10 @@ export async function restoreAllThumbnails() {
   return data.data as { restoredCount: number };
 }
 
-export async function improvePrompt(prompt: string) {
+export async function improvePrompt(payload: ImprovePromptPayload) {
   const { data } = await api.post<ApiSuccessEnvelope<{ prompt: string }>>(
     THUMBNAIL_URL.improvePrompt,
-    { prompt }
+    payload
   );
   return (data.data as { prompt: string }).prompt;
 }

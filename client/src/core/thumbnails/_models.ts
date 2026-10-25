@@ -12,9 +12,17 @@ export interface GenerateThumbnailPayload {
   referenceImage?: File | null;
 }
 
+/** The prompt plus the settings the improver can't see. */
+export interface ImprovePromptPayload {
+  prompt: string;
+  format: string;
+  textOverlay: boolean;
+  hasReferenceImage: boolean;
+}
+
 export interface GenerateThumbnailResponse {
   thumbnail: Thumbnail;
-  credits: Pick<IUser, "totalcredits" | "creditsUsed" | "packCredits" | "creditsResetAt">;
+  credits: Pick<IUser, "freeCredits" | "usedCredits" | "creditsResetAt">;
 }
 
 export interface PaginationParams extends ThumbnailFilters {

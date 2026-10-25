@@ -26,7 +26,7 @@ async function removeStuckGenerations() {
     // Whoever deletes the record refunds it, so this job and the request never both refund.
     const removed = await thumbnailModel.findOneAndDelete({ _id, isGenerating: true });
     if (removed) {
-      await refundCredits(String(removed.userId), CREDIT_COST.GENERATE_COST, removed.packCreditsUsed ?? 0);
+      await refundCredits(String(removed.userId), CREDIT_COST.GENERATE_COST);
       // Each one means a request died mid-generation: a crash, a restart or a function timeout.
       logger.warn("Stuck generation removed and refunded", { thumbnailId: String(_id), userId: String(removed.userId) });
     }

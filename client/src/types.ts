@@ -464,15 +464,15 @@ export interface IUser {
   provider: "email" | "google" | string;
   isVerified: boolean;
   plan: "free" | "pro" | "ultra" | string;
-  totalcredits: number;
-  creditsUsed: number;
-  /** Credits bought in packs. They never expire and are spent after the monthly allowance. */
+  freeCredits: number;
+  usedCredits: number;
+  subscriptionCredits: number;
   packCredits: number;
+  totalCredits: number;
   creditsResetAt: string | null;
   subscriptionId: string | null;
   subscriptionStatus: string | null;
   subscriptionRenewsAt: string | null;
-  /** End of the last paid billing period: the plan ends here when it no longer renews. */
   subscriptionPeriodEnd: string | null;
   followersCount: number;
   followingCount: number;

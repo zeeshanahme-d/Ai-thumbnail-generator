@@ -51,7 +51,6 @@ export const escapeRegex = (value: string) => {
 };
 
 // True when the address uses a throwaway inbox provider. Parent domains are checked too,
-// because the list has mailinator.com but not every subdomain like x.mailinator.com.
 export function isDisposableEmail(email: string): boolean {
     const domain = email.split("@").pop()?.trim().toLowerCase() ?? "";
     const labels = domain.split(".");

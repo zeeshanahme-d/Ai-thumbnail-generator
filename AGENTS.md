@@ -5,7 +5,7 @@ Guidance for Codex when working in this repository.
 ## Project
 
 AI Thumbnail Generator ("Eyecatch AI") — a web app where a user describes a thumbnail,
-picks a platform format, category, style, color scheme, and optional reference image, and the app
+picks a platform format, category, style, color scheme, and an optional reference image, and the app
 generates a thumbnail for YouTube, TikTok, Instagram, Facebook, X, Twitch or Vimeo using **Gemini AI** (`gemini-3.1-flash-lite-image`).
 
 Two workspaces, each with its own `package.json`:
@@ -223,7 +223,7 @@ Check these before writing anything new:
   Icon sizes with an `aria-label` show it as a `Tooltip` automatically; don't add `title`.
 - **`PromptCard.tsx`** (`components/image-generate-components/`) — the prompt textarea
   card. Clicking the card focuses the textarea; controlled (`value`+`onChange`) or
-  uncontrolled; includes style/category/format/color-scheme/reference-image pickers and the
+  uncontrolled; includes style/category/format/color-scheme pickers, the reference-image upload (`ReferenceImageUpload`) and the
   text-on-image switch (on by default).
   While empty it offers niche templates (`PROMPT_TEMPLATES` in `data/generator.ts`);
   signed-in users also get an **Improve** button (`POST /thumbnail/improve-prompt`).
@@ -274,7 +274,8 @@ Check these before writing anything new:
   **`Wrapper.tsx`** (max-w-7xl container), **`MobileNav.tsx`**, **`Skeleton.tsx`**,
   **`ThumbnailCardSkeleton.tsx`**, **`TabSwitcher.tsx`**.
 
-`lib/imageValidation.ts` owns image rules (extensions, MIME, 5 MB max) and returns a
+`lib/imageValidation.ts` owns image rules (extensions, MIME, 2 MB max, for avatars and reference images
+alike) and returns a
 user-facing message; reuse it for any upload. `lib/passwordValidation.ts` owns the
 password rule and mirrors `server/src/validations/password.validation.ts`;
 `lib/userValidation.ts` owns the full-name and username rules (including reserved names)
@@ -386,7 +387,7 @@ you write an operator on purpose (`$regex`, `$ne`, `$gt`, `$expr`, …), wrap it
 
 **Public** (via `thumbnail-public.routes.ts`, mounted first). `optionalAuthentication` lets guests
 through but checks anyone with a session cookie, so signed-in users get `isLiked`. Community and
-detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
+detail leave out `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 - `GET /thumbnail/community` — paginated community thumbnails. Search is a case-insensitive
   substring regex (a text index only matches whole words, which breaks search-as-you-type);
   `trending` sorts by `trendingScore`
@@ -397,8 +398,10 @@ detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 
 **Protected** (via `thumbnail.routes.ts`, behind `authenticationToken`):
 - `POST /thumbnail` — generate thumbnail (multipart form with optional `referenceImage`)
-- `POST /thumbnail/improve-prompt` — rewrite `{ prompt }` with `GEMINI_TEXT_MODEL`; free,
-  10 per 10 minutes per user (`improvePromptLimiter`)
+- `POST /thumbnail/improve-prompt` — rewrite `{ prompt, format, textOverlay, hasReferenceImage }`
+  into a title line plus a short brief with `GEMINI_TEXT_MODEL` (`PROMPT_IMPROVER_INSTRUCTION`,
+  settings line from `buildImproverInput`). The first line becomes the thumbnail's title, and colors,
+  lighting and style are left to the presets. Free, 10 per 10 minutes per user (`improvePromptLimiter`)
 - `DELETE /thumbnail/recycle-bin` — empty the bin; `PATCH /thumbnail/recycle-bin/restore` —
   restore all. Both are registered before the `/:id` routes, which would match them.
 - `GET /thumbnail` — user's own thumbnails (paginated, filterable)
@@ -424,8 +427,8 @@ detail leave out `packCreditsUsed` and `model` (`PUBLIC_THUMBNAIL_PROJECTION`):
 - `POST /upload/avatar` — upload avatar image (replaces old one on Cloudinary); 10 per hour
   per user (`avatarUploadLimiter`)
 
-`uploadSingleImage` keeps the file in memory (`req.file.buffer`, never on disk) and checks
-its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
+`uploadSingleImage` (avatar and reference image, 2 MB, `MAX_IMAGE_SIZE_MB`) keeps the file in memory
+(`req.file.buffer`, never on disk) and checks its real bytes with `file-type`. `uploadFileOnCloudniary` streams a buffer to Cloudinary.
 `schemas/media.schema.ts` (avatar and thumbnail image) sends only `url` to the client: the other
 fields are `select: false` plus a `toJSON` transform. Read `publicId` with `+avatar.publicId` (or
 name `thumbnail.publicId`), and select `avatar.url`, never the whole `avatar`, in an inclusive
@@ -457,17 +460,16 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
     event (`subscriptionUpdatedAt`) or one from a different subscription while the stored one
     is still live is ignored. If that other subscription is live too (two checkouts paid at
     once), it is cancelled at Paddle immediately; its first payment is refunded by hand.
-    `canceled`/`paused` move the account to Free and refill the free credits (`SIGNUP_BONUS`).
-  - `transaction.completed` owns the credits: a paid billing period sets `totalcredits` to
-    `credits_per_month`, clears usage and records `subscriptionPeriodStart/End`, once per
-    period. Payment-method-change transactions never refill. Renewal credits come from the
-    payment, not `subscription.updated`, which Paddle sends before charging.
+    `canceled`/`paused` move the account to Free and set `subscriptionCredits` to 0; free
+    credits are never touched, so subscribe-and-cancel hands out nothing.
+  - `transaction.completed` owns the plan credits: a paid billing period sets `subscriptionCredits`
+    to `credits_per_month` and records `subscriptionPeriodStart/End`, once per period.
+    Payment-method-change transactions grant nothing. Renewal credits come from the payment,
+    not `subscription.updated`, which Paddle sends before charging.
   - `transaction.completed` without a subscription is a credit pack (`grantCreditPack`):
     `credits_per_unit × quantity` from the paid transaction is added to `packCredits`, with the
     transaction id pushed to `creditPackTransactionIds` in the same write, so retries add nothing.
-- Paid refills inside a period (`resetDueCredits`): yearly plans clear usage on each monthly
-  anniversary of the period start (`nextPaidRefill`, capped at the period end); monthly plans
-  wait for the next payment. Check: `npx tsx src/utils/billing.check.ts`.
+- Check: `npx tsx src/utils/billing.check.ts` (price parsing and the credit balance).
 - Not built: switching plans (needs `subscriptions.update`); refunds of pack purchases are
   not taken back out of `packCredits`.
 
@@ -477,14 +479,15 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
    `youtube`; the server takes the aspect ratio from `THUMBNAIL_FORMATS`), `category` (default `General`),
    `color_scheme`, `text_overlay` (parsed with `z.stringbool()`, so `"false"` is false; on
    by default),
-   and optional `referenceImage` file
+   and the optional `referenceImage` file, sent to the image model before the prompt. One image call
+   per generation and a short prompt keep Gemini costs low
 2. Server applies a due monthly refill, then reserves credits atomically
    (`CREDIT_COST.GENERATE_COST = 5`)
 3. Creates a thumbnail document with `isGenerating: true`
-4. Builds the prompt with `buildThumbnailPrompt` (`utils/thumbnail-prompt.ts`): plain paragraphs
+4. Builds the prompt with `buildThumbnailPrompt` (`utils/thumbnail-prompt.ts`): short plain paragraphs
    for the title, the creator's brief (which wins over presets), the style and color presets
-   (`constants/constants.ts`, descriptions, none asks for an expression), reference image or
-   casting rules, the category niche (left out for General), a natural expression (no default shocked face), the headline or no-text rule
+   (`constants/constants.ts`, descriptions, none asks for an expression), the reference image (used as the brief says; otherwise a thumbnail lends only its layout,
+   lettering and colors, a person keeps their identity, a product or logo is featured) or casting rules, the category niche (left out for General), a natural expression (no default shocked face), the headline or no-text rule
    and the format's safe area (where its platform draws over the image). Check and print it: `npx tsx src/utils/thumbnail-prompt.check.ts --print`
 5. Calls `generateImage()` (`utils/gemini.ts`, which also has `generateText()`) with
    `GEMINI_IMAGE_MODEL`:
@@ -498,26 +501,28 @@ each price carries `custom_data: { plan, billing, credits_per_month }` and each 
 
 ### Credits system
 
-- **Test mode (portfolio)**: `PAID_CREDITS_SPENDABLE = false` (`constants.ts`, mirrored in
-  client `lib/credits.ts`). Payments run in the Paddle sandbox; plans and packs are recorded
-  but only the free credits (`SIGNUP_BONUS`, 20) spend (`min(totalcredits, SIGNUP_BONUS) − creditsUsed`, pack never).
-  Every verified account, whatever its plan, gets the free 30-day refill; paid periods record
-  `subscriptionPeriodStart/End` only, and cancelling doesn't refill (no subscribe/cancel
-  farming). Settings shows plan credits (`PLAN_MONTHLY_CREDITS`) and pack credits as locked;
-  `TestCheckoutDialog` (test card, Cancel / Proceed) opens before every checkout. The rest
-  of this section and Billing describe the `true` behaviour.
-- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (20 credits)
+- **Only free credits spend** (portfolio, Paddle sandbox). User fields:
+  - `freeCredits`: the only spendable credits. Change it by hand in MongoDB to give a user more;
+    it lasts until the next refill.
+  - `usedCredits`: free credits spent since the last refill.
+  - `subscriptionCredits` (plan, from the webhook) and `packCredits` (bought): shown, never spent.
+  - `totalCredits`: free + subscription + pack, calculated in the user's `toJSON`, never stored.
+
+  All four are integers ≥ 0 in the schema. Hand edits skip the schema, so the maths counts a
+  missing or negative value as 0. Settings shows the free credits bar and the locked credits
+  with the total. `TestCheckoutDialog` (test card, Cancel / Proceed) opens before every checkout.
+- Balance = `getRemainingCredits` = `freeCredits − usedCredits` (`utils/credits.ts`, mirrored
+  in client `lib/credits.ts`, which disables Generate below 5). `reserveCredits` charges
+  atomically before calling Gemini: one update that only matches while enough remain. A failed
+  or stuck generation refunds with `refundCredits` (never below 0).
+- New accounts start with 0 credits; verifying the email grants the `SIGNUP_BONUS` (10 credits)
   (`$max`, so an account is never topped up twice). Signup rejects
   disposable email domains (`isDisposableEmail` in `utils/helpers.ts`).
 - Generate costs 5 credits, Recreate costs 10 (not yet implemented)
-- `user.totalcredits` vs `user.creditsUsed` is the monthly allowance, which refills overwrite;
-  `user.packCredits` is bought credits, which never expire and no refill touches. Balance =
-  `getRemainingCredits` (allowance left + pack). `reserveCredits` charges atomically before
-  calling Gemini, allowance first (`splitCharge` / `chargeExpressions`, one pipeline update),
-  and returns how much came from the pack; the thumbnail stores it (`packCreditsUsed`) so a
-  failed or stuck generation refunds each part to where it came from (never below 0)
-- **Monthly refill** — only **verified** free accounts refill. When `creditsResetAt` passes
-  (or is missing), the account goes back to `SIGNUP_BONUS` credits with 0 used and the date moves 30 days
+- Old accounts with `totalcredits` / `creditsUsed` move over with `npx tsx src/db/migrate-credits.ts`
+  (run once; safe to rerun).
+- **Monthly refill** — only **verified** accounts refill, whatever their plan. When `creditsResetAt` passes
+  (or is missing), `freeCredits` goes back to `SIGNUP_BONUS` with 0 used and the date moves 30 days
   on (`CREDIT_RESET_INTERVAL_MS`). `resetDueCredits()` runs from `utils/scheduled-jobs.ts`
   every 10 minutes, for the one user before each generation, and on email verification. So
   verifying starts the cycle, and older accounts whose date passed while unverified refill
@@ -541,9 +546,7 @@ public production URLs; the client's host (Vercel) must set them itself.
 
 Site `https://eyecatch.zeeshanahmed.dev` (Vercel), API `https://api.eyecatch.zeeshanahmed.dev`
 (one Node process on an Oracle Ampere instance behind a reverse proxy, so `TRUST_PROXY=1`).
-The proxy must allow bodies over 5 MB (reference images, avatars) and wait longer than a
-generation (up to ~3 Gemini attempts of 60 s), e.g. Nginx `client_max_body_size 6m` and
-`proxy_read_timeout 300s`.
+Whatever sits in front of Node must allow bodies over 2 MB (a reference image or an avatar) and wait longer than a generation (up to ~3 Gemini attempts of 60 s).
 - `getClientOrigins()` (`utils/helpers.ts`) reads `CLIENT_URL`; outside production it adds
   `localhost:5173`/`5174`. Only those origins pass CORS, and any POST/PUT/PATCH/DELETE carrying
   another `Origin` is refused with `ORIGIN_NOT_ALLOWED` (CORS alone would still run a

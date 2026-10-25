@@ -10,12 +10,7 @@ export interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
-export function formatPaginatedResponse<T>(
-  data: T[],
-  total: number,
-  page: number,
-  limit: number
-): PaginatedResult<T> {
+export function formatPaginatedResponse<T>(data: T[], total: number, page: number, limit: number): PaginatedResult<T> {
   const totalPages = Math.ceil(total / limit) || 1;
 
   return {
