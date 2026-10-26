@@ -71,3 +71,9 @@ npm run dev
 ## Author
 
 Zeeshan Ahmed: [GitHub](https://github.com/zeeshanahme-d)
+
+## License
+
+Copyright (c) 2026 Zeeshan Ahmed. All rights reserved.
+
+The code is public so it can be viewed as part of my portfolio. You may view it, and fork it on GitHub only as GitHub's Terms of Service allow. You may not copy, modify, distribute, sell, deploy or publish this code or any part of it, or present it as your own work, without my written permission. To ask, contact me through the GitHub profile above.
